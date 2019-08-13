@@ -831,8 +831,8 @@ class AccountInvoiceElectronic(models.Model):
                                      message_type='notification',
                                      subtype=None,
                                      parent_id=False,
-                                     attachments=[[inv.fname_xml_comprobante, inv.fname_xml_comprobante],
-                                                  [inv.fname_xml_respuesta_tributacion, inv.fname_xml_respuesta_tributacion]],)
+                                     attachments=[[inv.fname_xml_respuesta_tributacion, inv.fname_xml_respuesta_tributacion],
+                                                  [inv.fname_xml_comprobante, inv.fname_xml_comprobante]],)
                     
                     sequence = inv.company_id.FEC_sequence_id.next_by_id()
                     response_json = api_facturae.get_clave_hacienda(self,

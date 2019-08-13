@@ -860,7 +860,7 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
     # Si fue aceptado o rechazado por haciendo se carga la respuesta
     if (estado_m_h == 'aceptado' or estado_m_h == 'rechazado') or (
             inv.type == 'out_invoice' or inv.type == 'out_refund'):
-        inv.fname_xml_respuesta_tributacion = 'respuesta_' + inv.number_electronic + '.xml'
+        inv.fname_xml_respuesta_tributacion = 'ACH_' + inv.number_electronic + '.xml'
         inv.xml_respuesta_tributacion = response_json.get('respuesta-xml')
 
     # Si fue aceptado por Hacienda y es un factura de cliente o nota de crédito, se envía el correo con los documentos
