@@ -823,9 +823,9 @@ class AccountInvoiceElectronic(models.Model):
                 inv.state_tributacion = 'na'
                 continue
 
-            if not inv.xml_comprobante or inv.state_send_invoice == 'rechazado':
+            if not inv.xml_comprobante or (inv.tipo_documento == 'FEC' and inv.state_send_invoice == 'rechazado'):
 
-                if inv.state_send_invoice == 'rechazado':
+                if inv.tipo_documento == 'FEC' and inv.state_send_invoice == 'rechazado':
                     inv.message_post(body='Se está enviando otra FEC porque la anterior fue rechazada por Hacienda', 
                                      subject='Envío de una segunda FEC',
                                      message_type='notification',
@@ -833,6 +833,16 @@ class AccountInvoiceElectronic(models.Model):
                                      parent_id=False,
                                      attachments=[[inv.fname_xml_comprobante, inv.fname_xml_comprobante],
                                                   [inv.fname_xml_respuesta_tributacion, inv.fname_xml_respuesta_tributacion]],)
+                    
+                    sequence = inv.company_id.FEC_sequence_id.next_by_id()
+                    response_json = api_facturae.get_clave_hacienda(self,
+                                                                    inv.tipo_documento,
+                                                                    sequence,
+                                                                    inv.journal_id.sucursal,
+                                                                    inv.journal_id.terminal)
+
+                    inv.number_electronic = response_json.get('clave')
+                    inv.sequence = response_json.get('consecutivo')
 
                 date_cr = api_facturae.get_time_hacienda()
 
