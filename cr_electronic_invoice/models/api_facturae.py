@@ -966,20 +966,17 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
         invoice.reference = invoice.consecutive_number_receiver
 
         invoice.number_electronic = invoice_xml.xpath("inv:Clave", namespaces=namespaces)[0].text
+
+        invoice.economic_activity_id = invoice.env['economic_activity'].search([('code', '=', invoice_xml.xpath("inv:CodigoActividad",namespaces=namespaces)[0].text)], limit=1)
+        
         invoice.date_issuance = invoice_xml.xpath("inv:FechaEmision", namespaces=namespaces)[0].text
         invoice.date_invoice = invoice.date_issuance
 
-        emisor = invoice_xml.xpath(
-            "inv:Emisor/inv:Identificacion/inv:Numero",
-            namespaces=namespaces)[0].text
+        emisor = invoice_xml.xpath("inv:Emisor/inv:Identificacion/inv:Numero", namespaces=namespaces)[0].text
 
-        receptor = invoice_xml.xpath(
-            "inv:Receptor/inv:Identificacion/inv:Numero",
-            namespaces=namespaces)[0].text
+        receptor = invoice_xml.xpath("inv:Receptor/inv:Identificacion/inv:Numero", namespaces=namespaces)[0].text
 
-        if receptor != invoice.company_id.vat:
-            raise UserError('El receptor no corresponde con la compañía actual con identificación ' +
-                             receptor + '. Por favor active la compañía correcta.')  # noqa
+        if receptor != invoice.company_id.vat: raise UserError('El receptor no corresponde con la compañía actual con identificación ' + receptor + '. Por favor active la compañía correcta.')  # noqa
 
         currency_node = invoice_xml.xpath("inv:ResumenFactura/inv:CodigoTipoMoneda/inv:CodigoMoneda", namespaces=namespaces)
         if currency_node:
@@ -1006,9 +1003,7 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
             lines = invoice_xml.xpath("inv:DetalleServicio/inv:LineaDetalle", namespaces=namespaces)
             new_lines = invoice.env['account.invoice.line']
             for line in lines:
-                product_uom = invoice.env['product.uom'].search(
-                    [('code', '=', line.xpath("inv:UnidadMedida", namespaces=namespaces)[0].text)],
-                    limit=1).id
+                product_uom = invoice.env['product.uom'].search([('code', '=', line.xpath("inv:UnidadMedida", namespaces=namespaces)[0].text)], limit=1).id
                 total_amount = float(line.xpath("inv:MontoTotal", namespaces=namespaces)[0].text)
 
                 discount_percentage = 0.0
