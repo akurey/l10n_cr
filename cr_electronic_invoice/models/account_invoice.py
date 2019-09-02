@@ -1081,9 +1081,6 @@ class AccountInvoiceElectronic(models.Model):
 
                         lines[line_number] = line
 
-                # convertir el monto de la factura a texto
-                inv.invoice_amount_text = extensions.text_converter.number_to_text_es(
-                    base_subtotal + total_impuestos)
                 inv.date_issuance = date_cr
 
                 # TODO: CORREGIR BUG NUMERO DE FACTURA NO SE GUARDA EN LA REFERENCIA DE LA NC CUANDO SE CREA MANUALMENTE
@@ -1260,3 +1257,7 @@ class AccountInvoiceElectronic(models.Model):
                 inv.number_electronic = response_json.get('clave')
                 inv.sequence = response_json.get('consecutivo')
                 inv.state_send_invoice = False
+
+                # convertir el monto de la factura a texto
+                self.invoice_amount_text = extensions.text_converter.number_to_text_es(self.amount_total)
+
