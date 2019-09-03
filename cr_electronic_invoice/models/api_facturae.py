@@ -967,7 +967,7 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
 
         invoice.number_electronic = invoice_xml.xpath("inv:Clave", namespaces=namespaces)[0].text
 
-        invoice.economic_activity_id = invoice.env['economic_activity'].search([('code', '=', invoice_xml.xpath("inv:CodigoActividad",namespaces=namespaces)[0].text)], limit=1)
+        invoice.economic_activity_id = invoice.env['economic_activity'].search([('code', '=', invoice_xml.xpath("inv:CodigoActividad", namespaces=namespaces)[0].text)], limit=1)
         
         invoice.date_issuance = invoice_xml.xpath("inv:FechaEmision", namespaces=namespaces)[0].text
         invoice.date_invoice = invoice.date_issuance
@@ -1009,18 +1009,19 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
                 discount_percentage = 0.0
                 discount_note = None
 
-                discount_node = line.xpath("inv:Descuento", namespaces=namespaces)
-                if discount_node:
-                    discount_amount_node = discount_node[0].xpath("inv:MontoDescuento", namespaces=namespaces)[0]
-                    discount_amount = float(discount_amount_node.text or '0.0')
-                    discount_percentage = discount_amount / total_amount * 100
-                    discount_note = discount_node[0].xpath("inv:NaturalezaDescuento", namespaces=namespaces)[0].text
-                else:
-                    discount_amount_node = line.xpath("inv:MontoDescuento", namespaces=namespaces)
-                    if discount_amount_node:
-                        discount_amount = float(discount_amount_node[0].text or '0.0')
+                if total_amount > 0:
+                    discount_node = line.xpath("inv:Descuento", namespaces=namespaces)
+                    if discount_node:
+                        discount_amount_node = discount_node[0].xpath("inv:MontoDescuento", namespaces=namespaces)[0]
+                        discount_amount = float(discount_amount_node.text or '0.0')
                         discount_percentage = discount_amount / total_amount * 100
-                        discount_note = line.xpath("inv:NaturalezaDescuento", namespaces=namespaces)[0].text
+                        discount_note = discount_node[0].xpath("inv:NaturalezaDescuento", namespaces=namespaces)[0].text
+                    else:
+                        discount_amount_node = line.xpath("inv:MontoDescuento", namespaces=namespaces)
+                        if discount_amount_node:
+                            discount_amount = float(discount_amount_node[0].text or '0.0')
+                            discount_percentage = discount_amount / total_amount * 100
+                            discount_note = line.xpath("inv:NaturalezaDescuento", namespaces=namespaces)[0].text
 
                 total_tax = 0.0
                 taxes = invoice.env['account.tax']

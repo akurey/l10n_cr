@@ -944,6 +944,8 @@ class AccountInvoiceElectronic(models.Model):
                         price_unit = round(line_taxes['total_excluded'], 5)
 
                         base_line = round(price_unit * quantity, 5)
+                        
+                    
                         descuento = inv_line.discount and round(
                             price_unit * quantity * inv_line.discount / 100.0,
                             5) or 0.0
@@ -973,12 +975,11 @@ class AccountInvoiceElectronic(models.Model):
                         if inv.tipo_documento == 'FEE' and inv_line.tariff_head:
                             line["partidaArancelaria"] = inv_line.tariff_head
 
-                        if inv_line.discount:
+                        if inv_line.discount and price_unit > 0:
                             # descuento = round(base_line - subtotal_line, 5)
                             total_descuento += descuento
                             line["montoDescuento"] = descuento
-                            line[
-                                "naturalezaDescuento"] = inv_line.discount_note or 'Descuento Comercial'
+                            line["naturalezaDescuento"] = inv_line.discount_note or 'Descuento Comercial'
 
                         # Se generan los impuestos
                         taxes = dict()
