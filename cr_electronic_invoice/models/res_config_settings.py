@@ -12,7 +12,8 @@ class ResConfigSettings(models.TransientModel):
         company_dependent=True,
         string=_("Default Expense Account for loading data from XML"),
         domain=[('deprecated', '=', False)],
-        help=_("The expense account used when loading Costa Rican digital invoice"))
+        help=_("The expense account used when loading Costa Rican digital invoice"),
+        oldname='default_expense_account_id')
 
     load_lines = fields.Boolean(
         string=_('Indicates if invoice lines should be load when loading a Costa Rican Digital Invoice'),
