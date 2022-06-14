@@ -38,45 +38,48 @@ class PosConfig(models.Model):
     def create_sequences(self):
         if self.journal_id:
             inv_cedula = self.journal_id.company_id.vat
-            inv_cedula = str(inv_cedula).zfill(12)
-            sucursal = str(self.sucursal).zfill(3)
-            terminal = str(self.terminal).zfill(5)
+            if inv_cedula:
+                inv_cedula = str(inv_cedula).zfill(12)
+                sucursal = str(self.sucursal).zfill(3)
+                terminal = str(self.terminal).zfill(5)
 
-            tipo_doc = '01'
+                tipo_doc = '01'
 
-            fe_sequence_id = self.env['ir.sequence'].sudo().create({
-                'name': 'Secuencia de Factura Electrónica POS: ' + self.name,
-                'code': 'sequence.pos.FE.' + str(self.id),
-                'prefix': '506%(day)s%(month)s%(y)s' + inv_cedula + sucursal + terminal + tipo_doc,
-                'suffix': "1%(h12)s%(day)s%(month)s%(y)s",
-                'padding': 10,
-            })
+                fe_sequence_id = self.env['ir.sequence'].sudo().create({
+                    'name': 'Secuencia de Factura Electrónica POS: ' + self.name,
+                    'code': 'sequence.pos.FE.' + str(self.id),
+                    'prefix': '506%(day)s%(month)s%(y)s' + inv_cedula + sucursal + terminal + tipo_doc,
+                    'suffix': "1%(h12)s%(day)s%(month)s%(y)s",
+                    'padding': 10,
+                })
 
-            self.FE_sequence_id = fe_sequence_id.id
+                self.FE_sequence_id = fe_sequence_id.id
 
-            tipo_doc = '03'
+                tipo_doc = '03'
 
-            nc_sequence_id = self.env['ir.sequence'].sudo().create({
-                'name': 'Secuencia de Nota Crédito Electrónica POS: ' + self.name,
-                'code': 'sequence.pos.NC.' + str(self.id),
-                'prefix': '506%(day)s%(month)s%(y)s' + inv_cedula + sucursal + terminal + tipo_doc,
-                'suffix': "1%(h12)s%(day)s%(month)s%(y)s",
-                'padding': 10,
-            })
+                nc_sequence_id = self.env['ir.sequence'].sudo().create({
+                    'name': 'Secuencia de Nota Crédito Electrónica POS: ' + self.name,
+                    'code': 'sequence.pos.NC.' + str(self.id),
+                    'prefix': '506%(day)s%(month)s%(y)s' + inv_cedula + sucursal + terminal + tipo_doc,
+                    'suffix': "1%(h12)s%(day)s%(month)s%(y)s",
+                    'padding': 10,
+                })
 
-            self.NC_sequence_id = nc_sequence_id.id
+                self.NC_sequence_id = nc_sequence_id.id
 
-            tipo_doc = '04'
+                tipo_doc = '04'
 
-            te_sequence_id = self.env['ir.sequence'].sudo().create({
-                'name': 'Secuencia de Tiquete Electrónico POS: ' + self.name,
-                'code': 'sequence.pos.TE.' + str(self.id),
-                'prefix': '506%(day)s%(month)s%(y)s' + inv_cedula + sucursal + terminal + tipo_doc,
-                'suffix': "1%(h12)s%(day)s%(month)s%(y)s",
-                'padding': 10,
-            })
+                te_sequence_id = self.env['ir.sequence'].sudo().create({
+                    'name': 'Secuencia de Tiquete Electrónico POS: ' + self.name,
+                    'code': 'sequence.pos.TE.' + str(self.id),
+                    'prefix': '506%(day)s%(month)s%(y)s' + inv_cedula + sucursal + terminal + tipo_doc,
+                    'suffix': "1%(h12)s%(day)s%(month)s%(y)s",
+                    'padding': 10,
+                })
 
-            self.TE_sequence_id = te_sequence_id.id
+                self.TE_sequence_id = te_sequence_id.id
+            else:
+                raise UserError('You must configure the identification on the company')
 
 
 class PosOrder(models.Model):
@@ -165,7 +168,7 @@ class PosOrder(models.Model):
             ('NC', 'Electronic Credit Note')
             ],
         string="Receipt Type",
-        required=False, default='FE',
+        default='FE',
         help='Show document type in concordance with Ministerio de Hacienda classification')
 
     sequence = fields.Char(string='Consecutive', readonly=True, )
@@ -416,11 +419,6 @@ class PosOrder(models.Model):
         _logger.info('E-INV CR - Reenvia Correos - Finalizado')
 
     def _validahacienda_pos(self, max_orders=10, no_partner=True):
-        """
-            TODO: [R1260(too-complex), PosOrder._validahacienda_pos] '_validahacienda_pos' is too complex.
-            The McCabe rating is 26
-            Se debe intentar mejorar la puntuación
-        """
         pos_orders = self.env['pos.order'].search([('state', 'in', ('paid', 'done', 'invoiced')),
                                                    '|', (no_partner, '=', True),
                                                    '&', ('partner_id', '!=', False), ('partner_id.vat', '!=', False),
