@@ -387,7 +387,7 @@ def gen_xml_v43(inv, sale_conditions, total_servicio_gravado,
     sb.append('<NumeroConsecutivo>' + inv.number_electronic[21:41] + '</NumeroConsecutivo>')
     sb.append('<FechaEmision>' + inv.date_issuance + '</FechaEmision>')
     sb.append('<Emisor>')
-    sb.append('<Nombre>' + escape(issuing_company.legal_name or issuing_company.name) + '</Nombre>')
+    sb.append('<Nombre>' + escape(issuing_company.name) + '</Nombre>')
     sb.append('<Identificacion>')
     sb.append('<Tipo>' + issuing_company.identification_id.code + '</Tipo>')
     sb.append('<Numero>' + issuing_company.vat + '</Numero>')
