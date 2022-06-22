@@ -1,4 +1,5 @@
-odoo.define('l10n_cr_hacienda_info_query.ClientDetailsEdit', function(require) {
+odoo.define('l10n_cr_hacienda_info_query.ClientDetailsEdit',
+function(require) {
     'use strict';
 
     const { getDataURLFromFile } = require('web.utils');
@@ -135,6 +136,7 @@ odoo.define('l10n_cr_hacienda_info_query.ClientDetailsEdit', function(require) {
             this.changes[event.target.name] = event.target.value;
 
             this.changes['name'] = result['nombre'];
+            this.changes['email'] = result['email'];
 
         }
 
