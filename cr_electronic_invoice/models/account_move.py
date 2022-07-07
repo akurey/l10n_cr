@@ -1406,8 +1406,8 @@ class AccountInvoiceElectronic(models.Model):
                 inv.tipo_documento = 'disabled'
                 continue
 
-            if inv.partner_id.has_exoneration:
-                if inv.partner_id.date_expiration and (inv.partner_id.date_expiration > datetime.date.today()):
+            if inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
+                (inv.partner_id.date_expiration < datetime.date.today()):
                     raise UserError(_('The exoneration of this client has expired'))
 
             currency = inv.currency_id
