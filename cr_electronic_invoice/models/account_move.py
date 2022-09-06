@@ -197,14 +197,15 @@ class AccountInvoiceElectronic(models.Model):
 
     @api.onchange('partner_id', 'company_id')
     def _compute_economic_activities(self):
-        for inv in self:
-            if inv.move_type in ('in_invoice', 'in_refund'):
-                if inv.partner_id:
-                    inv.economic_activities_ids = inv.partner_id.economic_activities_ids
-                    inv.economic_activity_id = inv.partner_id.activity_id
-            else:
-                inv.economic_activities_ids = self.env['economic.activity'].search([('active', '=', False)])
-                inv.economic_activity_id = inv.company_id.activity_id
+        if self.partner_id:
+            for inv in self:
+                if inv.move_type in ('in_invoice', 'in_refund'):
+                    if inv.partner_id:
+                        inv.economic_activities_ids = inv.partner_id.economic_activities_ids
+                        inv.economic_activity_id = inv.partner_id.activity_id
+                else:
+                    inv.economic_activities_ids = self.env['economic.activity'].search([('active', '=', False)])
+                    inv.economic_activity_id = inv.company_id.activity_id
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
@@ -1641,9 +1642,10 @@ class AccountInvoiceElectronic(models.Model):
                 actividad_economica = invoice_xml.xpath("inv:CodigoActividad", namespaces=namespaces)[0].text
                 info['activity_id'] = self.env['economic.activity'].search([('code', '=', actividad_economica)],
                                                                            limit=1).id
-
+                
+                
                 cliente = self.env['res.partner'].create(info)
-                cliente.onchange_vat()
+                self.get_new_partner_economic_activities(cliente)
                 self.partner_id = cliente.id
 
     def get_xml_document(self, invoice_id):
@@ -1667,3 +1669,26 @@ class AccountInvoiceElectronic(models.Model):
 
         url = f'/web/binary/download_document?tab_id={tab_id}&invoice_id={invoice_id}'
         return url
+    
+    @api.onchange('xml_supplier_approval')
+    def xml(self):
+        if self.xml_supplier_approval:
+            self.create_partner_from_xml()
+            
+    def get_new_partner_economic_activities(self, partner):
+        json_response = api_facturae.get_economic_activities(partner)
+        if json_response["status"] == 200:
+            activities = json_response["activities"]
+            # Activity Codes
+            a_codes = list([])
+            for activity in activities:
+                if activity["estado"] == "A":
+                    a_codes.append(activity["codigo"])
+            economic_activities = self.env['economic.activity'].with_context(active_test=False).search([('code',
+                                                                                                        'in',
+                                                                                                        a_codes)])
+            partner.economic_activities_ids = economic_activities
+            partner.name = json_response["name"]
+
+            if len(a_codes) >= 1:
+                partner.activity_id = economic_activities[0]
