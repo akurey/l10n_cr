@@ -1406,7 +1406,11 @@ class AccountInvoiceElectronic(models.Model):
                 super(AccountInvoiceElectronic, inv).action_post()
                 inv.tipo_documento = 'disabled'
                 continue
-
+            
+            if inv.state_tributacion in ['aceptado', 'rechazado']:
+                super(AccountInvoiceElectronic, inv).action_post()
+                continue
+            
             if inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
                 (inv.partner_id.date_expiration < datetime.date.today()):
                     raise UserError(_('The exoneration of this client has expired'))
