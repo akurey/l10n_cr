@@ -1407,7 +1407,7 @@ class AccountInvoiceElectronic(models.Model):
                 inv.tipo_documento = 'disabled'
                 continue
             
-            if inv.state_tributacion in ['aceptado', 'rechazado']:
+            if inv.state_tributacion in ['aceptado', 'rechazado', 'procesando']:
                 super(AccountInvoiceElectronic, inv).action_post()
                 continue
             
