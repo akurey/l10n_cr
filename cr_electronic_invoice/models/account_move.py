@@ -474,7 +474,7 @@ class AccountInvoiceElectronic(models.Model):
         api_facturae.load_xml_data(self, load_lines, account, product, analytic_account)
 
     def action_send_mrs_to_hacienda(self):
-        if self.state_invoice_partner:
+        if self.state_invoice_partner and (not self.state_tributacion or self.state_tributacion == 'error'):
             self.state_tributacion = False
             self.send_mrs_to_hacienda()
         else:
@@ -499,14 +499,16 @@ class AccountInvoiceElectronic(models.Model):
 
                     if inv.state_tributacion and inv.state_tributacion in ('aceptado', 'rechazado', 'na'):
                         raise UserError(_('Warning!.\n The supplier invoice has already been confirmed'))
-                    if not inv.amount_total_electronic_invoice and inv.xml_supplier_approval:
-                        try:
-                            inv.load_xml_data()
-                        except UserError as error:
-                            inv.state_tributacion = 'error'
-                            inv.message_post(subject=_('Error'),
-                                             body=_('Aviso!.\n Error en carga del XML del proveedor') + str(error))
-                            continue
+                    
+                    # This does not work when fixing an accounting error but the invoice was already sent
+                    # if not inv.amount_total_electronic_invoice and inv.xml_supplier_approval:
+                    #     try:
+                    #         inv.load_xml_data()
+                    #     except UserError as error:
+                    #         inv.state_tributacion = 'error'
+                    #         inv.message_post(subject=_('Error'),
+                    #                          body=_('Aviso!.\n Error en carga del XML del proveedor') + str(error))
+                    #         continue
 
                     if abs(inv.amount_total_electronic_invoice - inv.amount_total) > 1:
                         inv.state_tributacion = 'error'
