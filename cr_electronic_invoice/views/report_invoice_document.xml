@@ -395,7 +395,7 @@
         </template>
 
         <!-- EXTERNAL LAYOUT CLEAN -->
-        <template id="web.external_layout_clean">
+        <template id="web.external_layout_bold">
             <div class="o_clean_header">
                 <div class="row">
                     <div class="col-6">
@@ -417,7 +417,7 @@
                 </div>
             </div>
 
-            <div t-attf-class="article o_report_layout_clean o_company_#{company.id}_layout" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <div t-attf-class="article o_report_layout_bold o_company_#{company.id}_layout" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
                 <t t-call="web.address_layout"/>
                 <t t-raw="0"/>
             </div>
@@ -444,7 +444,7 @@
         </template>
 
         <!-- EXTERNAL LAYOUT BACKGROUND -->
-        <template id="web.external_layout_background">
+        <template id="web.external_layout_striped">
             <div t-attf-class="o_company_#{company.id}_layout header" t-att-style="report_header_style">
                 <div class="o_background_header">
                 <div class="float-right">

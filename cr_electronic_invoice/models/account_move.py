@@ -1058,7 +1058,7 @@ class AccountInvoiceElectronic(models.Model):
                     _no_cabys_code = False
 
                     for inv_line in inv.invoice_line_ids:
-                        if inv_line.display_type:  # skip sections and notes
+                        if inv_line.display_type not in ('products'):  # skip sections and notes
                             continue
 
                         # Revisamos si está línea es de Otros Cargos
