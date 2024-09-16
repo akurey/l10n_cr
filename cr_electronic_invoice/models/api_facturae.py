@@ -639,7 +639,6 @@ def gen_xml_v43(inv, sale_conditions, total_servicio_gravado,
         sb.append('<Razon>' + str(razon_referencia) + '</Razon>')
         sb.append('</InformacionReferencia>')
     if invoice_comments:
-        invoice_comments = re.sub(r'<[^>]+>', '', str(invoice_comments))
         sb.append('<Otros>')
         sb.append('<OtroTexto>' + str(invoice_comments) + '</OtroTexto>')
         sb.append('</Otros>')

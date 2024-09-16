@@ -8,7 +8,6 @@ from lxml import etree
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools.misc import get_lang
-
 from odoo.http import request
 from .qr_generator import GenerateQrCode
 from odoo.tools import html2plaintext
@@ -934,6 +933,10 @@ class AccountInvoiceElectronic(models.Model):
         _logger.info('E-INV CR - _send_invoices_to_hacienda - Completed Successfully')
 
     def generate_and_send_invoices(self, invoices):
+        def cleanhtml(raw_html):
+            CLEANR = re.compile('<.*?>') 
+            cleantext = re.sub(CLEANR, '', raw_html)
+            return cleantext
         total_invoices = len(invoices)
         current_invoice = 0
 
@@ -1001,7 +1004,7 @@ class AccountInvoiceElectronic(models.Model):
                     tipo_documento_referencia = False
                     razon_referencia = False
                     currency = inv.currency_id
-                    invoice_comments = escape(inv.narration) if inv.narration else ''
+                    invoice_comments = escape(cleanhtml(inv.narration)) if inv.narration else ''
 
                     if (inv.invoice_id or inv.not_loaded_invoice) and \
                         inv.reference_code_id and inv.reference_document_id:
@@ -1529,72 +1532,8 @@ class AccountInvoiceElectronic(models.Model):
         type_override = move_vals.get('type_override')
         if type_override:
             move_vals['move_type'] = type_override
-
+            move_vals.pop('type_override')
         return move_vals
-
-    def _reverse_moves(self, default_values_list=None, cancel=False):
-        """ Reverse a recordset of account.move.
-        If cancel parameter is true, the reconcilable or liquidity lines
-        of each original move will be reconciled with its reverse's.
-
-        :param default_values_list: A list of default values to consider per move.
-                                    ('type' & 'reversed_entry_id' are computed in the method).
-        :return:                    An account.move recordset, reverse of the current self.
-        """
-        if not default_values_list:
-            default_values_list = [{} for move in self]
-
-        if cancel:
-            lines = self.mapped('line_ids')
-            # Avoid maximum recursion depth.
-            if lines:
-                lines.remove_move_reconcile()
-
-        reverse_type_map = {
-            'entry': 'entry',
-            'out_invoice': 'out_refund',
-            'out_refund': 'entry',
-            'in_invoice': 'in_refund',
-            'in_refund': 'entry',
-            'out_receipt': 'entry',
-            'in_receipt': 'entry',
-        }
-
-        move_vals_list = []
-        for move, default_values in zip(self, default_values_list):
-            default_values.update({
-                'move_type': reverse_type_map[move.move_type],
-                'reversed_entry_id': move.id,
-            })
-            move_vals_list.append(move.with_context(move_reverse_cancel=cancel)._reverse_move_vals(default_values,
-                                                                                                   cancel=cancel))
-
-        reverse_moves = self.env['account.move'].create(move_vals_list)
-        for move, reverse_move in zip(self, reverse_moves.with_context(check_move_validity=False)):
-            # Update amount_currency if the date has changed.
-            if move.date != reverse_move.date:
-                for line in reverse_move.line_ids:
-                    if line.currency_id:
-                        line._onchange_currency()
-            reverse_move._recompute_dynamic_lines(recompute_all_taxes=False)
-        reverse_moves._check_balanced()
-
-        # Reconcile moves together to cancel the previous one.
-        if cancel:
-            # Used for use "Action Post" to get electronic number
-            reverse_moves.with_context(move_reverse_cancel=cancel).action_post()
-            for move, reverse_move in zip(self, reverse_moves):
-                lines = move.line_ids.filtered(
-                    lambda x: (x.account_id.reconcile or x.account_id.internal_type == 'liquidity')
-                    and not x.reconciled
-                )
-                for line in lines:
-                    counterpart_lines = reverse_move.line_ids.filtered(lambda x: x.account_id == line.account_id
-                                                                       and x.currency_id == line.currency_id
-                                                                       and not x.reconciled)
-                    (line + counterpart_lines).with_context(move_reverse_cancel=cancel).reconcile()
-
-        return reverse_moves
 
     def create_partner_from_xml(self):
 
