@@ -1405,7 +1405,6 @@ class AccountInvoiceElectronic(models.Model):
         return (tipo_documento, sequence)
 
     def action_post(self):
-        print("action_post de cr_electronic_invoice")
         # Revisamos si el ambiente para Hacienda está habilitado
         for inv in self:
             if inv.company_id.frm_ws_ambiente == 'disabled':
