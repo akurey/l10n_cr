@@ -108,64 +108,64 @@ def get_consecutivo_hacienda(tipo_documento, consecutivo, sucursal_id, terminal_
 
 
 def get_clave_hacienda(doc, tipo_documento, consecutivo, sucursal_id, terminal_id, situacion='normal'):
+    if tipo_documento != 'disabled':
+        tipo_doc = fe_enums.TipoDocumento[tipo_documento]
 
-    tipo_doc = fe_enums.TipoDocumento[tipo_documento]
+        # '''Verificamos si el consecutivo indicado corresponde a un numero'''
+        inv_consecutivo = re.sub('[^0-9]', '', consecutivo)
+        if len(inv_consecutivo) != 10:
+            raise UserError(_('La numeración debe de tener 10 dígitos'))
 
-    # '''Verificamos si el consecutivo indicado corresponde a un numero'''
-    inv_consecutivo = re.sub('[^0-9]', '', consecutivo)
-    if len(inv_consecutivo) != 10:
-        raise UserError(_('La numeración debe de tener 10 dígitos'))
+        # '''Verificamos la sucursal y terminal'''
+        inv_sucursal = re.sub('[^0-9]', '', str(sucursal_id)).zfill(3)
+        inv_terminal = re.sub('[^0-9]', '', str(terminal_id)).zfill(5)
 
-    # '''Verificamos la sucursal y terminal'''
-    inv_sucursal = re.sub('[^0-9]', '', str(sucursal_id)).zfill(3)
-    inv_terminal = re.sub('[^0-9]', '', str(terminal_id)).zfill(5)
+        # '''Armamos el consecutivo pues ya tenemos los datos necesarios'''
+        consecutivo_mh = inv_sucursal + inv_terminal + tipo_doc + inv_consecutivo
 
-    # '''Armamos el consecutivo pues ya tenemos los datos necesarios'''
-    consecutivo_mh = inv_sucursal + inv_terminal + tipo_doc + inv_consecutivo
+        if not doc.company_id.identification_id:
+            raise UserError(_('Seleccione el tipo de identificación del emisor en el pérfil de la compañía'))
 
-    if not doc.company_id.identification_id:
-        raise UserError(_('Seleccione el tipo de identificación del emisor en el pérfil de la compañía'))
+        # '''Obtenemos el número de identificación del Emisor y lo validamos númericamente'''
+        inv_cedula = re.sub('[^0-9]', '', doc.company_id.vat)
 
-    # '''Obtenemos el número de identificación del Emisor y lo validamos númericamente'''
-    inv_cedula = re.sub('[^0-9]', '', doc.company_id.vat)
+        # '''Validamos el largo de la cadena númerica de la cédula del emisor'''
+        if doc.company_id.identification_id.code == '01' and len(inv_cedula) != 9:
+            raise UserError(_('La Cédula Física del emisor debe de tener 9 dígitos'))
+        elif doc.company_id.identification_id.code == '02' and len(inv_cedula) != 10:
+            raise UserError(_('La Cédula Jurídica del emisor debe de tener 10 dígitos'))
+        elif doc.company_id.identification_id.code == '03' and len(inv_cedula) not in (11, 12):
+            raise UserError(_('La identificación DIMEX del emisor debe de tener 11 o 12 dígitos'))
+        elif doc.company_id.identification_id.code == '04' and len(inv_cedula) != 10:
+            raise UserError(_('La identificación NITE del emisor debe de tener 10 dígitos'))
 
-    # '''Validamos el largo de la cadena númerica de la cédula del emisor'''
-    if doc.company_id.identification_id.code == '01' and len(inv_cedula) != 9:
-        raise UserError(_('La Cédula Física del emisor debe de tener 9 dígitos'))
-    elif doc.company_id.identification_id.code == '02' and len(inv_cedula) != 10:
-        raise UserError(_('La Cédula Jurídica del emisor debe de tener 10 dígitos'))
-    elif doc.company_id.identification_id.code == '03' and len(inv_cedula) not in (11, 12):
-        raise UserError(_('La identificación DIMEX del emisor debe de tener 11 o 12 dígitos'))
-    elif doc.company_id.identification_id.code == '04' and len(inv_cedula) != 10:
-        raise UserError(_('La identificación NITE del emisor debe de tener 10 dígitos'))
+        inv_cedula = str(inv_cedula).zfill(12)
 
-    inv_cedula = str(inv_cedula).zfill(12)
+        # '''Limitamos la cedula del emisor a 20 caracteres o nos dará error'''
+        cedula_emisor = limit(inv_cedula, 20)
 
-    # '''Limitamos la cedula del emisor a 20 caracteres o nos dará error'''
-    cedula_emisor = limit(inv_cedula, 20)
+        # '''Validamos la situación del comprobante electrónico'''
+        situacion_comprobante = fe_enums.SituacionComprobante.get(situacion)
+        if not situacion_comprobante:
+            raise UserError(_(f'La situación indicada para el comprobante electŕonico es inválida: {situacion}'))
 
-    # '''Validamos la situación del comprobante electrónico'''
-    situacion_comprobante = fe_enums.SituacionComprobante.get(situacion)
-    if not situacion_comprobante:
-        raise UserError(_(f'La situación indicada para el comprobante electŕonico es inválida: {situacion}'))
+        # '''Creamos la fecha para la clave'''
+        dia = str(doc.invoice_date.day).zfill(2)
+        mes = str(doc.invoice_date.month).zfill(2)
+        anno = str(doc.invoice_date.year)[2:]
+        cur_date = dia + mes + anno
 
-    # '''Creamos la fecha para la clave'''
-    dia = str(doc.invoice_date.day).zfill(2)
-    mes = str(doc.invoice_date.month).zfill(2)
-    anno = str(doc.invoice_date.year)[2:]
-    cur_date = dia + mes + anno
+        phone = phonenumbers.parse(doc.company_id.phone,
+                                doc.company_id.country_id and doc.company_id.country_id.code or 'CR')
+        codigo_pais = str(phone and phone.country_code or 506)
 
-    phone = phonenumbers.parse(doc.company_id.phone,
-                               doc.company_id.country_id and doc.company_id.country_id.code or 'CR')
-    codigo_pais = str(phone and phone.country_code or 506)
+        # '''Creamos un código de seguridad random'''
+        codigo_seguridad = str(random.randint(1, 99999999)).zfill(8)
 
-    # '''Creamos un código de seguridad random'''
-    codigo_seguridad = str(random.randint(1, 99999999)).zfill(8)
+        clave_hacienda = codigo_pais + cur_date + cedula_emisor + \
+            consecutivo_mh + situacion_comprobante + codigo_seguridad
 
-    clave_hacienda = codigo_pais + cur_date + cedula_emisor + \
-        consecutivo_mh + situacion_comprobante + codigo_seguridad
-
-    return {'length': len(clave_hacienda), 'clave': clave_hacienda, 'consecutivo': consecutivo_mh}
+        return {'length': len(clave_hacienda), 'clave': clave_hacienda, 'consecutivo': consecutivo_mh}
 
 
 '''Variables para poder manejar el Refrescar del Token'''

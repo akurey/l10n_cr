@@ -1405,6 +1405,7 @@ class AccountInvoiceElectronic(models.Model):
         return (tipo_documento, sequence)
 
     def action_post(self):
+        print("action_post de cr_electronic_invoice")
         # Revisamos si el ambiente para Hacienda está habilitado
         for inv in self:
             if inv.company_id.frm_ws_ambiente == 'disabled':
@@ -1476,8 +1477,9 @@ class AccountInvoiceElectronic(models.Model):
                 if tipo_documento and sequence:
                     inv.tipo_documento = tipo_documento
                 else:
-                    super().action_post()
-                    continue
+                    if inv.state == 'draft':
+                        super().action_post()
+                        continue
 
             # Calcular si aplica IVA Devuelto
             # Sólo aplica para clínicas y para pago por tarjeta
@@ -1501,8 +1503,8 @@ class AccountInvoiceElectronic(models.Model):
                         'price_unit': -iva_devuelto,
                         'quantity': 1,
                     })
-
-            super().action_post()
+            if inv.state == 'draft':
+                super().action_post()
             if not inv.number_electronic:
                 # if journal doesn't have sucursal use default from company
                 sucursal_id = inv.journal_id.sucursal or self.env.user.company_id.sucursal_MR
@@ -1515,11 +1517,12 @@ class AccountInvoiceElectronic(models.Model):
                                                                 sequence,
                                                                 sucursal_id,
                                                                 terminal_id)
+                if response_json:
+                    inv.number_electronic = response_json.get('clave')
+                    inv.sequence = response_json.get('consecutivo')
 
-                inv.number_electronic = response_json.get('clave')
-                inv.sequence = response_json.get('consecutivo')
-
-            inv.name = inv.sequence
+            if inv.sequence:
+                inv.name = inv.sequence
             inv.state_tributacion = False
 
     @api.onchange('amount_total')
