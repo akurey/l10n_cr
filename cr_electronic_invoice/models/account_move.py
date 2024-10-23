@@ -1412,9 +1412,10 @@ class AccountInvoiceElectronic(models.Model):
                 inv.tipo_documento = 'disabled'
                 continue
             
-            if inv.state_tributacion in ['aceptado', 'rechazado', 'procesando']:
-                super(AccountInvoiceElectronic, inv).action_post()
-                continue
+            if inv.state_tributacion in ['aceptado', 'rechazado', 'procesando'] or inv.move_type in ('entry'):
+                if inv.state == 'draft':
+                    super(AccountInvoiceElectronic, inv).action_post()
+                    continue
             
             if inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
                 (inv.partner_id.date_expiration < datetime.date.today()):
