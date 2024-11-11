@@ -16,6 +16,6 @@ html2text
 num2words
 paramiko
 phonenumbers
-vatnumber
+#vatnumber
 xlsxwriter
 lxml
