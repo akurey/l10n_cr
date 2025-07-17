@@ -846,8 +846,9 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                             sb.append('<NumeroDocumento>' +
                                       receiver_company.exoneration_number +
                                       '</NumeroDocumento>')
+                            # TODO: Agregar 'Otros'
                             sb.append('<NombreInstitucion>' +
-                                      receiver_company.institution_name +
+                                      fe_enums.nombreInstitucion[receiver_company.institution_name] +
                                       '</NombreInstitucion>')
                             sb.append('<FechaEmision>' +
                                       str(receiver_company.date_issue) + 'T00:00:00-06:00' +

@@ -36,7 +36,7 @@ TipoDocumento = {
 
 # Xmlns used by Hacienda
 XmlnsHacienda = {
-    'FE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronica',
+    'FE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica',
     'ND': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/notaDebitoElectronica',
     'NC': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/notaCreditoElectronica',
     'TE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/tiqueteElectronico',
@@ -46,7 +46,7 @@ XmlnsHacienda = {
 
 schemaLocation = {
     'FE': 'https://www.hacienda.go.cr/ATV/Comprobante' +
-    'Electronico/docs/esquemas/2016/v4.3/FacturaElectronica_V4.3.xsd',
+    'Electronico/docs/esquemas/2016/v4.4/FacturaElectronica_V4.4.xsd',
     'ND': 'https://www.hacienda.go.cr/ATV/Comprobante' +
     'Electronico/docs/esquemas/2016/v4.3/NotaDebitoElectronica_V4.3.xsd',
     'NC': 'https://www.hacienda.go.cr/ATV/Comprobante' +
@@ -66,4 +66,20 @@ tagName = {
     'TE': 'TiqueteElectronico',  # Tiquete Electrónico
     'FEC': 'FacturaElectronicaCompra',  # Factura Electrónica de Compra
     'FEE': 'FacturaElectronicaExportacion'  # Factura Electrónica de Exportación
+}
+
+nombreInstitucion = {
+    'Ministerio de Hacienda': '01',
+    'Ministerio de Relaciones Exteriores y Culto': '02',
+    'Ministerio de Agricultura y Ganadería': '03',
+    'Ministerio de Economía, Industria y Comercio': '04',
+    'Cruz Roja Costarricense': '05',
+    'Benemérito Cuerpo de Bomberos de Costa Rica': '06',
+    'Asociación Obras del Espíritu Santo': '07',
+    'Federación Cruzada Nacional de protección al Anciano (Fecrunapa)': '08',
+    'Escuela de Agricultura de la Región Húmeda (EARTH)': '09',
+    'Instituto Centroamericano de Administración de Empresas (INCAE)': '10',
+    'Junta de Protección Social (JPS)': '11',
+    'Autoridad Reguladora de los Servicios Públicos (Aresep)': '12',
+    'Otros': '99'
 }
