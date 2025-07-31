@@ -48,6 +48,8 @@
                         <field name="percentage_exoneration"/>
                         <field name="date_issue"/>
                         <field name="date_expiration"/>
+                        <field name="exoneration_article"/>
+                        <field name="exoneration_clause"/>
                     </group>
                 </page>
             </xpath>

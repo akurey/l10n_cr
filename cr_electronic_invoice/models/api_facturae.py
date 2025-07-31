@@ -846,16 +846,22 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                             sb.append('<NumeroDocumento>' +
                                       receiver_company.exoneration_number +
                                       '</NumeroDocumento>')
+                            sb.append('<Articulo>' +
+                                      receiver_company.exoneration_article +
+                                      '</Articulo>')
+                            sb.append('<Inciso>' +
+                                      receiver_company.exoneration_clause +
+                                      '</Inciso>')
                             # TODO: Agregar 'Otros'
                             sb.append('<NombreInstitucion>' +
                                       fe_enums.nombreInstitucion[receiver_company.institution_name] +
                                       '</NombreInstitucion>')
-                            sb.append('<FechaEmision>' +
+                            sb.append('<FechaEmisionEX>' +
                                       str(receiver_company.date_issue) + 'T00:00:00-06:00' +
-                                      '</FechaEmision>')
-                            sb.append('<PorcentajeExoneracion>' +
+                                      '</FechaEmisionEX>')
+                            sb.append('<TarifaExonerada>' +
                                       str(b['exoneracion']['porcentajeCompra']) +
-                                      '</PorcentajeExoneracion>')
+                                      '</TarifaExonerada>')
                             sb.append('<MontoExoneracion>' +
                                       str(b['exoneracion']['montoImpuesto']) +
                                       '</MontoExoneracion>')
@@ -863,6 +869,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                             sb.append('</Exoneracion>')
                     sb.append('</Impuesto>')
 
+                sb.append('<ImpuestoAsumidoEmisorFabrica>' + str(int(0)) + '</ImpuestoAsumidoEmisorFabrica>')
                 sb.append('<ImpuestoNeto>' + str(v['impuestoNeto']) + '</ImpuestoNeto>')
 
             sb.append('<MontoTotalLinea>' + str(v['montoTotalLinea']) + '</MontoTotalLinea>')
@@ -933,7 +940,9 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     payment_method_length = len(payment_methods_id)
     for payment_method_counter in range(payment_method_length):
-        sb.append('<MedioPago>' + payment_methods_id[payment_method_counter] + '</MedioPago>')
+        sb.append('<MedioPago>')
+        sb.append('<TipoMedioPago>' + payment_methods_id[payment_method_counter] + '</TipoMedioPago>')
+        sb.append('</MedioPago>')
     
     sb.append('<TotalComprobante>' +
               str(round(base_total + total_impuestos + totalOtrosCargos - total_iva_devuelto, 5)) +

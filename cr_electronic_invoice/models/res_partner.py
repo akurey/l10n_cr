@@ -32,6 +32,8 @@ class PartnerElectronic(models.Model):
                                                string='Economic Activities',
                                                context={'active_test': False})
     export = fields.Boolean(string="It's export", default=False)
+    exoneration_article = fields.Char(string="Exoneration Article", help="Número de artículo que establece la exoneración")
+    exoneration_clause = fields.Char(string="Exoneration Clause", help="Número de inciso que establece la exoneración o autorización")
 
     @api.onchange('phone')
     def _onchange_phone(self):
