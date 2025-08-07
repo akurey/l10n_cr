@@ -159,6 +159,7 @@ def get_clave_hacienda(doc, tipo_documento, consecutivo, sucursal_id, terminal_i
                                 doc.company_id.country_id and doc.company_id.country_id.code or 'CR')
         codigo_pais = str(phone and phone.country_code or 506)
 
+        # TODO: Arreglar el orden de la clave
         # '''Creamos un código de seguridad random'''
         codigo_seguridad = str(random.randint(1, 99999999)).zfill(8)
 
@@ -742,10 +743,12 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
             sb.append('<Receptor>')
             sb.append('<Nombre>' + escape(str(receiver_company.name[:99])) + '</Nombre>')
 
-            if inv.tipo_documento == 'FEE' or id_code == '05':
-                if receiver_company.vat:
-                    sb.append('<IdentificacionExtranjero>' + receiver_company.vat + '</IdentificacionExtranjero>')
-            else:
+            #TODO: Revisar lo de la identificacion para FEE
+            if not (inv.tipo_documento == 'FEE' or id_code == '05'):
+            #     if receiver_company.vat:
+                    
+            #         sb.append('<Identificacion>' + receiver_company.vat + '</Identificacion>')
+            # else:
                 sb.append('<Identificacion>')
                 sb.append('<Tipo>' + id_code + '</Tipo>')
                 sb.append('<Numero>' + vat + '</Numero>')
@@ -784,6 +787,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
             sb.append('</Receptor>')
 
     sb.append('<CondicionVenta>' + sale_conditions + '</CondicionVenta>')
+    #TODO: Agregar condicionVentaOtros (FEE)
     sb.append('<PlazoCredito>' + plazo_credito + '</PlazoCredito>')
 
     if lines:
@@ -872,6 +876,14 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                 sb.append('<ImpuestoAsumidoEmisorFabrica>' + str(int(0)) + '</ImpuestoAsumidoEmisorFabrica>')
                 sb.append('<ImpuestoNeto>' + str(v['impuestoNeto']) + '</ImpuestoNeto>')
 
+            else: #TODO: Revisar esto, para cuando no hay impuesto pero igual es obligatorio
+                sb.append('<Impuesto>')
+                sb.append('<Codigo>01</Codigo>')
+                sb.append('<CodigoTarifaIVA>10</CodigoTarifaIVA>')
+                sb.append('<Tarifa>0.0</Tarifa>')
+                sb.append('<Monto>0.0</Monto>')
+                sb.append('</Impuesto>')
+            
             sb.append('<MontoTotalLinea>' + str(v['montoTotalLinea']) + '</MontoTotalLinea>')
             sb.append('</LineaDetalle>')
         sb.append('</DetalleServicio>')

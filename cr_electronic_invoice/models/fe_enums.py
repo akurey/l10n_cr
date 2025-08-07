@@ -39,9 +39,9 @@ XmlnsHacienda = {
     'FE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronica',
     'ND': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/notaDebitoElectronica',
     'NC': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/notaCreditoElectronica',
-    'TE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/tiqueteElectronico',
+    'TE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/tiqueteElectronico',
     'FEC': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronicaCompra',
-    'FEE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronicaExportacion'
+    'FEE': 'https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.4/facturaElectronicaExportacion'
 }
 
 schemaLocation = {
@@ -52,11 +52,11 @@ schemaLocation = {
     'NC': 'https://www.hacienda.go.cr/ATV/Comprobante' +
     'Electronico/docs/esquemas/2016/v4.3/NotaCreditoElectronica_V4.3.xsd',
     'TE': 'https://www.hacienda.go.cr/ATV/Comprobante' +
-    'Electronico/docs/esquemas/2016/v4.3/TiqueteElectronico_V4.3.xsd',
+    'Electronico/docs/esquemas/2016/v4.4/TiqueteElectronico_V4.4.xsd',
     'FEC': 'https://www.hacienda.go.cr/ATV/Comprobante' +
     'Electronico/docs/esquemas/2016/v4.3/FacturaElectronicaCompra_V4.3.xsd',
     'FEE': 'https://www.hacienda.go.cr/ATV/Comprobante' +
-    'Electronico/docs/esquemas/2016/v4.3/FacturaElectronicaExportacion_V4.3.xsd'
+    'Electronico/docs/esquemas/2016/v4.4/FacturaElectronicaExportacion_V4.4.xsd'
 }
 
 tagName = {
