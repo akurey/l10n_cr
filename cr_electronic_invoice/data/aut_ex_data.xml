@@ -27,19 +27,19 @@
 
     <record id="cr_electronic_invoice.AutEx_5" model="aut.ex">
         <field name="code">05</field>
-        <field name="name">Transitorio V</field>
+        <field name="name">Exenciones Dirección General de Hacienda Transitorio V (servicios de ingeniería, arquitectura, topografía obra civil)</field>
         <field name="active" eval="True"/>
     </record>
 
     <record id="cr_electronic_invoice.AutEx_6" model="aut.ex">
         <field name="code">06</field>
-        <field name="name">Transitorio IX</field>
+        <field name="name">Servicios turísticos inscritos ante el Instituto Costarricense de Turismo (ICT)</field>
         <field name="active" eval="True"/>
     </record>
 
     <record id="cr_electronic_invoice.AutEx_7" model="aut.ex">
         <field name="code">07</field>
-        <field name="name">Transitorio XVII</field>
+        <field name="name">“Transitorio XVII (Recolección, Clasificación, almacenamiento de Reciclaje y reutilizable)</field>
         <field name="active" eval="True"/>
     </record>
 

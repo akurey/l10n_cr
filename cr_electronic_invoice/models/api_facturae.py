@@ -159,7 +159,7 @@ def get_clave_hacienda(doc, tipo_documento, consecutivo, sucursal_id, terminal_i
                                 doc.company_id.country_id and doc.company_id.country_id.code or 'CR')
         codigo_pais = str(phone and phone.country_code or 506)
 
-        # TODO: Arreglar el orden de la clave
+
         # '''Creamos un código de seguridad random'''
         codigo_seguridad = str(random.randint(1, 99999999)).zfill(8)
 
@@ -847,15 +847,19 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                             sb.append('<TipoDocumentoEX1>' +
                                       receiver_company.type_exoneration.code +
                                       '</TipoDocumentoEX1>')
+                            #TODO: Agregar validacion solo para ciertos tipos
                             sb.append('<NumeroDocumento>' +
                                       receiver_company.exoneration_number +
                                       '</NumeroDocumento>')
-                            sb.append('<Articulo>' +
-                                      receiver_company.exoneration_article +
-                                      '</Articulo>')
-                            sb.append('<Inciso>' +
-                                      receiver_company.exoneration_clause +
-                                      '</Inciso>')
+                            
+                            if receiver_company.type_exoneration.code in ['02', '03', '08']:
+                                sb.append('<Articulo>' +
+                                        receiver_company.exoneration_article +
+                                        '</Articulo>')
+                                sb.append('<Inciso>' +
+                                        receiver_company.exoneration_clause +
+                                        '</Inciso>')
+           
                             # TODO: Agregar 'Otros'
                             sb.append('<NombreInstitucion>' +
                                       fe_enums.nombreInstitucion[receiver_company.institution_name] +
