@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronica" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" targetNamespace="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronica" elementFormDefault="qualified" attributeFormDefault="unqualified" version="4.3" vc:minVersion="1.1">
+<xs:schema xmlns="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronica"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+	xmlns:ds="http://www.w3.org/2000/09/xmldsig#" targetNamespace="https://cdn.comprobanteselectronicos.go.cr/xml-schemas/v4.3/facturaElectronica" elementFormDefault="qualified" attributeFormDefault="unqualified" version="4.3" vc:minVersion="1.1">
 	<xs:import namespace="http://www.w3.org/2000/09/xmldsig#" schemaLocation="http://www.w3.org/TR/2008/REC-xmldsig-core-20080610/xmldsig-core-schema.xsd"/>
 	<xs:element name="FacturaElectronica">
 		<xs:annotation>
@@ -247,7 +250,7 @@
 												<xs:documentation>Existe dos maneras de obtener el resultado del campo:
 -	Cuando no existe exoneración, se obtiene de la sumatoria de los campos “subtotal”, “monto del impuesto” .
 -	Cuando posee una exoneración, se obtiene de la sumatoria de los campos “Subtotal”, “Impuesto Neto”.
-</xs:documentation>
+												</xs:documentation>
 											</xs:annotation>
 										</xs:element>
 									</xs:sequence>
@@ -548,7 +551,7 @@
 				<xs:annotation>
 					<xs:documentation>Debe cumplir con la siguiente estructura: 
  \s*\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*\s*
-</xs:documentation>
+					</xs:documentation>
 				</xs:annotation>
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
@@ -608,7 +611,7 @@
 				<xs:annotation>
 					<xs:documentation>Este campo será de condición obligatoria, cuando el cliente lo requiera. Debe cumplir con la siguiente estructura: 
  \s*\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*\s*
-</xs:documentation>
+					</xs:documentation>
 				</xs:annotation>
 				<xs:simpleType>
 					<xs:restriction base="xs:string">

@@ -28,8 +28,12 @@
 
     <record id="cr_electronic_invoice.Identificationtype_05" model="identification.type">
         <field name="code">05</field>
-        <field name="name">Extranjero</field>
-        <field name="notes">Número de identificación en caso de que el receptor sea un extranjero. Máximo 20 caracteres</field>
+        <field name="name">Extranjero No Domiciliado</field>
+    </record>
+
+    <record id="cr_electronic_invoice.Identificationtype_06" model="identification.type">
+        <field name="code">06</field>
+        <field name="name">No Contribuyente</field>
     </record>
 
 </odoo>

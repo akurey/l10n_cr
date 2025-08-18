@@ -33,7 +33,7 @@ class InvoiceLineElectronic(models.Model):
     tariff_head = fields.Char(string="Tariff item for export invoice")
     categ_name = fields.Char(related='product_id.categ_id.name')
     product_code = fields.Char(related='product_id.default_code')
-    economic_activity_id = fields.Many2one("economic.activity", string="Economic activity",
+    economic_activity_id = fields.Many2one("economic.activity", string="Company Economic activity",
                                            store=True,
                                            context={'active_test': False},
                                            default=False)
@@ -167,6 +167,7 @@ class AccountInvoiceElectronic(models.Model):
                               store=True, index=True, help="The Parnter Tax Identification Number.")
     company_vat = fields.Char(string='Company Tax ID', related="partner_id.vat",
                               store=True, index=True, help="Your Company Tax Identification Number.")
+    rep_string = fields.Text()
 
     def _compute_qr_code(self):
         qr_info = ''
@@ -588,7 +589,7 @@ class AccountInvoiceElectronic(models.Model):
                                                  body=msg_body)
                                 continue
 
-                            xml = api_facturae.gen_xml_mr_43(
+                            xml = api_facturae.gen_xml_mr_4_4(
                                 inv.number_electronic, inv.partner_id.vat,
                                 inv.date_issuance,
                                 tipo, detalle_mensaje, inv.company_id.vat,
@@ -1293,7 +1294,8 @@ class AccountInvoiceElectronic(models.Model):
                     total_impuestos = round(total_impuestos, 5)
                     total_descuento = round(total_descuento, 5)
                     # ESTE METODO GENERA EL XML DIRECTAMENTE DESDE PYTHON
-                    xml_string_builder = api_facturae.gen_xml_v43(
+                    # xml_string_builder = api_facturae.gen_xml_v43(
+                    xml_string_builder = api_facturae.gen_xml_v4_4(
                         inv, sale_conditions, total_servicio_gravado,
                         total_servicio_exento, total_servicio_exonerado,
                         total_mercaderia_gravado, total_mercaderia_exento,
@@ -1308,7 +1310,19 @@ class AccountInvoiceElectronic(models.Model):
                         inv.company_id.signature,
                         inv.company_id.frm_pin,
                         xml_to_sign)
-
+                    
+                    try:
+                        rep_xml_builder = api_facturae.generate_rep_xml(inv, 'REP', sale_conditions, lines, currency_rate,
+                                                                        total_servicio_gravado, total_mercaderia_gravado, 
+                                                                        total_servicio_exento, total_mercaderia_exento,
+                                                                        total_servicio_exonerado, total_mercaderia_exonerado, base_subtotal,
+                                                                        total_impuestos, total_iva_devuelto, total_otros_cargos)
+                        inv.rep_string = rep_xml_builder
+                    except Exception as error:
+                        inv.message_post(subject=_('Error'),
+                                        body=_('Warning!.\n Error in generate_rep_xml: ') + str(error))
+                        continue
+                    
                     # inv.xml_comprobante = base64.encodestring(xml_firmado)
                     inv.fname_xml_comprobante = inv.tipo_documento + '_' + inv.number_electronic + '.xml'
                     self.env['ir.attachment'].sudo().create({'name': inv.fname_xml_comprobante,
