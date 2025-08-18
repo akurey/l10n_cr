@@ -3,7 +3,7 @@
 
     <record id="cr_electronic_invoice.AutEx_1" model="aut.ex">
         <field name="code">01</field>
-        <field name="name">Compras autorizadas por la Dirección General de Tributación </field>
+        <field name="name">Compras autorizadas por la Dirección General de Tributación</field>
         <field name="active" eval="True"/>
     </record>
 
@@ -39,7 +39,7 @@
 
     <record id="cr_electronic_invoice.AutEx_7" model="aut.ex">
         <field name="code">07</field>
-        <field name="name">“Transitorio XVII (Recolección, Clasificación, almacenamiento de Reciclaje y reutilizable)</field>
+        <field name="name">Transitorio XVII (Recolección, Clasificación, almacenamiento de Reciclaje y reutilizable)</field>
         <field name="active" eval="True"/>
     </record>
 
@@ -55,13 +55,13 @@
         <field name="active" eval="True"/>
     </record>
 
-    <record id="cr_electronic_invoice.AutEx10" model="aut.ex">
+    <record id="cr_electronic_invoice.AutEx_10" model="aut.ex">
         <field name="code">10</field>
         <field name="name">Órgano de las corporaciones municipales</field>
         <field name="active" eval="True"/>
     </record>
 
-    <record id="cr_electronic_invoice.AutEx11" model="aut.ex">
+    <record id="cr_electronic_invoice.AutEx_11" model="aut.ex">
         <field name="code">11</field>
         <field name="name">Exenciones Dirección General de Hacienda Autorización de Impuesto Local Concreta</field>
         <field name="active" eval="True"/>

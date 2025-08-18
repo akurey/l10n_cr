@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="cr_electronic_invoice.IssuerEx_1" model="issuer.ex">
+        <field name="code">01</field>
+        <field name="name">Ministerio de Hacienda</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_2" model="issuer.ex">
+        <field name="code">02</field>
+        <field name="name">Ministerio de Relaciones Exteriores y Culto</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_3" model="issuer.ex">
+        <field name="code">03</field>
+        <field name="name">Ministerio de Agricultura y Ganadería</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_4" model="issuer.ex">
+        <field name="code">04</field>
+        <field name="name">Ministerio de Economía, Industria y Comercio </field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_5" model="issuer.ex">
+        <field name="code">05</field>
+        <field name="name">Cruz Roja Costarricense</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_6" model="issuer.ex">
+        <field name="code">06</field>
+        <field name="name">Benemérito Cuerpo de Bomberos de Costa Rica</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_7" model="issuer.ex">
+        <field name="code">07</field>
+        <field name="name">Asociación Obras del Espíritu Santo</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_8" model="issuer.ex">
+        <field name="code">08</field>
+        <field name="name">Federación Cruzada Nacional de protección al Anciano (Fecrunapa)</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_9" model="issuer.ex">
+        <field name="code">09</field>
+        <field name="name">Escuela de Agricultura de la Región Húmeda (EARTH)</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_10" model="issuer.ex">
+        <field name="code">10</field>
+        <field name="name">Instituto Centroamericano de Administración de Empresas (INCAE)</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_11" model="issuer.ex">
+        <field name="code">11</field>
+        <field name="name">Junta de Protección Social (JPS)</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_12" model="issuer.ex">
+        <field name="code">12</field>
+        <field name="name">Autoridad Reguladora de los Servicios Públicos (Aresep)</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cr_electronic_invoice.IssuerEx_99" model="issuer.ex">
+        <field name="code">99</field>
+        <field name="name">Otros</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

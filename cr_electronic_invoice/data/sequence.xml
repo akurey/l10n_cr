@@ -42,4 +42,11 @@
         <field name="padding">10</field>
     </record>
 
+    <record id="seq_electronic_recibo_pago" model="ir.sequence">
+        <field name="name">Secuencia de Recibo Electrónico de Pago</field>
+        <field name="code">sequence.REP</field>
+        <field name="prefix"></field>
+        <field name="padding">10</field>
+    </record>
+
 </odoo>
