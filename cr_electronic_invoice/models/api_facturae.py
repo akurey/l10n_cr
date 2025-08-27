@@ -389,7 +389,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('<Clave>' + inv.number_electronic + '</Clave>')
     sb.append('<ProveedorSistemas>' + issuing_company.vat + '</ProveedorSistemas>')
     sb.append('<CodigoActividadEmisor>' + inv.company_id.activity_id.code + '</CodigoActividadEmisor>')
-    if inv.tipo_documento not in ['FEE', 'TE']:
+    if inv.tipo_documento not in ['FEE', 'TE'] and inv.partner_id.activity_id.code:
         sb.append('<CodigoActividadReceptor>' + inv.partner_id.activity_id.code + '</CodigoActividadReceptor>')
     sb.append('<NumeroConsecutivo>' + inv.number_electronic[21:41] + '</NumeroConsecutivo>')
     sb.append('<FechaEmision>' + inv.date_issuance + '</FechaEmision>')
