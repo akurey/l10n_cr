@@ -388,9 +388,14 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     sb.append('<Clave>' + inv.number_electronic + '</Clave>')
     sb.append('<ProveedorSistemas>' + issuing_company.vat + '</ProveedorSistemas>')
-    sb.append('<CodigoActividadEmisor>' + inv.company_id.activity_id.code + '</CodigoActividadEmisor>')
+    if inv.tipo_documento != 'FEC':
+        sb.append('<CodigoActividadEmisor>' + inv.company_id.activity_id.code + '</CodigoActividadEmisor>')
+    elif inv.tipo_documento == 'FEC' and issuing_company.activity_id.code:
+        sb.append('<CodigoActividadEmisor>' + inv.partner_id.activity_id.code + '</CodigoActividadEmisor>')
     if inv.tipo_documento not in ['FEE', 'TE'] and inv.partner_id.activity_id.code:
         sb.append('<CodigoActividadReceptor>' + inv.partner_id.activity_id.code + '</CodigoActividadReceptor>')
+    elif inv.tipo_documento == 'FEC':
+        sb.append('<CodigoActividadReceptor>' + receiver_company.activity_id.code + '</CodigoActividadReceptor>')
     sb.append('<NumeroConsecutivo>' + inv.number_electronic[21:41] + '</NumeroConsecutivo>')
     sb.append('<FechaEmision>' + inv.date_issuance + '</FechaEmision>')
     sb.append('<Emisor>')
@@ -401,15 +406,17 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('</Identificacion>')
     if issuing_company.commercial_name:
         sb.append('<NombreComercial>' + escape(str(issuing_company.commercial_name)) + '</NombreComercial>')
-    sb.append('<Ubicacion>')
-    sb.append('<Provincia>' + issuing_company.state_id.code + '</Provincia>')
-    sb.append('<Canton>' + issuing_company.county_id.code + '</Canton>')
-    sb.append('<Distrito>' + issuing_company.district_id.code + '</Distrito>')
-
-    if issuing_company.neighborhood_id:
-        sb.append('<Barrio>' + str(issuing_company.neighborhood_id.name) + '</Barrio>')
-    sb.append('<OtrasSenas>' + escape(str(issuing_company.street or 'No Aplica')) + '</OtrasSenas>')
-    sb.append('</Ubicacion>')
+    if inv.tipo_documento != 'FEC':
+        sb.append('<Ubicacion>')
+        sb.append('<Provincia>' + issuing_company.state_id.code + '</Provincia>')
+        sb.append('<Canton>' + issuing_company.county_id.code + '</Canton>')
+        sb.append('<Distrito>' + issuing_company.district_id.code + '</Distrito>')
+        if issuing_company.neighborhood_id:
+            sb.append('<Barrio>' + str(issuing_company.neighborhood_id.name) + '</Barrio>')
+        sb.append('<OtrasSenas>' + escape(str(issuing_company.street or 'No Aplica')) + '</OtrasSenas>')
+        sb.append('</Ubicacion>')
+    else:
+         sb.append('<OtrasSenasExtranjero>' + escape(str(issuing_company.street or 'No Aplica')) + '</OtrasSenasExtranjero>')
 
     if issuing_company.phone:
         phone = phonenumbers.parse(issuing_company.phone, (issuing_company.country_id.code or 'CR'))
@@ -481,10 +488,10 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     sb.append('<CondicionVenta>' + sale_conditions + '</CondicionVenta>')
     sb.append('<PlazoCredito>' + plazo_credito + '</PlazoCredito>')
-
+    tax_summary = {}
     if lines:
         sb.append('<DetalleServicio>')
-        tax_summary = {}
+        
         
         for (k, v) in lines.items():
             numero_linea = numero_linea + 1
@@ -678,7 +685,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     sb.append('</ResumenFactura>')
 
-    if tipo_documento_referencia and numero_documento_referencia and fecha_emision_referencia:
+    if tipo_documento_referencia:
         sb.append('<InformacionReferencia>')
         sb.append('<TipoDocIR>' + str(tipo_documento_referencia) + '</TipoDocIR>')
         sb.append('<Numero>' + str(numero_documento_referencia) + '</Numero>')
