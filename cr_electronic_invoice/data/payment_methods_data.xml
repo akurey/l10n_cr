@@ -22,13 +22,25 @@
 
     <record id="cr_electronic_invoice.PaymentMethods_4" model="payment.methods">
         <field name="sequence">04</field>
-        <field name="name">Transferencia – depósito</field>
+        <field name="name">Transferencia – depósito bancario</field>
         <field name="active">true</field>
     </record>
 
     <record id="cr_electronic_invoice.PaymentMethods_5" model="payment.methods">
         <field name="sequence">05</field>
-        <field name="name">Recaudado por tercero</field>
+        <field name="name">Recaudado por terceros</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.PaymentMethods_6" model="payment.methods">
+        <field name="sequence">06</field>
+        <field name="name">SINPE MOVIL</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.PaymentMethods_7" model="payment.methods">
+        <field name="sequence">07</field>
+        <field name="name">Plataforma Digital</field>
         <field name="active">true</field>
     </record>
 

@@ -33,7 +33,7 @@ class InvoiceLineElectronic(models.Model):
     tariff_head = fields.Char(string="Tariff item for export invoice")
     categ_name = fields.Char(related='product_id.categ_id.name')
     product_code = fields.Char(related='product_id.default_code')
-    economic_activity_id = fields.Many2one("economic.activity", string="Company Economic activity",
+    economic_activity_id = fields.Many2one("economic.activity", string="Economic activity",
                                            store=True,
                                            context={'active_test': False},
                                            default=False)
@@ -163,6 +163,7 @@ class AccountInvoiceElectronic(models.Model):
     ]
 
     qr_image = fields.Binary("QR Code", compute='_compute_qr_code')
+    qr_image_attachment = fields.Char("QR String")
     partner_vat = fields.Char(string='Partner Tax ID', related="partner_id.vat",
                               store=True, index=True, help="The Parnter Tax Identification Number.")
     company_vat = fields.Char(string='Company Tax ID', related="partner_id.vat",
@@ -193,7 +194,19 @@ class AccountInvoiceElectronic(models.Model):
                             key = str(key).replace(_('Partner'), _('Vendor'))
                     qr_info += f"{key} : {value} <br/>"
                 qr_info = html2plaintext(qr_info)
-        self.qr_image = GenerateQrCode.generate_qr_code(qr_info)
+
+        qr_bytes = GenerateQrCode.generate_qr_code(qr_info)
+        attachment = self.env['ir.attachment'].create({
+            'name': f"qr_{self.id}.png",
+            'type': 'binary',
+            'datas': qr_bytes,
+            'res_model': False,
+            'res_id': False,
+            'mimetype': 'image/png',
+        })
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        self.qr_image_attachment = f'{base_url}/web/image/{attachment.id}'
+        self.qr_image = qr_bytes
 
     @api.onchange('partner_id', 'company_id')
     def _compute_economic_activities(self):
@@ -1028,7 +1041,13 @@ class AccountInvoiceElectronic(models.Model):
                         tipo_documento_referencia = inv.reference_document_id.code
                         codigo_referencia = inv.reference_code_id.code
                         razon_referencia = inv.reference_code_id.name
-
+                    if not inv.invoice_id and inv.reference_code_id:
+                        tipo_documento_referencia = inv.reference_document_id.code
+                        fecha_emision_referencia = inv.invoice_date.strftime("%Y-%m-%d") + "T12:00:00-06:00"
+                        numero_documento_referencia = inv.ref
+                        codigo_referencia = inv.reference_code_id.code
+                        razon_referencia = f"{inv.reference_code_id.name} - {inv.reference_document_id.name}"
+                        
                     if inv.invoice_payment_term_id:
                         sale_conditions = inv.invoice_payment_term_id.sale_conditions_id and \
                             inv.invoice_payment_term_id.sale_conditions_id.code or '01'
@@ -1311,17 +1330,18 @@ class AccountInvoiceElectronic(models.Model):
                         inv.company_id.frm_pin,
                         xml_to_sign)
                     
-                    try:
-                        rep_xml_builder = api_facturae.generate_rep_xml(inv, 'REP', sale_conditions, lines, currency_rate,
-                                                                        total_servicio_gravado, total_mercaderia_gravado, 
-                                                                        total_servicio_exento, total_mercaderia_exento,
-                                                                        total_servicio_exonerado, total_mercaderia_exonerado, base_subtotal,
-                                                                        total_impuestos, total_iva_devuelto, total_otros_cargos)
-                        inv.rep_string = rep_xml_builder
-                    except Exception as error:
-                        inv.message_post(subject=_('Error'),
-                                        body=_('Warning!.\n Error in generate_rep_xml: ') + str(error))
-                        continue
+                    if  inv.invoice_payment_term_id.sale_conditions_id.code == '11': # Solo se genera si aplica "Pago de venta a crédito en IVA hasta 90 días"
+                        try:
+                            rep_xml_builder = api_facturae.generate_rep_xml(inv, 'REP', sale_conditions, lines, currency_rate,
+                                                                            total_servicio_gravado, total_mercaderia_gravado, 
+                                                                            total_servicio_exento, total_mercaderia_exento,
+                                                                            total_servicio_exonerado, total_mercaderia_exonerado, base_subtotal,
+                                                                            total_impuestos, total_iva_devuelto, total_otros_cargos)
+                            inv.rep_string = rep_xml_builder
+                        except Exception as error:
+                            inv.message_post(subject=_('Error'),
+                                            body=_('Warning!.\n Error in generate_rep_xml: ') + str(error))
+                            continue
                     
                     # inv.xml_comprobante = base64.encodestring(xml_firmado)
                     inv.fname_xml_comprobante = inv.tipo_documento + '_' + inv.number_electronic + '.xml'
@@ -1412,6 +1432,12 @@ class AccountInvoiceElectronic(models.Model):
         # Digital Supplier Invoice
         elif self.move_type == 'in_invoice' and self.partner_id.country_id and \
             self.partner_id.country_id.code == 'CR' and self.partner_id.identification_id and \
+                self.partner_id.vat and self.xml_supplier_approval is False and self.tipo_documento != 'CONT':
+            tipo_documento = 'FEC'
+            sequence = self.company_id.FEC_sequence_id.next_by_id()
+            
+        elif self.move_type == 'in_invoice' and self.partner_id.country_id and \
+            self.partner_id.country_id.code != 'CR' and self.partner_id.identification_id and \
                 self.partner_id.vat and self.xml_supplier_approval is False and self.tipo_documento != 'CONT':
             tipo_documento = 'FEC'
             sequence = self.company_id.FEC_sequence_id.next_by_id()

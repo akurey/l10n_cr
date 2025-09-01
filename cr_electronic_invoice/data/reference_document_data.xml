@@ -82,13 +82,31 @@
 
     <record id="cr_electronic_invoice.ReferenceDocument_14" model="reference.document">
         <field name="code">14</field>
-        <field name="name">Comprobante aportado por contribuyente del Regimen Simplificado</field>
+        <field name="name">Comprobante aportado por contribuyente del Regimen Especial</field>
         <field name="active">true</field>
     </record>
 
     <record id="cr_electronic_invoice.ReferenceDocument_15" model="reference.document">
         <field name="code">15</field>
         <field name="name">Sustituye una Factura Electronica de Compra</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceDocument_16" model="reference.document">
+        <field name="code">16</field>
+        <field name="name">Comprobante de Proveedor No Domiciliado</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceDocument_17" model="reference.document">
+        <field name="code">17</field>
+        <field name="name">Nota de Crédito a Factura Electrónica de Compra</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceDocument_18" model="reference.document">
+        <field name="code">18</field>
+        <field name="name">Nota de Débito a Factura Electrónica de Compra</field>
         <field name="active">true</field>
     </record>
 
