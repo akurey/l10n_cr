@@ -163,6 +163,7 @@ class AccountInvoiceElectronic(models.Model):
     ]
 
     qr_image = fields.Binary("QR Code", compute='_compute_qr_code')
+    qr_image_attachment = fields.Char("QR String")
     partner_vat = fields.Char(string='Partner Tax ID', related="partner_id.vat",
                               store=True, index=True, help="The Parnter Tax Identification Number.")
     company_vat = fields.Char(string='Company Tax ID', related="partner_id.vat",
@@ -193,7 +194,19 @@ class AccountInvoiceElectronic(models.Model):
                             key = str(key).replace(_('Partner'), _('Vendor'))
                     qr_info += f"{key} : {value} <br/>"
                 qr_info = html2plaintext(qr_info)
-        self.qr_image = GenerateQrCode.generate_qr_code(qr_info)
+
+        qr_bytes = GenerateQrCode.generate_qr_code(qr_info)
+        attachment = self.env['ir.attachment'].create({
+            'name': f"qr_{self.id}.png",
+            'type': 'binary',
+            'datas': qr_bytes,
+            'res_model': False,
+            'res_id': False,
+            'mimetype': 'image/png',
+        })
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        self.qr_image_attachment = f'{base_url}/web/image/{attachment.id}'
+        self.qr_image = qr_bytes
 
     @api.onchange('partner_id', 'company_id')
     def _compute_economic_activities(self):
