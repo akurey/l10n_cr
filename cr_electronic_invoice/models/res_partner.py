@@ -22,6 +22,7 @@ class PartnerElectronic(models.Model):
     exoneration_number = fields.Char()
     percentage_exoneration = fields.Float(string="Percentage of VAT Exoneration", required=False)
     institution_name = fields.Char(string="Exoneration Issuer")
+    exoneration_issuer = fields.Many2one("issuer.ex", string="Exoneration Issuer")
     date_issue = fields.Date(string="Issue Date")
     date_expiration = fields.Date(string="Expiration Date")
     date_notification = fields.Date(string="Last notification date")
@@ -32,6 +33,8 @@ class PartnerElectronic(models.Model):
                                                string='Economic Activities',
                                                context={'active_test': False})
     export = fields.Boolean(string="It's export", default=False)
+    exoneration_article = fields.Char(string="Exoneration Article", help="Número de artículo que establece la exoneración")
+    exoneration_clause = fields.Char(string="Exoneration Clause", help="Número de inciso que establece la exoneración o autorización")
 
     @api.onchange('phone')
     def _onchange_phone(self):
