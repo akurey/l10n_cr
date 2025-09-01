@@ -33,7 +33,7 @@ class InvoiceLineElectronic(models.Model):
     tariff_head = fields.Char(string="Tariff item for export invoice")
     categ_name = fields.Char(related='product_id.categ_id.name')
     product_code = fields.Char(related='product_id.default_code')
-    economic_activity_id = fields.Many2one("economic.activity", string="Company Economic activity",
+    economic_activity_id = fields.Many2one("economic.activity", string="Economic activity",
                                            store=True,
                                            context={'active_test': False},
                                            default=False)
