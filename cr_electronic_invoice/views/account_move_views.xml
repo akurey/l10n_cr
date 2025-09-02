@@ -93,7 +93,7 @@
                                 <field name="xml_comprobante" filename="fname_xml_comprobante"/>
                                 <field name="fname_xml_respuesta_tributacion" invisible="1" readonly="1"/>
                                 <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"/>
-                                <field name="state_tributacion" readonly="1"/>
+                                <field name="state_tributacion" readonly="0"/>
                                 <field name="electronic_invoice_return_message" readonly="1"/>
                             </group>
                         </group>
