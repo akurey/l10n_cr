@@ -377,7 +377,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     if inv.tipo_documento == 'FEC':
         issuing_company = inv.partner_id
-        receiver_company = inv.company_id
+        receiver_company = inv.company_id.partner_id
     else:
         issuing_company = inv.company_id
         receiver_company = inv.partner_id
@@ -662,7 +662,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('<TotalDescuentos>' + str(round(total_descuento, 5)) + '</TotalDescuentos>')
     sb.append('<TotalVentaNeta>' + str(round(base_total, 5)) + '</TotalVentaNeta>')
     
-    if tax_summary and not inv.partner_id.has_exoneration:
+    if tax_summary and ((inv.tipo_documento != 'FEC' and not inv.partner_id.has_exoneration) or (inv.tipo_documento == 'FEC' and not receiver_company.has_exoneration)):
         sb.append('<TotalDesgloseImpuesto>')
         for tax_code, tax in tax_summary.items():
             sb.append('<Codigo>' + tax['Codigo'] + '</Codigo>')
