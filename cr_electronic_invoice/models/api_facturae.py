@@ -14,7 +14,7 @@ import random
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-from odoo import _
+from odoo import _, tools
 from odoo.exceptions import UserError
 from xml.sax.saxutils import escape
 from ..xades.context2 import XAdESContext2, PolicyId2, create_xades_epes_signature
@@ -695,7 +695,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         sb.append('</InformacionReferencia>')
     if invoice_comments:
         sb.append('<Otros>')
-        sb.append('<OtroTexto>' + str(invoice_comments) + '</OtroTexto>')
+        sb.append('<OtroTexto>' + tools.html2plaintext(str(invoice_comments))[0:500] + '</OtroTexto>')
         sb.append('</Otros>')
 
     sb.append('</' + fe_enums.tagName[inv.tipo_documento] + '>')
