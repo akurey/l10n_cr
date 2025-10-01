@@ -695,7 +695,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         sb.append('</InformacionReferencia>')
     if invoice_comments:
         sb.append('<Otros>')
-        sb.append('<OtroTexto>' + str(invoice_comments)[0:500] + '</OtroTexto>')
+        sb.append('<OtroTexto>' + str(invoice_comments) + '</OtroTexto>')
         sb.append('</Otros>')
 
     sb.append('</' + fe_enums.tagName[inv.tipo_documento] + '>')
