@@ -104,15 +104,28 @@ class PartnerElectronic(models.Model):
             if json_response["status"] == 200:
                 activities = json_response["activities"]
                 # Activity Codes
+                economic_activities = self.env['economic.activity']
                 a_codes = list([])
                 for activity in activities:
                     if activity["estado"] == "A":
                         a_codes.append(activity["codigo"])
-                economic_activities = self.env['economic.activity'].with_context(active_test=False).search([('code',
-                                                                                                             'in',
-                                                                                                             a_codes)])
+                        economic_activity = self.env['economic.activity'].with_context(active_test=False).search([('code', '=', activity["codigo"])], limit=1)
+                        if not economic_activity:
+                            economic_activity = self.env['economic.activity'].create({
+                                'name': activity["descripcion"],
+                                'code': activity["codigo"],
+                                'description': activity["descripcion"],
+                                'sale_type': 'services' if activity["tipo"] == "S" else 'goods',
+                            })
+                        economic_activities += economic_activity
 
-                self.economic_activities_ids = economic_activities
+                
+                
+                if economic_activities:
+                    self.economic_activities_ids = economic_activities
+                else:
+                    self.economic_activities_ids = False
+
                 self.name = json_response["name"]
 
                 if len(a_codes) >= 1:
