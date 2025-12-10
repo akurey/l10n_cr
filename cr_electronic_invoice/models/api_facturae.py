@@ -444,7 +444,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         else:
             id_code = receiver_company.identification_id.code
 
-        if receiver_company.name:
+        if receiver_company.name and inv.tipo_documento != 'FEE':
             sb.append('<Receptor>')
             sb.append('<Nombre>' + escape(str(receiver_company.name[:99])) + '</Nombre>')
 
