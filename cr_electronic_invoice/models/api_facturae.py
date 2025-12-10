@@ -14,7 +14,7 @@ import random
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
-from odoo import _
+from odoo import _, tools
 from odoo.exceptions import UserError
 from xml.sax.saxutils import escape
 from ..xades.context2 import XAdESContext2, PolicyId2, create_xades_epes_signature
@@ -451,12 +451,10 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         if receiver_company.name:
             sb.append('<Receptor>')
             sb.append('<Nombre>' + escape(str(receiver_company.name[:99])) + '</Nombre>')
-
-            if not (inv.tipo_documento == 'FEE' or id_code == '05'):
-                sb.append('<Identificacion>')
-                sb.append('<Tipo>' + id_code + '</Tipo>')
-                sb.append('<Numero>' + vat + '</Numero>')
-                sb.append('</Identificacion>')
+            sb.append('<Identificacion>')
+            sb.append('<Tipo>' + id_code + '</Tipo>')
+            sb.append('<Numero>' + vat + '</Numero>')
+            sb.append('</Identificacion>')
 
             if inv.tipo_documento != 'FEE':
                 if receiver_company.state_id and \
@@ -699,7 +697,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         sb.append('</InformacionReferencia>')
     if invoice_comments:
         sb.append('<Otros>')
-        sb.append('<OtroTexto>' + str(invoice_comments)[0:500] + '</OtroTexto>')
+        sb.append('<OtroTexto>' + tools.html2plaintext(str(invoice_comments))[0:500] + '</OtroTexto>')
         sb.append('</Otros>')
 
     sb.append('</' + fe_enums.tagName[inv.tipo_documento] + '>')
