@@ -20,3 +20,4 @@ from . import economic_activity
 from . import qr_generator
 from . import invoice_qr_fields
 from . import issuer_ex
+from . import discount_code
