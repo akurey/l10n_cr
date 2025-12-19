@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="discount_code_1" model="discount.code">
+        <field name="code">01</field>
+        <field name="sequence">1</field>
+        <field name="name">Descuento por regalía</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_2" model="discount.code">
+        <field name="code">02</field>
+        <field name="sequence">2</field>
+        <field name="name">Descuento por Regalía IVA Cobrado al Cliente</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_3" model="discount.code">
+        <field name="code">03</field>
+        <field name="sequence">3</field>
+        <field name="name">Descuento por Bonificación</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_4" model="discount.code">
+        <field name="code">04</field>
+        <field name="sequence">4</field>
+        <field name="name">Descuento por volumen</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_5" model="discount.code">
+        <field name="code">05</field>
+        <field name="sequence">5</field>
+        <field name="name">Descuento por Temporada (estacional)</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_6" model="discount.code">
+        <field name="code">06</field>
+        <field name="sequence">6</field>
+        <field name="name">Descuento promociona</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_7" model="discount.code">
+        <field name="code">07</field>
+        <field name="sequence">7</field>
+        <field name="name">Descuento Comercial</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_8" model="discount.code">
+        <field name="code">08</field>
+        <field name="sequence">8</field>
+        <field name="name">Descuento por frecuencia</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_9" model="discount.code">
+        <field name="code">09</field>
+        <field name="sequence">9</field>
+        <field name="name">Descuento sostenido</field>
+        <field name="active">true</field>
+    </record>
+    <record id="discount_code_99" model="discount.code">
+        <field name="code">99</field>
+        <field name="sequence">99</field>
+        <field name="name">Otros descuentos</field>
+        <field name="active">true</field>
+    </record>
+</odoo>

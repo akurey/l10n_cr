@@ -11,6 +11,7 @@
                         <field name="code" />
                         <field name="name" />
                         <field name="description" />
+                        <field name="ciiu3" />
                         <field name="active" widget="boolean_button" />
                         <field name="sale_type" />
                     </group>
@@ -23,10 +24,11 @@
         <field name="name">economic.activity.tree</field>
         <field name="model">economic.activity</field>
         <field name="arch" type="xml">
-            <tree string="Economic activity" editable="bottom">
+            <tree string="Economic activity">
                 <field name="code" />
                 <field name="name" />
                 <field name="description" />
+                <field name="ciiu3" />
                 <field name="active" />
                 <field name="sale_type" />
             </tree>
@@ -38,7 +40,7 @@
         <field name="model">economic.activity</field>
         <field name="arch" type="xml">
             <search string="Search Activity">
-                <field name="name" string="Activity" filter_domain="['|', ('name','ilike',self), ('code','=',self)]" />
+                <field name="name" string="Activity" filter_domain="['|','|', ('name','ilike',self), ('code','=',self), ('ciiu3','=',self)]" />
                 <field name="id" string="ID" filter_domain="[('id','=',self)]" />
                 <separator/>
                 <filter name="Active" string="Active" domain="[('active','=',True)]"/>

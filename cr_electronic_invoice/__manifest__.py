@@ -39,6 +39,7 @@
         'data/sequence.xml',
         'data/res.currency.xml',
         'data/decimal_precision.xml',
+        "data/discount_code_data.xml",
         'data/issuer_ex_data.xml',
         'views/uom_views.xml',
         'views/account_move_views.xml',

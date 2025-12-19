@@ -60,7 +60,10 @@
             </xpath>
 
             <xpath expr="//field[@name='invoice_line_ids']//tree//field[@name='discount']" position="after">
-                <field name="discount_note"/>
+                <field name="discount_note" optional="hide" />
+                <field name="discount_code_id" optional="hide" attrs="{'required': [('discount', '!=', 0)]}"/>
+                <field name="discount_code_code" attrs="{'column_invisible': True}"/>
+                <field name="other_discount_code" attrs="{'invisible': [('discount_code_code', '!=', '99')]}" optional="hide"/>
                 <field name="tariff_head"/>
             </xpath>
 
