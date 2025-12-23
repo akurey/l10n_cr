@@ -38,6 +38,9 @@ class InvoiceLineElectronic(models.Model):
                                            context={'active_test': False},
                                            default=False)
     non_tax_deductible = fields.Boolean(string='Indicates if this invoice is non-tax deductible',)
+    discount_code_id = fields.Many2one('discount.code', string="Discount Codes")
+    other_discount_code = fields.Char(string="Other Discount Code")
+    discount_code_code = fields.Char(related="discount_code_id.code", string="Discount Code")
 
     @api.onchange('product_id')
     def product_changed(self):
@@ -487,7 +490,7 @@ class AccountInvoiceElectronic(models.Model):
         api_facturae.load_xml_data(self, load_lines, account, product, analytic_account)
 
     def action_send_mrs_to_hacienda(self):
-        if self.state_invoice_partner and (not self.state_tributacion or self.state_tributacion == 'error'):
+        if self.state_invoice_partner:
             self.state_tributacion = False
             self.send_mrs_to_hacienda()
         else:
@@ -677,14 +680,10 @@ class AccountInvoiceElectronic(models.Model):
                                                                               inv.consecutive_number_receiver + '.xml'
                                         # file_name used to avoid: E501 line too long
                                         file_name = inv.fname_xml_respuesta_tributacion
-                                        self.env['ir.attachment'].create({'name': file_name,
-                                                                          'type': 'binary',
-                                                                          'datas': response_json.get('respuesta-xml'),
-                                                                          'res_model': self._name,
-                                                                          'res_id': inv.id,
-                                                                          'res_field': 'xml_respuesta_tributacion',
-                                                                          'res_name': file_name,
-                                                                          'mimetype': 'text/xml'})
+                                        inv.write({
+                                            'xml_respuesta_tributacion': response_json.get('respuesta-xml'),
+                                            'fname_xml_respuesta_tributacion': file_name
+                                        })
 
                                         _logger.error(
                                             'E-INV CR - Estado Documento:%s',
@@ -1163,7 +1162,12 @@ class AccountInvoiceElectronic(models.Model):
                             if inv_line.discount and price_unit > 0:
                                 total_descuento += descuento
                                 line["montoDescuento"] = descuento
-                                line["naturalezaDescuento"] = inv_line.discount_note or 'Descuento Comercial'
+                                line["codigoDescuento"] = inv_line.discount_code_id.code or "01"
+                                if inv_line.discount_code_id.code == "99":
+                                    line["codigoDescuentoOTRO"] = inv_line.other_discount_code
+                                    line["naturalezaDescuento"] = inv_line.other_discount_code
+                                line["naturalezaDescuento"] = inv_line.discount_code_id.name or "Descuento Comercial"
+                                line["porcentajeDescuento"] = inv_line.discount or 0.0
 
                             # Se generan los impuestos
                             taxes = dict([])

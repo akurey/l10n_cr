@@ -10,3 +10,4 @@ access_AutEx,aut.ex,model_aut_ex,account.group_account_invoice,1,1,1,0
 access_economic_activity,economic.activity,model_economic_activity,account.group_account_invoice,1,1,1,0
 access_invoice_qr_fields,access.invoice.qr.fields,model_invoice_qr_fields,,1,1,1,1
 access_IssuerEx,issuer.ex,model_issuer_ex,account.group_account_invoice,1,1,1,0
+access_discount_code,access_discount_code,model_discount_code,base.group_user,1,0,0,0

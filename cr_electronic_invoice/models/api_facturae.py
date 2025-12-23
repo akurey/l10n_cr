@@ -514,12 +514,15 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
             sb.append('<Detalle>' + str(v['detalle']) + '</Detalle>')
             sb.append('<PrecioUnitario>' + str(v['precioUnitario']) + '</PrecioUnitario>')
             sb.append('<MontoTotal>' + str(v['montoTotal']) + '</MontoTotal>')
-            if v.get('montoDescuento'):
-                sb.append('<Descuento>')
-                sb.append('<MontoDescuento>' + str(v['montoDescuento']) + '</MontoDescuento>')
-                if v.get('naturalezaDescuento'):
-                    sb.append('<NaturalezaDescuento>' + str(v['naturalezaDescuento']) + '</NaturalezaDescuento>')
-                sb.append('</Descuento>')
+            if v.get("montoDescuento"):
+                sb.append("<Descuento>")
+                sb.append("<MontoDescuento>" + str(v["montoDescuento"]) + "</MontoDescuento>")
+                sb.append("<CodigoDescuento" +">" + str(v["codigoDescuento"]) + "</CodigoDescuento>")
+                if v.get("codigoDescuento") == "99":
+                    sb.append("<CodigoDescuentoOTRO>" + str(v["codigoDescuentoOTRO"]) + "</CodigoDescuentoOTRO>")
+                if v.get("naturalezaDescuento"):
+                    sb.append("<NaturalezaDescuento>" + str(v["naturalezaDescuento"]) + "</NaturalezaDescuento>")
+                sb.append("</Descuento>")
 
             sb.append('<SubTotal>' + str(v['subtotal']) + '</SubTotal>')
 
