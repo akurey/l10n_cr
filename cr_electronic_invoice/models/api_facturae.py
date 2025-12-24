@@ -271,9 +271,9 @@ def gen_xml_mr_4_4(clave, cedula_emisor, fecha_emision, id_mensaje,
 
     # '''Obtenemos el número de identificación del Emisor y lo validamos númericamente'''
     mr_cedula_emisor = re.sub('[^0-9]', '', cedula_emisor)
-    if len(mr_cedula_emisor) != 12:
-        mr_cedula_emisor = str(mr_cedula_emisor).zfill(12)
-    elif mr_cedula_emisor is None:
+    # if len(mr_cedula_emisor) != 12:
+    #     mr_cedula_emisor = str(mr_cedula_emisor).zfill(12)
+    if mr_cedula_emisor is None:
         raise UserError(_('La cédula del Emisor en el MR es inválida.'))
 
     mr_fecha_emision = fecha_emision
@@ -288,9 +288,9 @@ def gen_xml_mr_4_4(clave, cedula_emisor, fecha_emision, id_mensaje,
         raise UserError(_('No se ha proporcionado un ID válido para el MR.'))
 
     mr_cedula_receptor = re.sub('[^0-9]', '', cedula_receptor)
-    if len(mr_cedula_receptor) != 12:
-        mr_cedula_receptor = str(mr_cedula_receptor).zfill(12)
-    elif mr_cedula_receptor is None:
+    # if len(mr_cedula_receptor) != 12:
+    #     mr_cedula_receptor = str(mr_cedula_receptor).zfill(12)
+    if mr_cedula_receptor is None:
         raise UserError(_('No se ha proporcionado una cédula de receptor válida para el MR.'))
 
     # '''Verificamos si el consecutivo indicado para el mensaje receptor corresponde a numeros'''
