@@ -82,7 +82,7 @@
 
     <record id="cr_electronic_invoice.ReferenceDocument_14" model="reference.document">
         <field name="code">14</field>
-        <field name="name">Comprobante aportado por contribuyente del Regimen Especial</field>
+        <field name="name">Comprobante aportado por contribuyente del Regimen Simplificado</field>
         <field name="active">true</field>
     </record>
 
