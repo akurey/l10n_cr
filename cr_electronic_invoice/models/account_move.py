@@ -11,6 +11,7 @@ from odoo.tools.misc import get_lang
 from odoo.http import request
 from .qr_generator import GenerateQrCode
 from odoo.tools import html2plaintext
+from num2words import num2words
 
 from . import api_facturae
 from .. import extensions
@@ -174,42 +175,45 @@ class AccountInvoiceElectronic(models.Model):
     rep_string = fields.Text()
 
     def _compute_qr_code(self):
-        qr_info = ''
-        if self.env.user.company_id.invoice_qr_type != 'by_info':
-            qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
-            qr_info += self.get_portal_url()
-        else:
-            if self.env.user.company_id.invoice_field_ids:
-                # F841 local variable 'result' is assigned to but never used
-                # result = self.search_read([('id', 'in', self.ids)],
-                # self.env.user.company_id.invoice_field_ids.mapped('field_id.name'))
-                dict_result = {}
-                for ffild in self.env.user.company_id.invoice_field_ids.mapped('field_id'):
-                    if ffild.ttype == 'many2one':
-                        dict_result[ffild.field_description] = self[ffild.name].display_name
-                    else:
-                        dict_result[ffild.field_description] = self[ffild.name]
-                for key, value in dict_result.items():
-                    if str(key).__contains__('Partner') or str(key).__contains__(_('Partner')):
-                        if self.move_type in ['out_invoice', 'out_refund']:
-                            key = str(key).replace(_('Partner'), _('Customer'))
-                        elif self.move_type in ['in_invoice', 'in_refund']:
-                            key = str(key).replace(_('Partner'), _('Vendor'))
-                    qr_info += f"{key} : {value} <br/>"
-                qr_info = html2plaintext(qr_info)
+        for record in self:
+            qr_info = ''
+            if self.env.user.company_id.invoice_qr_type != 'by_info':
+                qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                qr_info += record.get_portal_url()
+            else:
+                if self.env.user.company_id.invoice_field_ids:
+                    # F841 local variable 'result' is assigned to but never used
+                    # result = self.search_read([('id', 'in', self.ids)],
+                    # self.env.user.company_id.invoice_field_ids.mapped('field_id.name'))
+                    dict_result = {}
+                    for ffild in self.env.user.company_id.invoice_field_ids.mapped('field_id'):
+                        if ffild.ttype == 'many2one':
+                            dict_result[ffild.field_description] = self[ffild.name].display_name
+                        else:
+                            dict_result[ffild.field_description] = self[ffild.name]
+                    for key, value in dict_result.items():
+                        if str(key).__contains__('Partner') or str(key).__contains__(_('Partner')):
+                            if record.move_type in ['out_invoice', 'out_refund']:
+                                key = str(key).replace(_('Partner'), _('Customer'))
+                            elif record.move_type in ['in_invoice', 'in_refund']:
+                                key = str(key).replace(_('Partner'), _('Vendor'))
+                        qr_info += f"{key} : {value} <br/>"
+                    qr_info = html2plaintext(qr_info)
+            record.qr_image = GenerateQrCode.generate_qr_code(qr_info)
 
-        qr_bytes = GenerateQrCode.generate_qr_code(qr_info)
-        attachment = self.env['ir.attachment'].create({
-            'name': f"qr_{self.id}.png",
-            'type': 'binary',
-            'datas': qr_bytes,
-            'res_model': False,
-            'res_id': False,
-            'mimetype': 'image/png',
-        })
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        self.qr_image_attachment = f'{base_url}/web/image/{attachment.id}'
-        self.qr_image = qr_bytes
+
+        # qr_bytes = GenerateQrCode.generate_qr_code(qr_info)
+        # attachment = self.env['ir.attachment'].create({
+        #     'name': f"qr_{self.id}.png",
+        #     'type': 'binary',
+        #     'datas': qr_bytes,
+        #     'res_model': False,
+        #     'res_id': False,
+        #     'mimetype': 'image/png',
+        # })
+        # base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        # self.qr_image_attachment = f'{base_url}/web/image/{attachment.id}'
+        # self.qr_image = qr_bytes
 
     @api.onchange('partner_id', 'company_id')
     def _compute_economic_activities(self):
@@ -1573,6 +1577,16 @@ class AccountInvoiceElectronic(models.Model):
     def update_text_amount(self):
         for inv in self:
             inv.invoice_amount_text = extensions.text_converter.number_to_text_es(inv.amount_total)
+
+    def get_amount_total_words(self, amount, export=False):
+        if export:
+            return num2words(amount, lang='en').title() + " " + self.currency_id.currency_unit_label
+        else:
+            if self.currency_id.currency_unit_label == 'Dollars':
+                currency_unit_label = 'Dólares'
+            else:
+                currency_unit_label = 'Colones'
+            return num2words(amount, lang='es').title() + " " + currency_unit_label
 
     def _reverse_move_vals(self, default_values, cancel=True):
         move_vals = super()._reverse_move_vals(default_values, cancel)
