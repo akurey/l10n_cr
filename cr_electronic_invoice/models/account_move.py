@@ -1579,14 +1579,17 @@ class AccountInvoiceElectronic(models.Model):
             inv.invoice_amount_text = extensions.text_converter.number_to_text_es(inv.amount_total)
 
     def get_amount_total_words(self, amount, export=False):
+        amount_int = ("%.2f" %amount).split(".", 1)[0]
+        amount_cents = ("%.2f" %amount).split(".", 1)[1]
+        amount_int = int(amount_int)
         if export:
-            return num2words(amount, lang='en').title() + " " + self.currency_id.currency_unit_label
+            return num2words(amount_int, lang='en').title() + (" and %s/100 %s" % (amount_cents, self.currency_id.currency_unit_label))
         else:
             if self.currency_id.currency_unit_label == 'Dollars':
                 currency_unit_label = 'Dólares'
             else:
                 currency_unit_label = 'Colones'
-            return num2words(amount, lang='es').title() + " " + currency_unit_label
+            return num2words(amount_int, lang='es').title() + (" y %s/100 %s" % (amount_cents, currency_unit_label))
 
     def _reverse_move_vals(self, default_values, cancel=True):
         move_vals = super()._reverse_move_vals(default_values, cancel)
