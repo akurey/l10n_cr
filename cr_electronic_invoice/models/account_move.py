@@ -1498,7 +1498,7 @@ class AccountInvoiceElectronic(models.Model):
                     missing.append(_("Authorization Type"))
                 if not p.exoneration_issuer:
                     missing.append(_("Exoneration Issuer"))
-                if p.percentage_exoneration is False or p.percentage_exoneration is None:
+                if not p.percentage_exoneration:
                     missing.append(_("Percentage of VAT Exoneration"))
                 if not p.date_issue:
                     missing.append(_("Issue Date"))
