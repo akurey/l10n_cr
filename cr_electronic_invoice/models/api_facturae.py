@@ -112,10 +112,6 @@ def get_clave_hacienda(doc, tipo_documento, consecutivo, sucursal_id, terminal_i
         original_doc = doc
         doc = doc.move_id
         
-    if tipo_documento == 'REP':
-        original_doc = doc
-        doc = doc.move_id
-        
     if tipo_documento != 'disabled':
         tipo_doc = fe_enums.TipoDocumento[tipo_documento]
 
