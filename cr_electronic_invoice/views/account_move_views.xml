@@ -39,7 +39,6 @@
             <field name="partner_id" position="after">
                 <field name="economic_activities_ids" invisible="1" readonly="1" options='{"active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
                 <field name="economic_activity_id" attrs="{'required':[('move_type','in', ('out_invoice', 'out_refund'))],'invisible':[('move_type','not in', ('out_invoice', 'out_refund')), ('tipo_documento','!=', 'FEC')]}" domain="[('id', 'in', economic_activities_ids),]" options='{"no_open": True, "no_create": True, "active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
-                <field name="show_exoneration" invisible="1"/>
                 <field name="number_electronic" readonly="1" attrs="{'invisible':[('move_type','not in', ('out_invoice', 'out_refund','in_invoice', 'in_refund'))]}"/>
                 <field name="sequence" readonly="1" attrs="{'invisible':[('move_type','not in', ('out_invoice', 'out_refund','in_invoice', 'in_refund'))]}"/>
             </field>
@@ -102,21 +101,6 @@
                             </group>
                         </group>
 
-                    </group>
-                </page>
-            </xpath>
-
-            <xpath expr="//page[@name='fe_invoice_data']" position="after">
-                <page name="exoneration" string="Exoneration" attrs="{'invisible': [('show_exoneration', '=', False)]}">
-                    <group col="2">
-                        <field name="exoneration_number" attrs="{'required': [('show_exoneration', '=', True)]}"/>
-                        <field name="type_exoneration" attrs="{'required': [('show_exoneration', '=', True)]}"/>
-                        <field name="exoneration_issuer" attrs="{'required': [('show_exoneration', '=', True)]}"/>
-                        <field name="percentage_exoneration" attrs="{'required': [('show_exoneration', '=', True)]}"/>
-                        <field name="date_issue" attrs="{'required': [('show_exoneration', '=', True)]}"/>
-                        <field name="date_expiration" attrs="{'required': [('show_exoneration', '=', True)]}"/>
-                        <field name="exoneration_article"/>
-                        <field name="exoneration_clause"/>
                     </group>
                 </page>
             </xpath>
