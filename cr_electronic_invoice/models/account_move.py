@@ -18,6 +18,8 @@ from .. import extensions
 
 _logger = logging.getLogger(__name__)
 
+EXONERATION_FISCAL_POSITION = "Exonerado 13%"
+
 
 class InvoiceLineElectronic(models.Model):
     _inherit = "account.move.line"
@@ -157,12 +159,12 @@ class AccountInvoiceElectronic(models.Model):
     economic_activities_ids = fields.Many2many('economic.activity', string='Economic activities',
                                                compute='_compute_economic_activities', context={'active_test': False})
 
-    # Mostrar formulario de exoneración del partner cuando fiscal_position_id = Exonerado 13%
+    # Show exoneration form when fiscal_position_id = Exonerado 13%
     show_exoneration = fields.Boolean(
         string="Show Exoneration",
         compute="_compute_show_exoneration",
     )
-    # Campos relacionados al partner: se muestran y editan en la factura, los datos viven en res.partner
+    # Related fields from partner: displayed and editable on invoice, data lives in res.partner
     exoneration_number = fields.Char(related="partner_id.exoneration_number", string="Exoneration Number", readonly=False)
     type_exoneration = fields.Many2one("aut.ex", related="partner_id.type_exoneration", string="Authorization Type", readonly=False)
     exoneration_issuer = fields.Many2one("issuer.ex", related="partner_id.exoneration_issuer", string="Exoneration Issuer", readonly=False)
@@ -236,7 +238,7 @@ class AccountInvoiceElectronic(models.Model):
             inv.show_exoneration = (
                 inv.move_type in ("out_invoice", "out_refund")
                 and bool(inv.fiscal_position_id)
-                and inv.fiscal_position_id.name == "Exonerado 13%"
+                and inv.fiscal_position_id.name == EXONERATION_FISCAL_POSITION
             )
 
     @api.onchange('partner_id', 'company_id')
@@ -1490,26 +1492,26 @@ class AccountInvoiceElectronic(models.Model):
                     continue
             
             if inv.show_exoneration:
-                p = inv.partner_id
+                partner = inv.partner_id
                 missing = []
-                if not p.exoneration_number:
+                if not partner.exoneration_number:
                     missing.append(_("Exoneration Number"))
-                if not p.type_exoneration:
+                if not partner.type_exoneration:
                     missing.append(_("Authorization Type"))
-                if not p.exoneration_issuer:
+                if not partner.exoneration_issuer:
                     missing.append(_("Exoneration Issuer"))
-                if not p.percentage_exoneration:
+                if not partner.percentage_exoneration:
                     missing.append(_("Percentage of VAT Exoneration"))
-                if not p.date_issue:
+                if not partner.date_issue:
                     missing.append(_("Issue Date"))
-                if not p.date_expiration:
+                if not partner.date_expiration:
                     missing.append(_("Expiration Date"))
                 if missing:
                     raise UserError(
-                        _('With fiscal position "Exonerado 13%%" the following customer fields are required: %s')
-                        % ", ".join(missing)
+                        _('With fiscal position "%s" the following customer fields are required: %s')
+                        % (EXONERATION_FISCAL_POSITION, ", ".join(missing))
                     )
-                if p.date_expiration < datetime.date.today():
+                if partner.date_expiration < datetime.date.today():
                     raise UserError(_("The exoneration of this client has expired"))
             elif inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
                     (inv.partner_id.date_expiration < datetime.date.today()):
