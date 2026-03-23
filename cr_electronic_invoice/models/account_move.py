@@ -233,10 +233,11 @@ class AccountInvoiceElectronic(models.Model):
     @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
     def _compute_show_exoneration(self):
         for inv in self:
+            fiscal_position_name = inv.fiscal_position_id.with_context(lang=False).name
             inv.show_exoneration = (
                 inv.move_type in ("out_invoice", "out_refund")
                 and bool(inv.fiscal_position_id)
-                and inv.fiscal_position_id.name == "Exonerado 13%"
+                and fiscal_position_name == "Exonerado 13%"
             )
 
     @api.onchange('partner_id', 'company_id')
