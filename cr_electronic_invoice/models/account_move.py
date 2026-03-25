@@ -18,6 +18,8 @@ from .. import extensions
 
 _logger = logging.getLogger(__name__)
 
+EXONERATION_FISCAL_POSITION = "Exonerado 13%"
+
 
 class InvoiceLineElectronic(models.Model):
     _inherit = "account.move.line"
@@ -157,6 +159,21 @@ class AccountInvoiceElectronic(models.Model):
     economic_activities_ids = fields.Many2many('economic.activity', string='Economic activities',
                                                compute='_compute_economic_activities', context={'active_test': False})
 
+    # Show exoneration form when fiscal_position_id = Exonerado 13%
+    show_exoneration = fields.Boolean(
+        string="Show Exoneration",
+        compute="_compute_show_exoneration",
+    )
+    # Related fields from partner: displayed and editable on invoice, data lives in res.partner
+    exoneration_number = fields.Char(related="partner_id.exoneration_number", string="Exoneration Number", readonly=False)
+    type_exoneration = fields.Many2one("aut.ex", related="partner_id.type_exoneration", string="Authorization Type", readonly=False)
+    exoneration_issuer = fields.Many2one("issuer.ex", related="partner_id.exoneration_issuer", string="Exoneration Issuer", readonly=False)
+    percentage_exoneration = fields.Float(related="partner_id.percentage_exoneration", string="Percentage of VAT Exoneration", readonly=False)
+    date_issue = fields.Date(related="partner_id.date_issue", string="Issue Date", readonly=False)
+    date_expiration = fields.Date(related="partner_id.date_expiration", string="Expiration Date", readonly=False)
+    exoneration_article = fields.Char(related="partner_id.exoneration_article", string="Exoneration Article", readonly=False)
+    exoneration_clause = fields.Char(related="partner_id.exoneration_clause", string="Exoneration Clause", readonly=False)
+
     not_loaded_invoice = fields.Char(string='Original Invoice Number not loaded', readonly=True)
 
     not_loaded_invoice_date = fields.Date(string='Original Invoice Date not loaded', readonly=True)
@@ -214,6 +231,15 @@ class AccountInvoiceElectronic(models.Model):
         # base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
         # self.qr_image_attachment = f'{base_url}/web/image/{attachment.id}'
         # self.qr_image = qr_bytes
+
+    @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
+    def _compute_show_exoneration(self):
+        for inv in self:
+            inv.show_exoneration = (
+                inv.move_type in ("out_invoice", "out_refund")
+                and bool(inv.fiscal_position_id)
+                and inv.fiscal_position_id.name == EXONERATION_FISCAL_POSITION
+            )
 
     @api.onchange('partner_id', 'company_id')
     def _compute_economic_activities(self):
@@ -1465,9 +1491,31 @@ class AccountInvoiceElectronic(models.Model):
                     super(AccountInvoiceElectronic, inv).action_post()
                     continue
             
-            if inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
-                (inv.partner_id.date_expiration < datetime.date.today()):
-                    raise UserError(_('The exoneration of this client has expired'))
+            if inv.show_exoneration:
+                partner = inv.partner_id
+                missing = []
+                if not partner.exoneration_number:
+                    missing.append(_("Exoneration Number"))
+                if not partner.type_exoneration:
+                    missing.append(_("Authorization Type"))
+                if not partner.exoneration_issuer:
+                    missing.append(_("Exoneration Issuer"))
+                if not partner.percentage_exoneration:
+                    missing.append(_("Percentage of VAT Exoneration"))
+                if not partner.date_issue:
+                    missing.append(_("Issue Date"))
+                if not partner.date_expiration:
+                    missing.append(_("Expiration Date"))
+                if missing:
+                    raise UserError(
+                        _('With fiscal position "%s" the following customer fields are required: %s')
+                        % (EXONERATION_FISCAL_POSITION, ", ".join(missing))
+                    )
+                if partner.date_expiration < datetime.date.today():
+                    raise UserError(_("The exoneration of this client has expired"))
+            elif inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
+                    (inv.partner_id.date_expiration < datetime.date.today()):
+                raise UserError(_('The exoneration of this client has expired'))
 
             currency = inv.currency_id
             sequence = False
