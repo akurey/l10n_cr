@@ -241,15 +241,18 @@ class AccountInvoiceElectronic(models.Model):
                 and inv.fiscal_position_id.name == EXONERATION_FISCAL_POSITION
             )
 
-    @api.onchange('partner_id', 'company_id')
+    @api.depends('partner_id', 'company_id', 'move_type')
     def _compute_economic_activities(self):
         for inv in self:
             if inv.move_type in ('in_invoice', 'in_refund'):
                 if inv.partner_id:
                     inv.economic_activities_ids = inv.partner_id.economic_activities_ids
                     inv.economic_activity_id = inv.partner_id.activity_id
+                else:
+                    inv.economic_activities_ids = self.env['economic.activity'].browse()
+                    inv.economic_activity_id = False
             else:
-                inv.economic_activities_ids = self.env['economic.activity'].search([('active', '=', False)])
+                inv.economic_activities_ids = self.env['economic.activity'].browse()
                 inv.economic_activity_id = inv.company_id.activity_id
 
     @api.onchange('partner_id')
