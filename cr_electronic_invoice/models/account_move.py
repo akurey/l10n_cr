@@ -250,8 +250,9 @@ class AccountInvoiceElectronic(models.Model):
                     inv.economic_activity_id = inv.partner_id.activity_id
                 else:
                     inv.economic_activities_ids = self.env['economic.activity'].browse()
+                    inv.economic_activity_id = False
             else:
-                inv.economic_activities_ids = self.env['economic.activity'].search([('active', '=', False)])
+                inv.economic_activities_ids = self.env['economic.activity'].browse()
                 inv.economic_activity_id = inv.company_id.activity_id
 
     @api.onchange('partner_id')
