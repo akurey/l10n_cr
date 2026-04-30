@@ -11,8 +11,6 @@ import pytz
 import time
 import phonenumbers
 import random
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import pkcs12 as crypto_pkcs12
 
 from odoo import _, tools
@@ -22,10 +20,6 @@ from ..xades.context2 import XAdESContext2, PolicyId2, create_xades_epes_signatu
 
 from lxml import etree
 
-try:
-    from OpenSSL import crypto
-except(ImportError, IOError) as err:
-    logging.info(err)
 
 # PARA VALIDAR JSON DE RESPUESTA
 # from .. import extensions
@@ -1425,11 +1419,8 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
 
 
 def p12_expiration_date(p12file, password):
-    try:
-        _password = password.encode() if isinstance(password, str) else password
-        _, cert, _ = crypto_pkcs12.load_key_and_certificates(
-            base64.b64decode(p12file), _password
-        )
-        return cert.not_valid_after
-    except Exception as crypte:
-        raise
+    _password = password.encode() if isinstance(password, str) else password
+    _, cert, _ = crypto_pkcs12.load_key_and_certificates(
+        base64.b64decode(p12file), _password
+    )
+    return cert.not_valid_after
