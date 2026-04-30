@@ -13,6 +13,7 @@ import phonenumbers
 import random
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.serialization import pkcs12 as crypto_pkcs12
 
 from odoo import _, tools
 from odoo.exceptions import UserError
@@ -42,8 +43,13 @@ def sign_xml(cert, password, xml, policy_id='https://www.hacienda.go.cr/ATV/Comp
 
     root.append(signature)
     ctx = XAdESContext2(policy)
-    certificate = crypto.load_pkcs12(base64.b64decode(cert), password)
-    ctx.load_pkcs12(certificate)
+    _password = password.encode() if isinstance(password, str) else password
+    private_key, certificate, _ = crypto_pkcs12.load_key_and_certificates(
+        base64.b64decode(cert), _password
+    )
+    ctx.x509 = certificate
+    ctx.public_key = certificate.public_key()
+    ctx.private_key = private_key
     ctx.sign(signature)
 
     return etree.tostring(root, encoding='UTF-8', method='xml', xml_declaration=True, with_tail=False)
@@ -1420,12 +1426,10 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
 
 def p12_expiration_date(p12file, password):
     try:
-        pkcs12 = crypto.load_pkcs12(base64.b64decode(p12file), password)
-        data = crypto.dump_certificate(crypto.FILETYPE_PEM, pkcs12.get_certificate())
-        cert = x509.load_pem_x509_certificate(data, default_backend())
+        _password = password.encode() if isinstance(password, str) else password
+        _, cert, _ = crypto_pkcs12.load_key_and_certificates(
+            base64.b64decode(p12file), _password
+        )
         return cert.not_valid_after
-    except crypto.Error as crypte:
-        exc_str = str(crypte)
-        if exc_str.find('mac verify failure'):
-            raise
+    except Exception as crypte:
         raise
