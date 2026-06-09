@@ -8,7 +8,6 @@ from lxml import etree
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools.misc import get_lang
-from odoo.http import request
 from .qr_generator import GenerateQrCode
 from odoo.tools import html2plaintext
 from num2words import num2words
@@ -23,12 +22,6 @@ EXONERATION_FISCAL_POSITION = "Exonerado 13%"
 
 class InvoiceLineElectronic(models.Model):
     _inherit = "account.move.line"
-
-    @api.model
-    def _get_default_activity_id(self):
-        for line in self:
-            line.economic_activity_id = line.product_id and line.product_id.categ_id and \
-                line.product_id.categ_id.economic_activity_id and line.product_id.categ_id.economic_activity_id.id
 
     discount_note = fields.Char()
     total_tax = fields.Float()
@@ -195,13 +188,10 @@ class AccountInvoiceElectronic(models.Model):
         for record in self:
             qr_info = ''
             if self.env.user.company_id.invoice_qr_type != 'by_info':
-                qr_info = request.env['ir.config_parameter'].sudo().get_param('web.base.url')
+                qr_info = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
                 qr_info += record.get_portal_url()
             else:
                 if self.env.user.company_id.invoice_field_ids:
-                    # F841 local variable 'result' is assigned to but never used
-                    # result = self.search_read([('id', 'in', self.ids)],
-                    # self.env.user.company_id.invoice_field_ids.mapped('field_id.name'))
                     dict_result = {}
                     for ffild in self.env.user.company_id.invoice_field_ids.mapped('field_id'):
                         if ffild.ttype == 'many2one':
@@ -218,20 +208,6 @@ class AccountInvoiceElectronic(models.Model):
                     qr_info = html2plaintext(qr_info)
             record.qr_image = GenerateQrCode.generate_qr_code(qr_info)
 
-
-        # qr_bytes = GenerateQrCode.generate_qr_code(qr_info)
-        # attachment = self.env['ir.attachment'].create({
-        #     'name': f"qr_{self.id}.png",
-        #     'type': 'binary',
-        #     'datas': qr_bytes,
-        #     'res_model': False,
-        #     'res_id': False,
-        #     'mimetype': 'image/png',
-        # })
-        # base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        # self.qr_image_attachment = f'{base_url}/web/image/{attachment.id}'
-        # self.qr_image = qr_bytes
-
     @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
     def _compute_show_exoneration(self):
         for inv in self:
@@ -241,6 +217,7 @@ class AccountInvoiceElectronic(models.Model):
                 and inv.fiscal_position_id.name == EXONERATION_FISCAL_POSITION
             )
 
+    @api.depends('partner_id', 'company_id', 'move_type')
     @api.onchange('partner_id', 'company_id')
     def _compute_economic_activities(self):
         for inv in self:
@@ -309,8 +286,6 @@ class AccountInvoiceElectronic(models.Model):
             attachment = self.env['ir.attachment'].sudo().search(domain, limit=1)
 
             if attachment:
-                # attachment.name = self.fname_xml_comprobante
-
                 domain_resp = [('res_model', '=', 'account.move'),
                                ('res_id', '=', self.id),
                                ('res_field', '=', 'xml_respuesta_tributacion'),
@@ -349,11 +324,12 @@ class AccountInvoiceElectronic(models.Model):
     def action_invoice_sent(self):
         self.ensure_one()
 
-        if self.invoice_id.move_type in ['in_invoice', 'in_refund']:
-            email_template = self.env.ref('cr_electronic_invoice.email_template_invoice_vendor',
-                                          raise_if_not_found=False)
-        else:
-            email_template = self.env.ref('account.email_template_edi_invoice', raise_if_not_found=False)
+        self.set_currency_rate()
+
+        email_template = self.invoice_id.move_type in ['in_invoice', 'in_refund'] and \
+            self.env.ref('cr_electronic_invoice.email_template_invoice_vendor', raise_if_not_found=False) or \
+            self.env.ref('account.email_template_edi_invoice',
+                         raise_if_not_found=False)
 
         email_template.attachment_ids = [(5, 0, 0)]
 
@@ -371,15 +347,15 @@ class AccountInvoiceElectronic(models.Model):
                       ('res_id', '=', self.id),
                       ('res_field', '=', 'xml_comprobante'),
                       ('name', '=', self.tipo_documento + '_' + self.number_electronic + '.xml')]
-            attachment = self.env['ir.attachment'].sudo().search(domain, limit=1)
+            attachment = self.env['ir.attachment'].sudo().search(
+                domain, limit=1)
             if attachment:
-                # attachment.name = self.fname_xml_comprobante
-
                 domain_resp = [('res_model', '=', self._name),
                                ('res_id', '=', self.id),
                                ('res_field', '=', 'xml_respuesta_tributacion'),
                                ('name', '=', 'AHC_' + self.number_electronic + '.xml')]
-                attachment_resp = self.env['ir.attachment'].sudo().search(domain_resp, limit=1)
+                attachment_resp = self.env['ir.attachment'].sudo().search(
+                    domain_resp, limit=1)
 
                 if attachment_resp:
                     # attachment_resp.name = self.fname_xml_respuesta_tributacion
@@ -395,16 +371,17 @@ class AccountInvoiceElectronic(models.Model):
                                                                          'datas': self.xml_respuesta_tributacion,
                                                                          'res_name': fname_xml_respuesta_tributacion,
                                                                          'mimetype': 'text/xml'})
-                    email_template.attachment_ids = [(6, 0, [attach_copy.id, attach_resp_copy.id])]
+                    email_template.attachment_ids = [
+                        (6, 0, [attach_copy.id, attach_resp_copy.id])
+                    ]
                 else:
-                    raise UserError(_('Response XML from Hacienda has not been received'))
-            else:
-                raise UserError(_('Invoice XML has not been generated for id:' + str(self.id)))
-
+                    raise UserError(
+                        _('Response XML from Hacienda has not been received'))
         else:
             raise UserError(_('Partner is not assigne to this invoice'))
 
-        compose_form = self.env.ref('account.account_invoice_send_wizard_form', raise_if_not_found=False).sudo()
+        compose_form = self.env.ref(
+            'account.account_invoice_send_wizard_form', raise_if_not_found=False).sudo()
         ctx = dict(
             default_model='account.move',
             default_res_id=self.id,
@@ -431,93 +408,56 @@ class AccountInvoiceElectronic(models.Model):
         }
 
     @api.onchange('xml_supplier_approval')
-    def _onchange_xml_supplier_approval(self):
-        if self.xml_supplier_approval:
-            xml_decoded = base64.b64decode(self.xml_supplier_approval)
-            try:
-                factura = etree.fromstring(xml_decoded)
-            except Exception as e:
-                _logger.info('E-INV CR - This XML file is not XML-compliant.  Exception %s', e)
-                return {'status': 400,
-                        'text': 'Excepción de conversión de XML'}
-
-            pretty_xml_string = etree.tostring(
-                factura, pretty_print=True,
-                encoding='UTF-8', xml_declaration=True)
-            _logger.error('E-INV CR - send_file XML: %s', pretty_xml_string)
-            namespaces = factura.nsmap
-            inv_xmlns = namespaces.pop(None)
-            namespaces['inv'] = inv_xmlns
-            if not factura.xpath("inv:Clave", namespaces=namespaces):
-                return {'value': {'xml_supplier_approval': False},
-                        'warning': {'title': 'Attention',
-                                    'message': 'The xml file does not contain the Clave node. '
-                                               'Please upload a file with the correct format.'}}
-
-            if not factura.xpath("inv:FechaEmision", namespaces=namespaces):
-                return {'value': {'xml_supplier_approval': False},
-                        'warning': {'title': 'Attention',
-                                    'message': 'The xml file does not contain the FechaEmision node. '
-                                    'Please upload a file with the correct format.'}}
-
-            if not factura.xpath("inv:Emisor/inv:Identificacion/inv:Numero",
-                                 namespaces=namespaces):
-                return {'value': {'xml_supplier_approval': False},
-                        'warning': {'title': 'Attention',
-                                    'message': 'The xml file does not contain the Emisor node. '
-                                    'Please upload a file with the correct format.'}}
-
-            if not factura.xpath("inv:ResumenFactura/inv:TotalComprobante",
-                                 namespaces=namespaces):
-                return {'value': {'xml_supplier_approval': False},
-                        'warning': {'title': 'Attention',
-                                    'message': 'The TotalComprobante node cannot be located. '
-                                    'Please upload a file with the correct format.'}}
-
-        else:
-            self.state_tributacion = False
-            self.xml_supplier_approval = False
-            self.fname_xml_supplier_approval = False
-            self.xml_respuesta_tributacion = False
-            self.fname_xml_respuesta_tributacion = False
-            self.date_issuance = False
-            self.number_electronic = False
-            self.state_invoice_partner = False
+    def onchange_xml_supplier_approval(self):
+        if self.xml_supplier_approval and not self.partner_id:
+            self.create_partner_from_xml()
 
     def load_xml_data(self):
         account = False
         analytic_account = False
         product = False
 
-        purchase_journal = self.env['account.journal'].search([('type', '=', 'purchase')], limit=1)
+        purchase_journal = self.env['account.journal'].search(
+            [('type', '=', 'purchase')], limit=1)
         default_account_id = purchase_journal.expense_account_id.id
         if default_account_id:
-            account = self.env['account.account'].search([('id', '=', default_account_id)], limit=1)
+            account = self.env['account.account'].search(
+                [('id', '=', default_account_id)], limit=1)
             load_lines = purchase_journal.load_lines
         else:
-            default_account_id = self.env['ir.config_parameter'].sudo().get_param('expense_account_id')
-            load_lines = bool(self.env['ir.config_parameter'].sudo().get_param('load_lines'))
+            default_account_id = self.env['ir.config_parameter'].sudo(
+            ).get_param('expense_account_id')
+            load_lines = bool(
+                self.env['ir.config_parameter'].sudo().get_param('load_lines'))
             if default_account_id:
-                account = self.env['account.account'].search([('id', '=', default_account_id)], limit=1)
+                account = self.env['account.account'].search(
+                    [('id', '=', default_account_id)], limit=1)
 
         analytic_account_id = purchase_journal.expense_analytic_account_id.id
         if analytic_account_id:
-            analytic_account = self.env['account.analytic.account'].search([('id', '=', analytic_account_id)], limit=1)
+            analytic_account = self.env['account.analytic.account'].search(
+                [('id', '=', analytic_account_id)], limit=1)
         else:
-            analytic_account_id = self.env['ir.config_parameter'].sudo().get_param('expense_analytic_account_id')
+            analytic_account_id = self.env['ir.config_parameter'].sudo(
+            ).get_param('expense_analytic_account_id')
             if analytic_account_id:
                 analytic_account = self.env['account.analytic.account'].search([('id', '=', analytic_account_id)],
                                                                                limit=1)
 
         product_id = purchase_journal.expense_product_id.id
-        if product_id:
-            product = self.env['product.product'].search([('id', '=', product_id)], limit=1)
-        else:
-            product_id = self.env['ir.config_parameter'].sudo().get_param('expense_product_id')
-            if product_id:
-                product = self.env['product.product'].search([('id', '=', product_id)], limit=1)
 
-        api_facturae.load_xml_data(self, load_lines, account, product, analytic_account)
+        if product_id:
+            product = self.env['product.product'].search(
+                [('id', '=', product_id)], limit=1)
+        else:
+            product_id = self.env['ir.config_parameter'].sudo(
+            ).get_param('expense_product_id')
+            if product_id:
+                product = self.env['product.product'].search(
+                    [('id', '=', product_id)], limit=1)
+
+        api_facturae.load_xml_data(
+            self, load_lines, account, product, analytic_account)
 
     def action_send_mrs_to_hacienda(self):
         if self.state_invoice_partner:
@@ -545,16 +485,6 @@ class AccountInvoiceElectronic(models.Model):
 
                     if inv.state_tributacion and inv.state_tributacion in ('aceptado', 'rechazado', 'na'):
                         raise UserError(_('Warning!.\n The supplier invoice has already been confirmed'))
-                    
-                    # This does not work when fixing an accounting error but the invoice was already sent
-                    # if not inv.amount_total_electronic_invoice and inv.xml_supplier_approval:
-                    #     try:
-                    #         inv.load_xml_data()
-                    #     except UserError as error:
-                    #         inv.state_tributacion = 'error'
-                    #         inv.message_post(subject=_('Error'),
-                    #                          body=_('Aviso!.\n Error en carga del XML del proveedor') + str(error))
-                    #         continue
 
                     if abs(inv.amount_total_electronic_invoice - inv.amount_total) > 1:
                         inv.state_tributacion = 'error'
@@ -652,14 +582,12 @@ class AccountInvoiceElectronic(models.Model):
                             inv.fname_xml_comprobante = tipo_documento + '_' + inv.number_electronic + '.xml'
                             self.env['ir.attachment'].sudo().create({'name': inv.fname_xml_comprobante,
                                                                      'type': 'binary',
-                                                                     #'datas': base64.encodestring(xml_firmado),
                                                                      'datas': base64.b64encode(xml_firmado),
                                                                      'res_model': inv._name,
                                                                      'res_id': inv.id,
                                                                      'res_field': 'xml_comprobante',
                                                                      'res_name': inv.fname_xml_comprobante,
                                                                      'mimetype': 'text/xml'})
-                            # inv.xml_comprobante = base64.encodestring(xml_firmado)
                             inv.tipo_documento = tipo_documento
 
                             if inv.state_tributacion != 'procesando':
@@ -689,11 +617,10 @@ class AccountInvoiceElectronic(models.Model):
 
                                     if not token_m_h:
                                         _logger.error(
-                                            _('E-INV CR - Send Acceptance Message - HALTED - Failed to get token'))
+                                            'E-INV CR - Send Acceptance Message - HALTED - Failed to get token')
                                         return
 
-                                    _logger.error(
-                                        _('E-INV CR - send_mrs_to_hacienda - 013'))
+                                    _logger.debug('E-INV CR - send_mrs_to_hacienda - 013')
 
                                     response_json = api_facturae.consulta_clave(
                                         inv.number_electronic + '-' + inv.consecutive_number_receiver,
@@ -715,8 +642,8 @@ class AccountInvoiceElectronic(models.Model):
                                             'fname_xml_respuesta_tributacion': file_name
                                         })
 
-                                        _logger.error(
-                                            'E-INV CR - Estado Documento:%s',
+                                        _logger.info(
+                                            'E-INV CR - Estado Documento: %s',
                                             inv.state_tributacion)
 
                                         message_description += _('<p><b>Ha enviado Mensaje de Receptor</b>') + \
@@ -728,16 +655,13 @@ class AccountInvoiceElectronic(models.Model):
 
                                         self.message_post(
                                             body=message_description)
-                                            #subtype='mail.mt_note',
-                                            #content_subtype='html')
 
-
-                                        _logger.info(_(f'E-INV CR - Document Status:{inv.state_tributacion}'))
+                                        _logger.info('E-INV CR - Document Status: %s', inv.state_tributacion)
 
                                     elif status == 400:
                                         inv.state_tributacion = 'ne'
-                                        _logger.error(
-                                            _('E-INV CR - Document Acceptance:%s not found in Hacienda.'),
+                                        _logger.warning(
+                                            'E-INV CR - Document Acceptance: %s not found in Hacienda.',
                                             inv.number_electronic + '-' + inv.consecutive_number_receiver)
                                     else:
                                         _logger.error(
@@ -765,7 +689,7 @@ class AccountInvoiceElectronic(models.Model):
         total_invoices = len(invoices)
         current_invoice = 0
 
-        _logger.info(_(f'E-INV CR - Inquiry Treasury - Invoices to Verify: {total_invoices}'))
+        _logger.info('E-INV CR - Inquiry Treasury - Invoices to Verify: %s', total_invoices)
 
         for i in invoices:
             try:
@@ -776,19 +700,19 @@ class AccountInvoiceElectronic(models.Model):
                 token_m_h = api_facturae.get_token_hacienda(i, i.company_id.frm_ws_ambiente)
 
                 if not token_m_h:
-                    _logger.error(_('E-INV CR - Consult Hacienda - HALTED - Failed to get token'))
+                    _logger.error('E-INV CR - Consult Hacienda - HALTED - Failed to get token')
                     return
 
                 if not i.xml_comprobante:
                     i.state_tributacion = 'error'
-                    _logger.warning(_('E-INV CR - Document:%s has no XML document. Status %s'),
+                    _logger.warning('E-INV CR - Document: %s has no XML document. Status %s',
                                     i.number_electronic, 'error')
                     continue
 
                 if not i.number_electronic or len(i.number_electronic) != 50:
                     i.state_tributacion = 'error'
-                    _logger.warning(_('E-INV CR - Document:%s does not comply with the format of ') +
-                                    _('electronic number. Status: %s'), i.number, 'error')
+                    _logger.warning('E-INV CR - Document: %s does not comply with the electronic number format. Status: %s',
+                                    i.number, 'error')
                     continue
 
                 response_json = api_facturae.consulta_clave(i.number_electronic,
@@ -798,15 +722,15 @@ class AccountInvoiceElectronic(models.Model):
 
                 if status == 200:
                     estado_m_h = response_json.get('ind-estado')
-                    _logger.info(_(f'E-INV CR - Document Status:{estado_m_h}'))
+                    _logger.info('E-INV CR - Document Status: %s', estado_m_h)
                 elif status == 400:
                     estado_m_h = response_json.get('ind-estado')
                     i.state_tributacion = 'ne'
-                    _logger.warning(_('E-INV CR - Document:%s not found in') +
-                                    _('Hacienda.  Status: %s'), i.number_electronic, estado_m_h)
+                    _logger.warning('E-INV CR - Document: %s not found in Hacienda. Status: %s',
+                                    i.number_electronic, estado_m_h)
                     continue
                 else:
-                    _logger.error(_('E-INV CR - Unexpected error in query Hacienda  - Aborting'))
+                    _logger.error('E-INV CR - Unexpected error in query Hacienda - Aborting')
                     return
 
                 i.state_tributacion = estado_m_h
@@ -875,15 +799,14 @@ class AccountInvoiceElectronic(models.Model):
                     self.env['ir.attachment'].create({'name': i.fname_xml_respuesta_tributacion,
                                                       'type': 'binary',
                                                       'datas': response_json.get('respuesta-xml'),
-                                                      'res_model': self._name,
+                                                      'res_model': i._name,
                                                       'res_id': i.id,
                                                       'res_field': 'xml_respuesta_tributacion',
                                                       'res_name': i.fname_xml_respuesta_tributacion,
                                                       'mimetype': 'text/xml'})
-                    decoded_xml=base64.b64decode(response_json.get('respuesta-xml')).decode('utf-8')
-                    xml_errors=decoded_xml.partition('<DetalleMensaje>')[2].partition('</DetalleMensaje>')[0]
-                    #_logger.error(xml_errors)
-                    i.message_post(subject='Error',body=xml_errors)
+                    decoded_xml = base64.b64decode(response_json.get('respuesta-xml')).decode('utf-8')
+                    xml_errors = decoded_xml.partition('<DetalleMensaje>')[2].partition('</DetalleMensaje>')[0]
+                    i.message_post(subject='Error', body=xml_errors)
                 else:
                     if i.error_count > 10:
                         i.state_tributacion = 'error'
@@ -956,7 +879,6 @@ class AccountInvoiceElectronic(models.Model):
                     body=message,
                     subject=_('IMPORTANT NOTICE!!'),
                     message_type='notification',
-                    #subtype=None,
                     parent_id=False,
                 )
                 inv.state_tributacion = 'error'
@@ -971,7 +893,6 @@ class AccountInvoiceElectronic(models.Model):
             self.message_post(body=message,
                               subject=_('IMPORTANT NOTICE!!'),
                               message_type='notification',
-                              #subtype=None,
                               parent_id=False)
         _logger.info('E-INV CR - _send_invoices_to_hacienda - Completed Successfully')
 
@@ -994,7 +915,6 @@ class AccountInvoiceElectronic(models.Model):
                         body=message,
                         subject=_('IMPORTANT NOTICE!!'),
                         message_type='notification',
-                        #subtype=None,
                         parent_id=False,
                     )
 
@@ -1014,7 +934,6 @@ class AccountInvoiceElectronic(models.Model):
                         inv.message_post(body=msg_body + inv.number_electronic,
                                             subject=_('Sending a second FEC'),
                                             message_type='notification',
-                                            #subtype=None,
                                             parent_id=False,
                                             attachments=[[inv.fname_xml_respuesta_tributacion,
                                                         inv.fname_xml_respuesta_tributacion],
@@ -1107,7 +1026,7 @@ class AccountInvoiceElectronic(models.Model):
                     total_impuestos = 0.0
                     base_subtotal = 0.0
                     _old_rate_exoneration = False
-                    _no_cabys_code = False
+                    cabys_error_msg = False
 
                     for inv_line in inv.invoice_line_ids:
                         if inv_line.display_type not in ('products'):  # skip sections and notes
@@ -1176,10 +1095,10 @@ class AccountInvoiceElectronic(models.Model):
                                 elif inv_line.product_id.categ_id and inv_line.product_id.categ_id.cabys_code:
                                     line["codigoCabys"] = inv_line.product_id.categ_id.cabys_code
                                 else:
-                                    _no_cabys_code = _(f'Warning!.\nLine without CABYS code: {inv_line.name}')
+                                    cabys_error_msg = _('Warning!.\nLine without CABYS code: %s') % inv_line.name
                                     continue
                             else:
-                                _no_cabys_code =  _(f'Warning!.\nLine without CABYS code: {inv_line.name}')
+                                cabys_error_msg = _('Warning!.\nLine without CABYS code: %s') % inv_line.name
                                 continue
 
                             if inv.tipo_documento == 'FEE' and inv_line.tariff_head:
@@ -1308,9 +1227,9 @@ class AccountInvoiceElectronic(models.Model):
                     if inv.invoice_id and not inv.invoice_origin:
                         inv.invoice_origin = inv.invoice_id.display_name
 
-                    if _no_cabys_code and inv.tipo_documento != 'NC':  # CAByS is not required for financial NCs
+                    if cabys_error_msg and inv.tipo_documento != 'NC':  # CAByS is not required for financial NCs
                         inv.state_tributacion = 'error'
-                        inv.message_post(subject=_('Error'), body=_no_cabys_code)
+                        inv.message_post(subject=_('Error'), body=cabys_error_msg)
                         continue
 
                     if _old_rate_exoneration:
@@ -1342,8 +1261,6 @@ class AccountInvoiceElectronic(models.Model):
                     base_subtotal = round(base_subtotal, 5)
                     total_impuestos = round(total_impuestos, 5)
                     total_descuento = round(total_descuento, 5)
-                    # ESTE METODO GENERA EL XML DIRECTAMENTE DESDE PYTHON
-                    # xml_string_builder = api_facturae.gen_xml_v43(
                     xml_string_builder = api_facturae.gen_xml_v4_4(
                         inv, sale_conditions, total_servicio_gravado,
                         total_servicio_exento, total_servicio_exonerado,
@@ -1360,7 +1277,8 @@ class AccountInvoiceElectronic(models.Model):
                         inv.company_id.frm_pin,
                         xml_to_sign)
                     
-                    if  inv.invoice_payment_term_id.sale_conditions_id.code == '11': # Solo se genera si aplica "Pago de venta a crédito en IVA hasta 90 días"
+                    if inv.invoice_payment_term_id and inv.invoice_payment_term_id.sale_conditions_id and \
+                            inv.invoice_payment_term_id.sale_conditions_id.code == '11':
                         try:
                             rep_xml_builder = api_facturae.generate_rep_xml(inv, 'REP', sale_conditions, lines, currency_rate,
                                                                             total_servicio_gravado, total_mercaderia_gravado, 
@@ -1373,11 +1291,9 @@ class AccountInvoiceElectronic(models.Model):
                                             body=_('Warning!.\n Error in generate_rep_xml: ') + str(error))
                             continue
                     
-                    # inv.xml_comprobante = base64.encodestring(xml_firmado)
                     inv.fname_xml_comprobante = inv.tipo_documento + '_' + inv.number_electronic + '.xml'
                     self.env['ir.attachment'].sudo().create({'name': inv.fname_xml_comprobante,
                                                                 'type': 'binary',
-                                                                #'datas': base64.encodestring(xml_firmado),
                                                                 'datas': base64.b64encode(xml_firmado),
                                                                 'res_model': self._name,
                                                                 'res_id': inv.id,
@@ -1416,8 +1332,8 @@ class AccountInvoiceElectronic(models.Model):
                         inv.message_post(subject=_('Error'), body=response_text)
                         inv.electronic_invoice_return_message = response_text
                         inv.state_tributacion = 'error'
-                        _logger.error(_(f'E-INV CR  - Invoice: {inv.number_electronic}' +
-                                        'Status: {response_status} Error sending XML: {response_text}'))
+                        _logger.error('E-INV CR  - Invoice: %s Status: %s Error sending XML: %s',
+                                      inv.number_electronic, response_status, response_text)
                     else:
                         inv.error_count += 1
                         if inv.tipo_documento == 'FEC':
@@ -1425,8 +1341,8 @@ class AccountInvoiceElectronic(models.Model):
                         else:
                             inv.state_tributacion = 'procesando'
                         inv.message_post(subject=_('Error'), body=response_text)
-                        _logger.error(_('E-INV CR  - Invoice: %s  Status: %s Error '
-                                        'sending XML: %s' % (inv.number_electronic, response_status, response_text)))
+                        _logger.error('E-INV CR  - Invoice: %s  Status: %s Error sending XML: %s',
+                                      inv.number_electronic, response_status, response_text)
             except Exception as error:
                 inv.state_tributacion = 'error'
                 inv.message_post(subject=_('Error'),
@@ -1559,7 +1475,7 @@ class AccountInvoiceElectronic(models.Model):
             # Validate if invoice currency is the same as the company currency
             if currency.name != inv.company_id.currency_id.name and (not currency.rate_ids or not
                                                                      (len(currency.rate_ids) > 0)):
-                raise UserError(_(f'There is no registered exchange rate for the currency {currency.name}'))
+                raise UserError(_('There is no registered exchange rate for the currency %s') % currency.name)
 
             # Digital Invoice or ticket
             if inv.move_type in ('out_invoice', 'out_refund') and inv.number_electronic:
@@ -1583,7 +1499,7 @@ class AccountInvoiceElectronic(models.Model):
                     if inv_line.product_id:
                         # Remove any existing IVA Devuelto lines
                         if inv_line.product_id.id == prod_iva_devuelto.id:
-                            inv_line.unlink
+                            inv_line.unlink()
                         elif inv_line.product_id.categ_id.name == 'Servicios de Salud':
                             iva_devuelto += inv_line.price_tax
                 if iva_devuelto:
@@ -1644,7 +1560,6 @@ class AccountInvoiceElectronic(models.Model):
         return move_vals
 
     def create_partner_from_xml(self):
-
         if not self.partner_id and self.xml_supplier_approval:
             info = {}
 
@@ -1653,52 +1568,100 @@ class AccountInvoiceElectronic(models.Model):
             inv_xmlns = namespaces.pop(None)
             namespaces['inv'] = inv_xmlns
 
-            info['vat'] = invoice_xml.xpath("inv:Emisor/inv:Identificacion/inv:Numero", namespaces=namespaces)[0].text
+            info['vat'] = invoice_xml.xpath(
+                "inv:Emisor/inv:Identificacion/inv:Numero", namespaces=namespaces)[0].text
 
-            partner = self.env['res.partner'].search([('vat', '=', info['vat']), ('type', '=', 'contact')], limit=1)
+            partner = self.env['res.partner'].search(
+                [('vat', '=', info['vat']), ('type', '=', 'contact')], limit=1)
             if len(partner) > 0:
                 self.partner_id = partner.id
             else:
-                info['name'] = invoice_xml.xpath("inv:Emisor/inv:Nombre", namespaces=namespaces)[0].text
-                info['phone'] = invoice_xml.xpath("inv:Emisor/inv:Telefono/inv:NumTelefono",
-                                                  namespaces=namespaces)[0].text or False
-                info['email'] = invoice_xml.xpath("inv:Emisor/inv:CorreoElectronico",
-                                                  namespaces=namespaces)[0].text or False
+                info['name'] = invoice_xml.xpath(
+                    "inv:Emisor/inv:Nombre", namespaces=namespaces)[0].text
+                phone_node = invoice_xml.xpath("inv:Emisor/inv:Telefono/inv:NumTelefono",
+                                                  namespaces=namespaces)
+                info['phone'] = phone_node[0].text if phone_node else False
+                email_node = invoice_xml.xpath("inv:Emisor/inv:CorreoElectronico",
+                                                  namespaces=namespaces)
+                info['email'] = email_node[0].text if email_node else False
                 info['lang'] = 'es_CR'
 
-                # Se agrega manualmente la información ya que no se puede obtener del XML
-                info['property_payment_term_id'] = 1
-                info['payment_methods_id'] = 1
-                info['property_product_pricelist'] = 1
-                info['property_supplier_payment_term_id'] = 1
-
                 # País
-                info['country_id'] = self.env['res.country'].search([('code', '=', 'CR')], limit=1).id
+                info['country_id'] = self.env['res.country'].search(
+                    [('code', '=', 'CR')], limit=1).id
 
+                ubicacion_node = invoice_xml.xpath("inv:Emisor/inv:Ubicacion", namespaces=namespaces)
+                if ubicacion_node:
                 # Provincia
-                provincia = invoice_xml.xpath("inv:Emisor/inv:Ubicacion/inv:Provincia", namespaces=namespaces)[0].text
-                state_id = self.env['res.country.state'].search([('code', '=', provincia)], limit=1).id
-                info['state_id'] = state_id
+                    provincia = invoice_xml.xpath(
+                        "inv:Emisor/inv:Ubicacion/inv:Provincia", namespaces=namespaces)[0].text
+                    state_id = self.env['res.country.state'].search(
+                        [('code', '=', provincia)], limit=1).id
+                    info['state_id'] = state_id
 
-                # Cantón
-                canton = invoice_xml.xpath("inv:Emisor/inv:Ubicacion/inv:Canton", namespaces=namespaces)[0].text
-                county_id = self.env['res.country.county'].search([('code', '=', canton),
-                                                                   ('state_id', '=', state_id)], limit=1).id
-                info['county_id'] = county_id
+                    # Cantón
+                    canton = invoice_xml.xpath(
+                        "inv:Emisor/inv:Ubicacion/inv:Canton", namespaces=namespaces)[0].text
+                    county_id = self.env['res.country.county'].search([('code', '=', canton),
+                                                                    ('state_id', '=', state_id)], limit=1).id
+                    info['county_id'] = county_id
 
-                # Distrito
-                distrito = invoice_xml.xpath("inv:Emisor/inv:Ubicacion/inv:Distrito", namespaces=namespaces)[0].text
-                district_id = self.env['res.country.district'].search([('code', '=', distrito),
-                                                                       ('county_id', '=', county_id)], limit=1).id
-                info['district_id'] = district_id
-
-                actividad_economica = invoice_xml.xpath("inv:CodigoActividad", namespaces=namespaces)[0].text
-                info['activity_id'] = self.env['economic.activity'].search([('code', '=', actividad_economica)],
-                                                                           limit=1).id
-
+                    # Distrito
+                    distrito = invoice_xml.xpath(
+                        "inv:Emisor/inv:Ubicacion/inv:Distrito", namespaces=namespaces)[0].text
+                    district_id = self.env['res.country.district'].search([('code', '=', distrito),
+                                                                        ('county_id', '=', county_id)], limit=1).id
+                    info['district_id'] = district_id
+                actividad_economica = invoice_xml.xpath("inv:CodigoActividad", namespaces=namespaces)
+                if not actividad_economica:
+                    actividad_economica = invoice_xml.xpath("inv:CodigoActividadEmisor", namespaces=namespaces)
+                actividad_economica = actividad_economica[0].text
+                info["activity_id"] = (
+                    self.env["economic.activity"].search([("code", "=", actividad_economica)], limit=1).id
+                )
                 cliente = self.env['res.partner'].create(info)
-                cliente.onchange_vat()
+                self.get_new_partner_economic_activities(cliente)
                 self.partner_id = cliente.id
+    
+    def get_new_partner_economic_activities(self, partner):
+        json_response = api_facturae.get_economic_activities(partner)
+        if json_response["status"] == 200:
+            activities = json_response["activities"]
+            a_codes_with_ciiu3 = []
+            a_codes_without_ciiu3 = []
+            a_ciiu3 = []
+            for activity in activities:
+                if activity["estado"] == "A":
+                    ciiu3_list = activity.get("ciiu3") or []
+                    codigo = activity.get("codigo")
+                    if ciiu3_list:
+                        a_codes_with_ciiu3.append(codigo)
+                        a_ciiu3.append(ciiu3_list[0]["codigo"])
+                        activity_id = self.env["economic.activity"].search([
+                            ("code", "=", str(codigo)),
+                            ("ciiu3", "=", str(ciiu3_list[0].get("codigo")))
+                        ], limit=1).id
+                    else:
+                        a_codes_without_ciiu3.append(codigo)
+                        activity_id = self.env["economic.activity"].search([
+                            ("code", "=", str(codigo))
+                        ], limit=1).id
+                    if activity.get("tipo") == "P":
+                        partner.activity_id = activity_id
+            acts_with = (
+                self.env["economic.activity"].with_context(active_test=False).search(
+                    [("code", "in", a_codes_with_ciiu3), ("ciiu3", "in", a_ciiu3)]
+                ) if a_codes_with_ciiu3 else self.env["economic.activity"].browse()
+            )
+            acts_without = (
+                self.env["economic.activity"].with_context(active_test=False).search(
+                    [("code", "in", a_codes_without_ciiu3)]
+                ) if a_codes_without_ciiu3 else self.env["economic.activity"].browse()
+            )
+            economic_activities = acts_with | acts_without
+            economic_activities.active = True
+            partner.economic_activities_ids = economic_activities
+            partner.name = json_response["name"]
 
     def get_xml_document(self, invoice_id):
         tab_id = []
@@ -1719,5 +1682,6 @@ class AccountInvoiceElectronic(models.Model):
             if attachment_resp:
                 tab_id.append(attachment_resp.id)
 
-        url = f'/web/binary/download_document?tab_id={tab_id}&invoice_id={invoice_id}'
+        tab_ids_str = ','.join(str(i) for i in tab_id)
+        url = f'/web/binary/download_document?tab_id={tab_ids_str}&invoice_id={invoice_id}'
         return url
