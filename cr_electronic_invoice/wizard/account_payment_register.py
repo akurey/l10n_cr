@@ -11,7 +11,7 @@ class AccountPaymentRegister(models.TransientModel):
     def _create_payments(self):
         payments = super()._create_payments()
 
-        active_invoices = self.env["account.move"].browse(self._context.get("active_ids", []))
+        active_invoices = self.env["account.move"].browse(self.env.context.get("active_ids", []))
 
         for payment in payments:
             if payment.payment_type != 'inbound':

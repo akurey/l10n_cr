@@ -6,11 +6,11 @@
         <field name="name">payment.methods.tree</field>
         <field name="model">payment.methods</field>
         <field name="arch" type="xml">
-            <tree string="Payment methods">
+            <list string="Payment methods">
                 <field name="sequence"/>
                 <field name="name"/>
                 <field name="active"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -28,7 +28,7 @@
     <record id="action_payment_methods" model="ir.actions.act_window">
         <field name="name">Payment methods</field>
         <field name="res_model">payment.methods</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <!--<field name="search_view_id" ref="view_account_invoice_filter"/>-->
     </record>
 
@@ -39,7 +39,7 @@
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
                 <notebook>
-                    <page name="electronic_information" string="Electronic Information" attrs="{'invisible': [('reconciled_invoices_count','=', 0), ('payment_type','=','inbound')]}">
+                    <page name="electronic_information" string="Electronic Information" invisible="reconciled_invoices_count == 0 and payment_type == 'inbound'">
                         <group id="fe_tab_group" col="2">
                             <group name="eref_info_group" colspan="2">
                                 <group string="Electronic Receipts" name="eref_info_group2" colspan="2">
@@ -58,7 +58,7 @@
 
             <xpath expr="//div[@name='button_box']" position="after">
                 <div>
-                    <div class="alert alert-warning" role="alert" attrs="{'invisible':['|', ('state_tributacion','not in', ('procesando')), ('state', 'in', ('draft'))]}">
+                    <div class="alert alert-warning" role="alert" invisible="state_tributacion != 'procesando' or state == 'draft'">
                         The document was issued successfully, however we still do not have the answer, it will be consulted in 10 minutes, if you wish to consult it manually press
                         <button class="btn btn-primary" name="consult_rep_document" type="object" string="Consult Document"/>
                     </div>

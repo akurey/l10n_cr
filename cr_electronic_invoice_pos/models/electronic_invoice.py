@@ -175,9 +175,10 @@ class PosOrder(models.Model):
 
     economic_activity_id = fields.Many2one("economic.activity", string="Economic Activity", )
 
-    _sql_constraints = [
-        ('number_electronic_uniq', 'unique (number_electronic)', "La clave de comprobante debe ser única"),
-    ]
+    _number_electronic_uniq = models.Constraint(
+        'unique (number_electronic)',
+        "La clave de comprobante debe ser única",
+    )
 
     @api.model
     def create(self, vals):

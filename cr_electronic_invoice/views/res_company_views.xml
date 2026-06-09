@@ -10,11 +10,11 @@
             <xpath expr="//sheet" position="inside">
                 <group>
                     <field name="invoice_qr_type"/>
-                    <field name="invoice_field_ids" attrs="{'required':[('invoice_qr_type','=','by_info')],'invisible':[('invoice_qr_type','!=','by_info')]}">
-                        <tree editable="bottom">
+                    <field name="invoice_field_ids" required="invoice_qr_type == 'by_info'" invisible="invoice_qr_type != 'by_info'">
+                        <list editable="bottom">
                             <field name="sequence" widget="handle" />
                             <field name="field_id" />
-                        </tree>
+                        </list>
                     </field>
                 </group>
             </xpath>
@@ -46,7 +46,7 @@
                         <group col="2"/>
                     </group>
                     <group col="4">
-                        <field attrs="{'invisible' : [('ultima_respuesta_exo', 'in', (False,''))], 'readonly' : [('ultima_respuesta_exo', '!=', False)]}" colspan="4" name="ultima_respuesta_exo"/>
+                        <field invisible="ultima_respuesta_exo in (False, '')" readonly="ultima_respuesta_exo != False" colspan="4" name="ultima_respuesta_exo"/>
                     </group>
                 </page>
             </xpath>

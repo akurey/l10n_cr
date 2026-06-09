@@ -17,10 +17,10 @@ class EconomicActivity(models.Model):
                                  required=True)
 
     @api.model
-    def name_search(self, name='', args=None, operator='ilike', limit=100):
-        if not args:
-            args = []
-        domain = args + ["|", "|", ("name", operator, name), ("code", operator, name), ("ciiu3", operator, name)]
+    def name_search(self, name='', domain=None, operator='ilike', limit=100):
+        if not domain:
+            domain = []
+        domain = domain + ["|", "|", ("name", operator, name), ("code", operator, name), ("ciiu3", operator, name)]
         activities = self.search_fetch(domain, ['display_name'], limit=limit)
         return [(a.id, a.display_name) for a in activities]
 

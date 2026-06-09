@@ -90,12 +90,12 @@ class AccountJournalInherit(models.Model):
             'name': _('Generated Documents'),
             'domain': [('id', 'in', invoices.ids)],
             'res_model': 'account.move',
-            'views': [[False, "tree"], [False, "form"]],
+            'views': [[False, "list"], [False, "form"]],
             'type': 'ir.actions.act_window',
-            'context': self._context
+            'context': self.env.context
         }
         if len(invoices) == 1:
             action_vals.update({'res_id': invoices[0].id, 'view_mode': 'form'})
         else:
-            action_vals['view_mode'] = 'tree,form'
+            action_vals['view_mode'] = 'list,form'
         return action_vals

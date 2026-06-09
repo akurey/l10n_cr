@@ -178,10 +178,10 @@ class AccountInvoiceElectronic(models.Model):
 
     not_loaded_invoice_date = fields.Date(string='Original Invoice Date not loaded', readonly=True)
 
-    _sql_constraints = [
-        ('number_electronic_uniq', 'unique (company_id, number_electronic)',
-            "La clave de comprobante debe ser única"),
-    ]
+    _number_electronic_uniq = models.Constraint(
+        'unique (company_id, number_electronic)',
+        "La clave de comprobante debe ser única",
+    )
 
     qr_image = fields.Binary("QR Code", compute='_compute_qr_code')
     qr_image_attachment = fields.Char("QR String")

@@ -20,17 +20,17 @@
         <field name="name">code.type.product.tree</field>
         <field name="model">code.type.product</field>
         <field name="arch" type="xml">
-            <tree string="Code types" editable="bottom">
+            <list string="Code types" editable="bottom">
                 <field name="code"/>
                 <field name="name"/>
-            </tree>
+            </list>
         </field>
     </record>
 
     <record id="action_code_type_product" model="ir.actions.act_window">
         <field name="name">Code types</field>
         <field name="res_model">code.type.product</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
     </record>
 
 </odoo>
