@@ -37,6 +37,7 @@
     ],
     'test': [
     ],
+    'license': 'LGPL-3',
     'auto_install': False,
     'application': True,
     'installable': True,

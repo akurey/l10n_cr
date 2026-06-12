@@ -187,13 +187,13 @@ class AccountInvoiceElectronic(models.Model):
     def _compute_qr_code(self):
         for record in self:
             qr_info = ''
-            if self.env.user.company_id.invoice_qr_type != 'by_info':
+            if record.company_id.invoice_qr_type != 'by_info':
                 qr_info = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
                 qr_info += record.get_portal_url()
             else:
-                if self.env.user.company_id.invoice_field_ids:
+                if record.company_id.invoice_field_ids:
                     dict_result = {}
-                    for ffild in self.env.user.company_id.invoice_field_ids.mapped('field_id'):
+                    for ffild in record.company_id.invoice_field_ids.mapped('field_id'):
                         if ffild.ttype == 'many2one':
                             dict_result[ffild.field_description] = self[ffild.name].display_name
                         else:
@@ -275,7 +275,7 @@ class AccountInvoiceElectronic(models.Model):
         if not lang:
             lang = get_lang(self.env).code
 
-        if self.env.user.company_id.frm_ws_ambiente == 'disabled':
+        if self.company_id.frm_ws_ambiente == 'disabled':
             pass
         elif self.partner_id and self.partner_id.email:
 
@@ -339,7 +339,7 @@ class AccountInvoiceElectronic(models.Model):
         if not lang:
             lang = get_lang(self.env).code
 
-        if self.env.user.company_id.frm_ws_ambiente == 'disabled':
+        if self.company_id.frm_ws_ambiente == 'disabled':
             pass
         elif self.partner_id and self.partner_id.email:  # and not i.partner_id.opt_out:
 
@@ -671,9 +671,14 @@ class AccountInvoiceElectronic(models.Model):
     @api.model
     # cron Job that verifies if the invoices are Validated at Tributación
     def _check_hacienda_for_invoices(self, max_invoices=10):
+        for company in self.env['res.company'].search([]):
+            self.with_company(company)._check_hacienda_for_invoices_company(company, max_invoices)
+
+    def _check_hacienda_for_invoices_company(self, company, max_invoices=10):
         out_invoices = self.env['account.move'].search(
             [('move_type', 'in', ('out_invoice', 'out_refund')),
              ('state', '=', 'posted'),
+             ('company_id', '=', company.id),
              ('state_tributacion', 'in', ('recibido', 'procesando', 'ne'))],  # , 'error'
             limit=max_invoices)
 
@@ -681,6 +686,7 @@ class AccountInvoiceElectronic(models.Model):
             [('move_type', '=', 'in_invoice'),
              ('tipo_documento', '=', 'FEC'),
              ('state', '=', 'posted'),
+             ('company_id', '=', company.id),
              ('state_tributacion', 'in', ('procesando', 'ne', 'error'))],
             limit=max_invoices)
 
@@ -833,10 +839,15 @@ class AccountInvoiceElectronic(models.Model):
 
     @api.model
     def _check_hacienda_for_mrs(self, max_invoices=10):  # cron
+        for company in self.env['res.company'].search([]):
+            self.with_company(company)._check_hacienda_for_mrs_company(company, max_invoices)
+
+    def _check_hacienda_for_mrs_company(self, company, max_invoices=10):
         invoices = self.env['account.move'].search(
             [('move_type', 'in', ('in_invoice', 'in_refund')),
              ('tipo_documento', '!=', 'FEC'),
              ('state', '=', 'posted'),
+             ('company_id', '=', company.id),
              ('xml_supplier_approval', '!=', False),
              ('state_invoice_partner', '!=', False),
              ('state_tributacion', 'not in', ('aceptado', 'rechazado', 'error', 'na'))],
@@ -861,35 +872,38 @@ class AccountInvoiceElectronic(models.Model):
 
     @api.model
     def _send_invoices_to_hacienda(self, max_invoices=10):  # cron
-        days_left = self.env.user.company_id.get_days_left()
         _logger.debug('E-INV CR - Ejecutando _send_invoices_to_hacienda')
-        invoices = self.env['account.move'].search([('move_type', 'in', ['out_invoice', 'out_refund']),
-                                                    ('state', '=', 'posted'),
-                                                    ('number_electronic', '!=', False),
-                                                    ('invoice_date', '>=', '2019-07-01'),
-                                                    '|', ('state_tributacion', '=', False),
-                                                    ('state_tributacion', '=', 'ne')], order='id asc',
-                                                   limit=max_invoices)
-        if days_left >= 0:
-            self.generate_and_send_invoices(invoices)
-        else:
-            message = self.env.user.company_id.get_message_to_send()
-            for inv in invoices:
-                inv.message_post(
-                    body=message,
-                    subject=_('IMPORTANT NOTICE!!'),
-                    message_type='notification',
-                    parent_id=False,
-                )
-                inv.state_tributacion = 'error'
+        for company in self.env['res.company'].search([]):
+            days_left = company.get_days_left()
+            invoices = self.with_company(company).env['account.move'].search(
+                [('move_type', 'in', ['out_invoice', 'out_refund']),
+                 ('state', '=', 'posted'),
+                 ('number_electronic', '!=', False),
+                 ('invoice_date', '>=', '2019-07-01'),
+                 ('company_id', '=', company.id),
+                 '|', ('state_tributacion', '=', False),
+                 ('state_tributacion', '=', 'ne')], order='id asc',
+                limit=max_invoices)
+            if days_left >= 0:
+                self.with_company(company).generate_and_send_invoices(invoices)
+            else:
+                message = company.get_message_to_send()
+                for inv in invoices:
+                    inv.message_post(
+                        body=message,
+                        subject=_('IMPORTANT NOTICE!!'),
+                        message_type='notification',
+                        parent_id=False,
+                    )
+                    inv.state_tributacion = 'error'
         _logger.info('E-INV CR - _send_invoices_to_hacienda - Completed Successfully')
 
     def generate_and_send_invoice(self):
-        days_left = self.env.user.company_id.get_days_left()
+        days_left = self.company_id.get_days_left()
         if days_left >= 0:
             self.generate_and_send_invoices(self)
         else:
-            message = self.env.user.company_id.get_message_to_send()
+            message = self.company_id.get_message_to_send()
             self.message_post(body=message,
                               subject=_('IMPORTANT NOTICE!!'),
                               message_type='notification',
@@ -904,13 +918,13 @@ class AccountInvoiceElectronic(models.Model):
         total_invoices = len(invoices)
         current_invoice = 0
 
-        days_left = self.env.user.company_id.get_days_left()
-        message = self.env.user.company_id.get_message_to_send()
         for inv in invoices:
             try:
                 current_invoice += 1
+                days_left = inv.company_id.get_days_left()
+                message = inv.company_id.get_message_to_send()
 
-                if days_left <= self.env.user.company_id.range_days:
+                if days_left <= inv.company_id.range_days:
                     inv.message_post(
                         body=message,
                         subject=_('IMPORTANT NOTICE!!'),
@@ -1515,10 +1529,10 @@ class AccountInvoiceElectronic(models.Model):
                 super().action_post()
             if not inv.number_electronic:
                 # if journal doesn't have sucursal use default from company
-                sucursal_id = inv.journal_id.sucursal or self.env.user.company_id.sucursal_MR
+                sucursal_id = inv.journal_id.sucursal or inv.company_id.sucursal_MR
 
                 # if journal doesn't have terminal use default from company
-                terminal_id = inv.journal_id.terminal or self.env.user.company_id.terminal_MR
+                terminal_id = inv.journal_id.terminal or inv.company_id.terminal_MR
 
                 response_json = api_facturae.get_clave_hacienda(inv,
                                                                 inv.tipo_documento,

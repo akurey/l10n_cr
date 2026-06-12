@@ -130,28 +130,6 @@ class CompanyElectronic(models.Model):
         return new_comp_id
 
     def write(self, vals):
-        if vals.get('date_expiration_sign') or vals.get('range_days'):
-            cron = self.env.ref('cr_electronic_invoice.ir_cron_send_expiration_notice', False)
-
-            if not self.range_days:
-                return super().write(vals)
-
-            date_expiration_sign = vals.get('date_expiration_sign') and \
-                vals['date_expiration_sign'] or self.date_expiration_sign
-            # date_expiration_sign = vals.get('date_expiration_sign') and \
-            #     datetime.strptime(vals['date_expiration_sign'], '%Y-%m-%d %H:%M:%S') or self.date_expiration_sign
-            if date_expiration_sign:
-                if isinstance(date_expiration_sign, str):
-                    date_expiration_sign = datetime.strptime(date_expiration_sign, '%Y-%m-%d %H:%M:%S')
-
-            range_days = vals.get('range_days') or self.range_days
-            next_call = date_expiration_sign - timedelta(days=range_days)
-            new_values = {
-                'nextcall': next_call
-            }
-
-            cron.write(new_values)
-
         return super().write(vals)
 
     def get_days_left(self):
@@ -174,26 +152,28 @@ class CompanyElectronic(models.Model):
 
     def _cron_send_email_notifications(self):
         today = datetime.now()
-        date_due = self.env.user.company_id.date_expiration_sign
-        range_day = self.env.user.company_id.range_days
+        template = self.env.ref('cr_electronic_invoice.email_template_edi_expiration_notice', False)
+        if not template:
+            return
 
-        range_date = date_due - timedelta(days=range_day)
-        if today >= range_date:
-            template = self.env.ref('cr_electronic_invoice.email_template_edi_expiration_notice', False)
+        template_values = {
+            'email_to': '${object.email|safe}',
+            'email_cc': False,
+            'auto_delete': True,
+            'partner_to': False,
+            'scheduled_date': False,
+        }
+        template.write(template_values)
 
-            template_values = {
-                'email_to': '${object.email|safe}',
-                'email_cc': False,
-                'auto_delete': True,
-                'partner_to': False,
-                'scheduled_date': False,
-            }
-
-            template.write(template_values)
-
-            for user in self.env.user.company_id.send_user_ids:
-                if user.email:
-                    template.with_context(lang=user.lang).send_mail(user.id, force_send=True, raise_exception=True)
+        for company in self.search([]):
+            date_due = company.date_expiration_sign
+            if not date_due or not company.range_days:
+                continue
+            range_date = date_due - timedelta(days=company.range_days)
+            if today >= range_date:
+                for user in company.send_user_ids:
+                    if user.email:
+                        template.with_context(lang=user.lang).send_mail(user.id, force_send=True, raise_exception=True)
 
     def try_create_configuration_sequences(self):
         """ Try to automatically add the Comprobante Confirmation sequence to the company.
@@ -250,7 +230,7 @@ class CompanyElectronic(models.Model):
         if self.vat:
             json_response = api_facturae.get_economic_activities(self)
 
-            self.env.cr.execute('update economic_activity set active=False')
+            self.env['economic.activity'].with_context(active_test=False).search([]).write({'active': False})
 
             self.message_post(subject=_('Actividades Económicas'),
                               body=_('Aviso!.\n Cargando actividades económicas desde Hacienda'))
