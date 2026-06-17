@@ -11,7 +11,7 @@ class ResConfigSettings(models.TransientModel):
         ('disabled', 'Disabled'),
         ('bccr', 'BCCR (recommended)'),
         ('hacienda', 'Hacienda')
-        ], required=True, default='disabled')
+        ], default='disabled')
 
     bccr_username = fields.Char(string="BCCR username")
     bccr_email = fields.Char(string="e-mail registered in the BCCR")
@@ -25,7 +25,7 @@ class ResConfigSettings(models.TransientModel):
             bccr_username=get_param('bccr_username'),
             bccr_email=get_param('bccr_email'),
             bccr_token=get_param('bccr_token'),
-            exchange_source=get_param('exchange_source'),
+            exchange_source=get_param('exchange_source') or 'disabled',
         )
         return res
 
