@@ -18,6 +18,7 @@
         'sale_management',
         'sales_team',
         'account',
+        'l10n_cr',
         'l10n_cr_country_codes',
         'res_currency_cr_adapter',
         ],

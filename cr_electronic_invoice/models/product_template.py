@@ -28,6 +28,11 @@ class ProductElectronic(models.Model):
     non_tax_deductible = fields.Boolean(string='Is Non Tax Deductible',
                                         help='Indicates if this product is non-tax deductible')
 
+    iva_devuelto_tarjeta = fields.Boolean(
+        string='IVA Devuelto con Tarjeta',
+        help='Si está activo, el IVA de este producto/servicio se devuelve automáticamente cuando el pago es con tarjeta.'
+    )
+
 
 class ProductCategory(models.Model):
     _inherit = "product.category"

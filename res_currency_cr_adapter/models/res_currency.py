@@ -3,7 +3,7 @@
 
 from odoo import api, fields, models
 from zeep import Client
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date as date_type
 import xml.etree.ElementTree
 import logging
 import requests
@@ -77,6 +77,15 @@ class ResCurrencyRate(models.Model):
 
         _logger.info("=========================================================")
         _logger.info("Executing exchange rate update from 1 CRC = X USD")
+
+        if isinstance(first_date, str):
+            first_date = datetime.strptime(first_date, '%Y-%m-%d').date()
+        elif isinstance(first_date, datetime):
+            first_date = first_date.date()
+        if isinstance(last_date, str):
+            last_date = datetime.strptime(last_date, '%Y-%m-%d').date()
+        elif isinstance(last_date, datetime):
+            last_date = last_date.date()
 
         exchange_source = self.env['ir.config_parameter'].sudo().get_param('exchange_source')
         if exchange_source == 'bccr':
@@ -172,40 +181,66 @@ class ResCurrencyRate(models.Model):
 
             # Get current date to get exchange rate for today
             if first_date:
-                initial_date = first_date.strftime('%Y-%m-%d')
-                end_date = last_date.strftime('%Y-%m-%d')
+                currency_rate_obj = self.env['res.currency.rate']
+                currency_usd = self.env['res.currency'].search([('name', '=', 'USD')], limit=1)
+                companies = self.env['res.company'].search([])
 
-                try:
-                    url = 'https://api.hacienda.go.cr/indicadores/tc/dolar/historico/?d='+initial_date+'&h='+end_date
-                    response = requests.get(url, timeout=5, verify=False)
-
-                except requests.exceptions.RequestException as e:
-                    _logger.error('RequestException %s', e)
+                # Hacienda API returns ~60 days max per request; chunk into 60-day batches
+                chunk_size = timedelta(days=60)
+                all_data = []
+                if not isinstance(first_date, date_type) or not isinstance(last_date, date_type):
                     return False
-                if response.status_code in (200,):
-                    data = response.json()
-                    companies = self.env['res.company'].search([])
-                    for company in companies:
-                        _logger.error(company.id)
+                chunk_start = first_date
+                end = last_date
 
-                        for rate_line in data:
-                            today = datetime.strptime(rate_line['fecha'], '%Y-%m-%d %H:%M:%S')
-                            vals = {}
-                            vals['original_rate'] = rate_line['venta']
-                            # Odoo utiliza un valor inverso,
-                            # a cuantos dólares equivale 1 colón, por eso se divide 1 / tipo de cambio.
-                            vals['rate'] = 1 / vals['original_rate']
-                            vals['original_rate_2'] = rate_line['compra']
-                            vals['rate_2'] = 1 / vals['original_rate_2']
-                            vals['currency_id'] = self.env.ref('base.USD').id
+                while chunk_start <= end:
+                    chunk_end = min(chunk_start + chunk_size - timedelta(days=1), end)
+                    try:
+                        url = ('https://api.hacienda.go.cr/indicadores/tc/dolar/historico/?d='
+                               + chunk_start.strftime('%Y-%m-%d') + '&h=' + chunk_end.strftime('%Y-%m-%d'))
+                        _logger.info('Hacienda request chunk %s → %s', chunk_start, chunk_end)
+                        response = requests.get(url, timeout=10, verify=False)
+                        if response.status_code == 200:
+                            chunk_data = response.json()
+                            _logger.info('Hacienda chunk returned %d records', len(chunk_data))
+                            all_data.extend(chunk_data)
+                        else:
+                            _logger.error('Hacienda API returned %s for chunk %s-%s',
+                                          response.status_code, chunk_start, chunk_end)
+                    except requests.exceptions.RequestException as e:
+                        _logger.error('RequestException %s', e)
+                    chunk_start = chunk_end + timedelta(days=1)
 
-                            rate_id = self.env['res.currency.rate'].search([('name', '=', today.date())], limit=1)
+                _logger.info('Hacienda total records collected: %d', len(all_data))
+
+                for company in companies:
+                    for rate_line in all_data:
+                            fecha_str = rate_line['fecha']
+                            try:
+                                rate_date = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S').date()
+                            except ValueError:
+                                rate_date = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+
+                            vals = {
+                                'original_rate': rate_line['venta'],
+                                'rate': 1 / rate_line['venta'],
+                                'original_rate_2': rate_line['compra'],
+                                'rate_2': 1 / rate_line['compra'],
+                                'currency_id': currency_usd.id,
+                                'company_id': company.id,
+                            }
+
+                            rate_id = currency_rate_obj.search([
+                                ('name', '=', rate_date),
+                                ('currency_id', '=', currency_usd.id),
+                                ('company_id', '=', company.id),
+                            ], limit=1)
 
                             if rate_id:
                                 rate_id.write(vals)
                             else:
-                                vals['name'] = today.date()
-                                self.create(vals)
+                                vals['name'] = rate_date
+                                currency_rate_obj.create(vals)
             else:
                 try:
                     url = 'https://api.hacienda.go.cr/indicadores/tc'
