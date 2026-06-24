@@ -98,6 +98,11 @@ class CompanyElectronic(models.Model):
     url_base_exo = fields.Char(string="URL Base EXONET", help="URL Base ENDPOINT EXONET",
                                default="https://api.hacienda.go.cr/fe/ex?")
 
+    @api.onchange('vat')
+    def _onchange_vat_sync_registry(self):
+        if self.vat:
+            self.company_registry = self.vat
+
     @api.constrains('invoice_qr_type', 'invoice_field_ids')
     def check_invoice_field_ids(self):
         if self.invoice_qr_type == 'by_info' and not self.invoice_field_ids:
