@@ -326,7 +326,7 @@ class AccountInvoiceElectronic(models.Model):
 
         self.set_currency_rate()
 
-        email_template = self.invoice_id.move_type in ['in_invoice', 'in_refund'] and \
+        email_template = self.move_type in ['in_invoice', 'in_refund'] and \
             self.env.ref('cr_electronic_invoice.email_template_invoice_vendor', raise_if_not_found=False) or \
             self.env.ref('account.email_template_edi_invoice',
                          raise_if_not_found=False)
@@ -381,18 +381,11 @@ class AccountInvoiceElectronic(models.Model):
             raise UserError(_('Partner is not assigne to this invoice'))
 
         compose_form = self.env.ref(
-            'account.account_invoice_send_wizard_form', raise_if_not_found=False).sudo()
+            'account.account_move_send_wizard_form', raise_if_not_found=False)
         ctx = dict(
-            default_model='account.move',
-            default_res_id=self.id,
-            default_res_model='account.move',
-            default_use_template=bool(email_template),
+            active_model='account.move',
+            active_ids=[self.id],
             default_template_id=email_template and email_template.id or False,
-            default_composition_mode='comment',
-            mark_invoice_as_sent=True,
-            custom_layout="mail.mail_notification_paynow",
-            model_description=self.with_context(lang=lang).type_name,
-            force_email=True
         )
 
         return {
@@ -400,9 +393,9 @@ class AccountInvoiceElectronic(models.Model):
             'type': 'ir.actions.act_window',
             'view_type': 'form',
             'view_mode': 'form',
-            'res_model': 'account.invoice.send',
-            'views': [(compose_form.id, 'form')],
-            'view_id': compose_form.id,
+            'res_model': 'account.move.send.wizard',
+            'views': [(compose_form.id if compose_form else False, 'form')],
+            'view_id': compose_form.id if compose_form else False,
             'target': 'new',
             'context': ctx,
         }
@@ -1504,9 +1497,8 @@ class AccountInvoiceElectronic(models.Model):
                         continue
 
             # Calcular si aplica IVA Devuelto
-            # Sólo aplica para clínicas y para pago por tarjeta
-            actividad_iva_devuelto = 'CLINICA, CENTROS MEDICOS, HOSPITALES PRIVADOS Y OTROS'
-            if inv.economic_activity_id.name == actividad_iva_devuelto and inv.payment_methods_id.sequence == '02':
+            # Aplica cuando el pago es con tarjeta y el producto tiene el flag iva_devuelto_tarjeta
+            if inv.payment_methods_id.sequence == '02':
                 prod_iva_devuelto = self.env.ref('cr_electronic_invoice.product_iva_devuelto')
                 iva_devuelto = 0
                 for inv_line in inv.invoice_line_ids:
@@ -1514,7 +1506,7 @@ class AccountInvoiceElectronic(models.Model):
                         # Remove any existing IVA Devuelto lines
                         if inv_line.product_id.id == prod_iva_devuelto.id:
                             inv_line.unlink()
-                        elif inv_line.product_id.categ_id.name == 'Servicios de Salud':
+                        elif inv_line.product_id.iva_devuelto_tarjeta:
                             iva_devuelto += inv_line.price_tax
                 if iva_devuelto:
                     self.env['account.move.line'].create({

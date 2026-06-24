@@ -137,11 +137,10 @@
                 <attribute name="decoration-danger">
                     state_tributacion == 'rechazado'
                 </attribute>
-            </tree>
-            <field name="state" position="before">
+            </list>
+            <field name="move_type" position="before">
                 <field name="tipo_documento" string="Doc Elect." optional="show"/>
                 <field name="sequence" string="Consecutive" optional="show"/>
-                <field name="move_type" column_invisible="1" readonly="1"/>
                 <field name="state_tributacion" string="State FE" optional="show"/>
             </field>
         </field>
