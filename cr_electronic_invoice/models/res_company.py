@@ -31,6 +31,13 @@ class CompanyElectronic(models.Model):
     activity_id = fields.Many2one("economic.activity",
                                   string="Default economic activity",
                                   context={'active_test': False})
+    economic_activity_ids = fields.Many2many(
+        'economic.activity',
+        'economic_activity_company_rel',
+        'company_id',
+        'activity_id',
+        string='Economic Activities',
+    )
     signature = fields.Binary(string="Cryptographic Key", )
     date_expiration_sign = fields.Datetime(string="Due date", default='1985-08-28 00:00:00')
     range_days = fields.Integer(string='Days range', default=5)
@@ -232,37 +239,23 @@ class CompanyElectronic(models.Model):
                 body=_("Signature requerido"))
 
     def action_get_economic_activities(self):
-        if self.vat:
-            json_response = api_facturae.get_economic_activities(self)
+        result = self.partner_id.action_get_economic_activities()
 
-            self.env['economic.activity'].with_context(active_test=False).search([]).write({'active': False})
+        fetched = self.partner_id.with_context(active_test=False).economic_activities_ids
+        EconomicActivity = self.env['economic.activity'].with_context(active_test=False)
 
-            self.message_post(subject=_('Actividades Económicas'),
-                              body=_('Aviso!.\n Cargando actividades económicas desde Hacienda'))
+        # Remove this company from all previously linked activities.
+        stale = EconomicActivity.search([('company_ids', 'in', self.ids)])
+        stale.write({'company_ids': [(3, self.id)]})
 
-            if json_response["status"] == 200:
-                activities = json_response["activities"]
-                activities_codes = list([])
-                for activity in activities:
-                    if activity["estado"] == "A":
-                        activities_codes.append(activity["codigo"])
+        # Deactivate activities that now belong to no company.
+        orphaned = stale.filtered(lambda a: not a.company_ids)
+        orphaned.write({'active': False})
 
-                economic_activities = self.env['economic.activity'].with_context(active_test=False).search([
-                    ('code', 'in', activities_codes)])
+        if fetched:
+            fetched.write({'company_ids': [(4, self.id)]})
+            self.legal_name = self.partner_id.name
+            if not self.activity_id:
+                self.activity_id = fetched[0]
 
-                for activity in economic_activities:
-                    activity.active = True
-
-                self.legal_name = json_response["name"]
-            else:
-                alert = {
-                    'title': json_response["status"],
-                    'message': json_response["text"]
-                }
-                return {'value': {'vat': ''}, 'warning': alert}
-        else:
-            alert = {
-                'title': 'Atención',
-                'message': _('Company VAT is invalid')
-            }
-            return {'value': {'vat': ''}, 'warning': alert}
+        return result

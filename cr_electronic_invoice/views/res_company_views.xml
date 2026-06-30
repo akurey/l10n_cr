@@ -22,8 +22,18 @@
             <field name="website" position="before">
                 <field name="commercial_name"/>
                 <field name="legal_name"/>
-                <field name="activity_id" domain="[('active', '=', True)]" options='{"no_open": True, "no_create": True}' />
+            </field>
+
+            <field name="currency_id" position="after">
+                <field name="activity_id" domain="[('id', 'in', economic_activity_ids)]" options='{"no_open": True, "no_create": True}' />
                 <button name="action_get_economic_activities" type="object" string="Consultar Actividad Economica en Hacienda" colspan="2" />
+                <field name="economic_activity_ids" colspan="2" options='{"no_create": True}'>
+                    <list>
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="sale_type"/>
+                    </list>
+                </field>
             </field>
 
             <field name="vat" position="before">

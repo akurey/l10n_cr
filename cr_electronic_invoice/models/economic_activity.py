@@ -15,6 +15,13 @@ class EconomicActivity(models.Model):
     sale_type = fields.Selection(selection=[('goods', 'Goods'), ('services', 'Services')],
                                  default='goods',
                                  required=True)
+    company_ids = fields.Many2many(
+        'res.company',
+        'economic_activity_company_rel',
+        'activity_id',
+        'company_id',
+        string='Companies',
+    )
 
     @api.model
     def name_search(self, name='', domain=None, operator='ilike', limit=100):

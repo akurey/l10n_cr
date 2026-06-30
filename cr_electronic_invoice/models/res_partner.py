@@ -102,29 +102,29 @@ class PartnerElectronic(models.Model):
             json_response = api_facturae.get_economic_activities(self)
             _logger.debug('E-INV CR  - Economic Activities: %s', json_response)
             if json_response["status"] == 200:
-                activities = json_response["activities"]
-                # Activity Codes
-                economic_activities = self.env['economic.activity']
-                a_codes = list([])
-                for activity in activities:
-                    if activity["estado"] == "A":
-                        a_codes.append(activity["codigo"])
-                        economic_activity = self.env['economic.activity'].with_context(active_test=False).search([('code', '=', activity["codigo"])], limit=1)
-                        if not economic_activity:
-                            economic_activity = self.env['economic.activity'].create({
-                                'name': activity["descripcion"],
-                                'code': activity["codigo"],
-                                'description': activity["descripcion"],
-                                'sale_type': 'services' if activity["tipo"] == "S" else 'goods',
-                            })
-                        economic_activities += economic_activity
+                EconomicActivity = self.env['economic.activity'].with_context(active_test=False)
+                activity_ids = []
+                a_codes = []
+                for activity in (json_response["activities"] or []):
+                    if activity.get("estado") != "A":
+                        continue
+                    a_codes.append(activity["codigo"])
+                    record = EconomicActivity.search([('code', '=', activity["codigo"])], limit=1)
+                    if not record:
+                        record = EconomicActivity.create({
+                            'code': activity["codigo"],
+                            'name': activity.get("descripcion", ""),
+                            'description': activity.get("descripcion", ""),
+                            'sale_type': 'services' if activity.get("tipo") == "S" else 'goods',
+                        })
+                    activity_ids.append(record.id)
 
-                
-                
-                if economic_activities:
-                    self.economic_activities_ids = economic_activities
-                else:
-                    self.economic_activities_ids = False
+                _logger.info('E-INV CR - activities from Hacienda for %s: %s', self.vat, a_codes)
+
+                economic_activities = EconomicActivity.browse(activity_ids)
+                economic_activities.filtered(lambda a: not a.active).write({'active': True})
+
+                self.economic_activities_ids = [(6, 0, activity_ids)] if activity_ids else False
 
                 self.name = json_response["name"]
 
