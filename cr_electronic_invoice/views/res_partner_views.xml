@@ -19,7 +19,7 @@
             </field>
 
             <xpath expr="//form/sheet/notebook" position="before">
-                <group col="7">
+                <group col="7" groups="account.group_account_user,account.group_account_readonly">
                     <separator colspan="7"/>
                     <field name="activity_id" domain="[('id', 'in', economic_activities_ids)]" options="{&quot;no_create&quot;: True, &quot;active_test&quot;: False}" colspan="5" />
                     <button name="action_get_economic_activities" type="object" string="Consultar Actividad Economica en Hacienda" colspan="2" />
