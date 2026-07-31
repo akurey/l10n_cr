@@ -10,13 +10,12 @@
                 <setting string="Origen del tipo de cambio">
                     <field name="exchange_source"/>
                 </setting>
-                <setting string="Usuario BCCR" invisible="exchange_source != 'bccr'">
-                    <field name="bccr_username" string="Usuario registrado en el BCCR"/>
-                </setting>
                 <setting string="Email BCCR" invisible="exchange_source != 'bccr'">
                     <field name="bccr_email" string="Email registrado en el BCCR"/>
                 </setting>
-                <setting string="Token BCCR" invisible="exchange_source != 'bccr'">
+                <setting string="Token BCCR"
+                         help="Token generado en el sitio de Indicadores Económicos, en Mi Perfil → Generar token. No es el token de suscripción del antiguo servicio SOAP."
+                         invisible="exchange_source != 'bccr'">
                     <field name="bccr_token" string="Token BCCR" password="True"/>
                 </setting>
             </xpath>
