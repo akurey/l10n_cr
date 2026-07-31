@@ -13,9 +13,15 @@ class ResConfigSettings(models.TransientModel):
         ('hacienda', 'Hacienda')
         ], default='disabled')
 
+    # Kept for backwards compatibility: the retired SOAP service took the user
+    # name as a request parameter, the SDDE REST API does not use it
     bccr_username = fields.Char(string="BCCR username")
     bccr_email = fields.Char(string="e-mail registered in the BCCR")
-    bccr_token = fields.Char(string="Token to use in the BCCR",)
+    bccr_token = fields.Char(
+        string="BCCR access token",
+        help="Bearer token generated on the Indicadores Economicos site "
+             "under Mi Perfil -> Generar token. It is not the subscription "
+             "token of the old SOAP web service.")
 
     @api.model
     def get_values(self):
