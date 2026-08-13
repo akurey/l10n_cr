@@ -502,6 +502,7 @@ _____________________<br/>
 Firma
                         </td>
                         <td style="border:1px solid black;" class="text-right">
+                            <div id="right-elements">
                             <table class="table table-sm">
                                 <tr class="border-black o_subtotal" style="">
                                     <td>
@@ -550,6 +551,7 @@ Firma
                                     </td>
                                 </tr>
                             </table>
+                            </div>
                         </td>
                     </tr>
                 </table>
