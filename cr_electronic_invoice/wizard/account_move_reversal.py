@@ -8,8 +8,8 @@ class AccountMoveReversal(models.TransientModel):
     Account move reversal wizard, it cancel an account move by reversing it.
     """
 
-    reference_code_id = fields.Many2one("reference.code", string="Reference Code", required=True)
-    reference_document_id = fields.Many2one("reference.document", string="Reference Document", required=True)
+    reference_code_id = fields.Many2one("reference.code", string="Reference Code")
+    reference_document_id = fields.Many2one("reference.document", string="Reference Document")
 
     def _prepare_default_reversal(self, move):
         default_values = super()._prepare_default_reversal(move)

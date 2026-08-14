@@ -52,11 +52,11 @@
                 <field name="tipo_documento"
                     readonly="state != 'draft'"
                     invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
-                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
+                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and company_id.frm_ws_ambiente != 'disabled'"/>
                 <field name="payment_methods_id"
                     readonly="state != 'draft'"
                     invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
-                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
+                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and company_id.frm_ws_ambiente != 'disabled'"/>
             </field>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='name']" position="after">
@@ -66,8 +66,9 @@
             </xpath>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='discount']" position="after">
+                <field name="company_id" column_invisible="True"/>
                 <field name="discount_note" optional="hide" />
-                <field name="discount_code_id" optional="hide" required="discount != 0"/>
+                <field name="discount_code_id" optional="hide" required="discount != 0 and company_id.frm_ws_ambiente != 'disabled'"/>
                 <field name="discount_code_code" column_invisible="True"/>
                 <field name="other_discount_code" invisible="discount_code_code != '99'" optional="hide"/>
                 <field name="tariff_head"/>
