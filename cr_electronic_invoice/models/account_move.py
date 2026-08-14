@@ -461,6 +461,8 @@ class AccountInvoiceElectronic(models.Model):
 
     def send_mrs_to_hacienda(self):
         for inv in self:
+            if inv.company_id.frm_ws_ambiente == 'disabled':
+                continue
             if inv.xml_supplier_approval:
 
                 # Verificar si el MR ya fue enviado y estamos esperando la confirmación
@@ -664,7 +666,7 @@ class AccountInvoiceElectronic(models.Model):
     @api.model
     # cron Job that verifies if the invoices are Validated at Tributación
     def _check_hacienda_for_invoices(self, max_invoices=10):
-        for company in self.env['res.company'].search([]):
+        for company in self.env['res.company'].search([('frm_ws_ambiente', '!=', 'disabled')]):
             self.with_company(company)._check_hacienda_for_invoices_company(company, max_invoices)
 
     def _check_hacienda_for_invoices_company(self, company, max_invoices=10):
@@ -832,7 +834,7 @@ class AccountInvoiceElectronic(models.Model):
 
     @api.model
     def _check_hacienda_for_mrs(self, max_invoices=10):  # cron
-        for company in self.env['res.company'].search([]):
+        for company in self.env['res.company'].search([('frm_ws_ambiente', '!=', 'disabled')]):
             self.with_company(company)._check_hacienda_for_mrs_company(company, max_invoices)
 
     def _check_hacienda_for_mrs_company(self, company, max_invoices=10):
@@ -913,6 +915,8 @@ class AccountInvoiceElectronic(models.Model):
 
         for inv in invoices:
             try:
+                if inv.company_id.frm_ws_ambiente == 'disabled':
+                    continue
                 current_invoice += 1
                 days_left = inv.company_id.get_days_left()
                 message = inv.company_id.get_message_to_send()
@@ -1630,6 +1634,8 @@ class AccountInvoiceElectronic(models.Model):
                 self.partner_id = cliente.id
     
     def get_new_partner_economic_activities(self, partner):
+        if self.company_id.frm_ws_ambiente == 'disabled':
+            return
         json_response = api_facturae.get_economic_activities(partner)
         if json_response["status"] == 200:
             activities = json_response["activities"]

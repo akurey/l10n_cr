@@ -23,6 +23,9 @@ class AccountPaymentRegister(models.TransientModel):
                 continue
             invoice = invoice[0]
 
+            if invoice.company_id.frm_ws_ambiente == 'disabled':
+                continue
+
             sucursal_id = payment.move_id.journal_id.sucursal or self.env.user.company_id.sucursal_MR
             terminal_id = payment.move_id.journal_id.terminal or self.env.user.company_id.terminal_MR
             sequence = self.env['ir.sequence'].next_by_code('sequence.REP')
