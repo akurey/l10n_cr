@@ -25,9 +25,9 @@
             </field>
 
             <field name="currency_id" position="after">
-                <field name="activity_id" domain="[('id', 'in', economic_activity_ids)]" options='{"no_open": True, "no_create": True}' />
-                <button name="action_get_economic_activities" type="object" string="Consultar Actividad Economica en Hacienda" colspan="2" />
-                <field name="economic_activity_ids" colspan="2" options='{"no_create": True}'>
+                <field name="activity_id" domain="[('id', 'in', economic_activity_ids)]" options='{"no_open": True, "no_create": True}' invisible="frm_ws_ambiente == 'disabled'"/>
+                <button name="action_get_economic_activities" type="object" string="Consultar Actividad Economica en Hacienda" colspan="2" invisible="frm_ws_ambiente == 'disabled'"/>
+                <field name="economic_activity_ids" colspan="2" options='{"no_create": True}' invisible="frm_ws_ambiente == 'disabled'">
                     <list>
                         <field name="code"/>
                         <field name="name"/>
@@ -70,7 +70,7 @@
             <xpath expr="//page[1]" position="after">
                 <page string="Electronic Invoice">
                     <group cols="2">
-                        <group cols="2">
+                        <group cols="2" invisible="frm_ws_ambiente == 'disabled'">
                             <field name="signature"/>
                             <field name="frm_ws_identificador"/>
                             <field name="frm_ws_password" password="True"/>
@@ -81,17 +81,17 @@
                             <field name="to_emails"/>
                         </group>
                         <group cols="2">
-                            <button name="test_get_token" type="object" string="Test get token" colspan="2" />
+                            <button name="test_get_token" type="object" string="Test get token" colspan="2" invisible="frm_ws_ambiente == 'disabled'"/>
                             <field name="frm_ws_ambiente" widget="radio"/>
                         </group>
-                        <group cols="2">
+                        <group cols="2" invisible="frm_ws_ambiente == 'disabled'">
                             <field name="CCE_sequence_id"/>
                             <field name="CPCE_sequence_id"/>
                             <field name="RCE_sequence_id"/>
                             <field name="FEC_sequence_id"/>
                         </group>
 
-                        <group cols="2">
+                        <group cols="2" invisible="frm_ws_ambiente == 'disabled'">
                             <field name="sucursal_MR"/>
                             <field name="terminal_MR"/>
                         </group>

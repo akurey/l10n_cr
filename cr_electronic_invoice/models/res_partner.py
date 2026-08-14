@@ -35,6 +35,18 @@ class PartnerElectronic(models.Model):
     export = fields.Boolean(string="It's export", default=False)
     exoneration_article = fields.Char(string="Exoneration Article", help="Número de artículo que establece la exoneración")
     exoneration_clause = fields.Char(string="Exoneration Clause", help="Número de inciso que establece la exoneración o autorización")
+    frm_ws_ambiente = fields.Selection(
+        selection=[('disabled', 'Deshabilitado'),
+                  ('api-stag', 'Pruebas'),
+                  ('api-prod', 'Producción')],
+        string="Environment",
+        compute="_compute_frm_ws_ambiente",
+    )
+
+    def _compute_frm_ws_ambiente(self):
+        ambiente = self.env.company.frm_ws_ambiente
+        for partner in self:
+            partner.frm_ws_ambiente = ambiente
 
     @api.onchange('phone')
     def _onchange_phone(self):
@@ -98,6 +110,8 @@ class PartnerElectronic(models.Model):
                                           'sin ceros al inicio y sin guiones.'))
 
     def action_get_economic_activities(self):
+        if self.env.company.frm_ws_ambiente == 'disabled':
+            return
         if self.vat:
             json_response = api_facturae.get_economic_activities(self)
             _logger.debug('E-INV CR  - Economic Activities: %s', json_response)

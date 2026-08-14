@@ -218,6 +218,8 @@ class CompanyElectronic(models.Model):
             self.write(to_write)
 
     def test_get_token(self):
+        if self.frm_ws_ambiente == 'disabled':
+            return
         self.get_expiration_date()
         token_m_h = api_facturae.get_token_hacienda(
             self.env.user, self.frm_ws_ambiente)

@@ -36,6 +36,8 @@ class AccountPayment(models.Model):
     
     
     def consult_rep_document(self):
+        if self.move_id.company_id.frm_ws_ambiente == 'disabled':
+            return
         token_m_h = api_facturae.get_token_hacienda(self.move_id, self.move_id.company_id.frm_ws_ambiente)
         response_json_consulta_clave = api_facturae.consulta_clave(self.clave, token_m_h, self.move_id.company_id.frm_ws_ambiente)
                 

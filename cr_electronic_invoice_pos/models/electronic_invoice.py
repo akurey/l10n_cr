@@ -271,6 +271,8 @@ class PosOrder(models.Model):
         _logger.info(
             'E-INV CR - Consulta Hacienda - POS Orders to check: %s', total_orders)
         for doc in pos_orders:
+            if doc.company_id.frm_ws_ambiente == 'disabled':
+                continue
             current_order += 1
             _logger.info(
                 'E-INV CR - Consulta Hacienda - POS Order %s / %s', current_order, total_orders)

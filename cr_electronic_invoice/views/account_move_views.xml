@@ -34,8 +34,8 @@
             <field name="partner_id" position="after">
                 <field name="economic_activities_ids" invisible="1" readonly="1" options='{"active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
                 <field name="economic_activity_id"
-                    required="move_type in ('out_invoice', 'out_refund')"
-                    invisible="move_type not in ('out_invoice', 'out_refund') and tipo_documento != 'FEC'"
+                    required="move_type in ('out_invoice', 'out_refund') and company_id.frm_ws_ambiente != 'disabled'"
+                    invisible="(move_type not in ('out_invoice', 'out_refund') and tipo_documento != 'FEC') or company_id.frm_ws_ambiente == 'disabled'"
                     domain="[('id', 'in', economic_activities_ids),]"
                     options='{"no_open": True, "no_create": True, "active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
                 <field name="show_exoneration" invisible="1"/>
@@ -83,7 +83,7 @@
             </xpath>
 
             <xpath expr="//page[2]" position="after">
-                <page name="fe_invoice_data" string="Electronic Information" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')">
+                <page name="fe_invoice_data" string="Electronic Information" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and company_id.frm_ws_ambiente == 'disabled')">
                     <group id="fe_tab_group" col="2">
                         <group string="Electronic Acceptance" name="fe_in_info_group" colspan="2" col="5" invisible="tipo_documento == 'FEC' or move_type in ('out_invoice', 'out_refund')">
                             <field name="fname_xml_supplier_approval" invisible="1" colspan="5" />
@@ -91,7 +91,7 @@
                             <button name="load_xml_data" type="object" string="Cargar datos del XML" colspan="1" invisible="xml_supplier_approval == False or move_type in ('out_invoice', 'out_refund') or tipo_documento == 'FEC' or state != 'draft'"/>
                             <field name="state_invoice_partner" colspan="5" invisible="move_type in ('out_invoice', 'out_refund') or tipo_documento == 'FEC'"/>
                         </group>
-                        <group name="eref_info_group" colspan="2">
+                        <group name="eref_info_group" colspan="2" invisible="company_id.frm_ws_ambiente == 'disabled'">
                             <group string="Electronic Document Reference" name="eref_info_group1" colspan="2">
                                 <field name="reference_code_id" readonly="state != 'draft'"/>
                                 <field name="reference_document_id" readonly="state != 'draft'"/>
