@@ -452,7 +452,11 @@
                                     <span t-field="l.discount"/>
                                 </td>
                                 <td class="text-right">
-                                    <span t-if="l.tax_ids" t-esc="', '.join(map(lambda x: (x.description or x.name), l.tax_ids))"/>
+                                    <!-- 19-port: same fix as cr_electronic_invoice/views/report_invoice_document.xml -
+                                         account.tax.description became an Html field (core auto-wraps plain
+                                         text in a <div>), so t-esc'ing it printed the raw markup. Use
+                                         tax_label (plain Char, invoice_label or name) instead. -->
+                                    <span t-if="l.tax_ids" t-esc="', '.join(map(lambda x: x.tax_label, l.tax_ids))"/>
                                     <span t-if="not l.tax_ids">EXE</span>
                                 </td>
                                 <td class="text-right">
