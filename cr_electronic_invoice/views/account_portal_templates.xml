@@ -92,6 +92,18 @@
                                 </div>
                             </li>
                         </ul>
+                        <!-- 19-port: empty (not hidden - display:none would also
+                             hide anything xpath-inserted after it) anchor, purely
+                             so sale_timesheet.portal_invoice_page_inherit's xpath
+                             (//t[@t-set='entries']/div/div/div[hasclass('o_download_pdf')],
+                             position="after") has something to match - this
+                             template fully replaces (not xpath-inherits)
+                             account.portal_invoice_page, using a real ul/li/div
+                             structure instead of core's div/div/div, so
+                             sale_timesheet's exact-path xpath could never match it
+                             as-is. Its "View Timesheets" button will render right
+                             after this (empty, so visually a no-op) anchor. -->
+                        <div><div><div class="o_download_pdf"/></div></div>
                     </t>
                 </t>
 

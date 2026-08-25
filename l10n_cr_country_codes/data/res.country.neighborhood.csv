@@ -75,7 +75,7 @@ neighborhood_Cornelia_Patalillo_Vásquez_de_Coronado_SJ,01,Cornelia,district_Pat
 neighborhood_Avilés_Cascajal_Vásquez_de_Coronado_SJ,01,Avilés,district_Cascajal_Vásquez_de_Coronado_SJ
 neighborhood_Abarca_San_Ignacio_Acosta_SJ,01,Abarca,district_San_Ignacio_Acosta_SJ
 neighborhood_Alto_Sierra_Guaitil_Villa_Acosta_SJ,01,Alto Sierra,district_Guaitil_Villa_Acosta_SJ
-neighborhood_San_Pablo_Palmichal_Acosta_SJ,01,San Pablo,district_Palmichal_Acosta_SJ
+neighborhood_San_Pablo_Palmichal_Acosta_SJ_01,01,San Pablo,district_Palmichal_Acosta_SJ
 neighborhood_Bajo_Los_Cruces_Cangrejal_Acosta_SJ,01,Bajo Los Cruces,district_Cangrejal_Acosta_SJ
 neighborhood_Alto_Parritón_Sabanillas_Acosta_SJ,01,Alto Parritón,district_Sabanillas_Acosta_SJ
 neighborhood_Acacias_San_Juan_Tibás_SJ,01,Acacias,district_San_Juan_Tibás_SJ
@@ -1659,7 +1659,7 @@ neighborhood_Guayabal_Canoas_Corredores_P,15,Guayabal,district_Canoas_Corredores
 neighborhood_Kilómetro_25_Laurel_Corredores_P,15,Kilómetro 25,district_Laurel_Corredores_P
 neighborhood_Playa_Azul_Tárcoles_Garabito_P,15,Playa Azul,district_Tárcoles_Garabito_P
 neighborhood_Hospital_Limón_Limón_L,15,Hospital,district_Limón_Limón_L
-neighborhood_Brisas_Valle_La_Estrella_Limón_L,15,Brisas,district_Valle_La_Estrella_Limón_L
+neighborhood_Brisas_Valle_La_Estrella_Limón_L_15,15,Brisas,district_Valle_La_Estrella_Limón_L
 neighborhood_Polonia_Matama_Limón_L,15,Polonia,district_Matama_Limón_L
 neighborhood_Toro_Amarillo._Guápiles_Pococí_L,15,Toro Amarillo.,district_Guápiles_Pococí_L
 neighborhood_San_Valentín_Jiménez_Pococí_L,15,San Valentín,district_Jiménez_Pococí_L
@@ -1979,7 +1979,7 @@ neighborhood_Mastatal_Chires_Puriscal_SJ,18,Mastatal,district_Chires_Puriscal_SJ
 neighborhood_Nápoles_San_Lorenzo_Tarrazú_SJ,18,Nápoles,district_San_Lorenzo_Tarrazú_SJ
 neighborhood_Santo_Cristo_Guadalupe_Goicoechea_SJ,18,Santo Cristo,district_Guadalupe_Goicoechea_SJ
 neighborhood_Tablazo._San_Ignacio_Acosta_SJ,18,Tablazo.,district_San_Ignacio_Acosta_SJ
-neighborhood_San_Pablo_Palmichal_Acosta_SJ,18,San Pablo,district_Palmichal_Acosta_SJ
+neighborhood_San_Pablo_Palmichal_Acosta_SJ_18,18,San Pablo,district_Palmichal_Acosta_SJ
 neighborhood_Zoncuano._Sabanillas_Acosta_SJ,18,Zoncuano.,district_Sabanillas_Acosta_SJ
 neighborhood_Jardines_de_Moravia_San_Vicente_Moravia_SJ,18,Jardines de Moravia,district_San_Vicente_Moravia_SJ
 neighborhood_Santa_Marta_San_Pedro_Montes_de_Oca_SJ,18,Santa Marta,district_San_Pedro_Montes_de_Oca_SJ
@@ -2499,7 +2499,7 @@ neighborhood_Joaquineños_San_Joaquín_Flores_H,02,Joaquineños,district_San_Joa
 neighborhood_Ugalde._Barrantes_Flores_H,02,Ugalde.,district_Barrantes_Flores_H
 neighborhood_Año_2000_Llorente_Flores_H,02,Año 2000,district_Llorente_Flores_H
 neighborhood_Amada_San_Pablo_San_Pablo_H,02,Amada,district_San_Pablo_San_Pablo_H
-neighborhood_Esperanza_Puerto_Viejo_Sarapiquí_H,02,Esperanza,district_Puerto_Viejo_Sarapiquí_H
+neighborhood_Esperanza_Puerto_Viejo_Sarapiquí_H_02,02,Esperanza,district_Puerto_Viejo_Sarapiquí_H
 neighborhood_Arbolitos_(parte)_La_Virgen_Sarapiquí_H,02,Arbolitos (parte),district_La_Virgen_Sarapiquí_H
 neighborhood_Cerro_Negro_(parte)_Las_Horquetas_Sarapiquí_H,02,Cerro Negro (parte),district_Las_Horquetas_Sarapiquí_H
 neighborhood_Chimurria_Llanuras_Del_Gaspar_Sarapiquí_H,02,Chimurria,district_Llanuras_Del_Gaspar_Sarapiquí_H
@@ -2867,7 +2867,7 @@ neighborhood_Bajo_Barrientos_Turrialba_Turrialba_C,22,Bajo Barrientos,district_T
 neighborhood_Selva_(parte)_La_Suiza_Turrialba_C,22,Selva (parte),district_La_Suiza_Turrialba_C
 neighborhood_Estrella_San_Isidro_El_Guarco_C,22,Estrella,district_San_Isidro_El_Guarco_C
 neighborhood_Rincón_de_Ricardo_San_Pablo_San_Pablo_H,22,Rincón de Ricardo,district_San_Pablo_San_Pablo_H
-neighborhood_Esperanza_Puerto_Viejo_Sarapiquí_H,22,Esperanza,district_Puerto_Viejo_Sarapiquí_H
+neighborhood_Esperanza_Puerto_Viejo_Sarapiquí_H_22,22,Esperanza,district_Puerto_Viejo_Sarapiquí_H
 neighborhood_San_Gerardo_(parte)_La_Virgen_Sarapiquí_H,22,San Gerardo (parte),district_La_Virgen_Sarapiquí_H
 neighborhood_Finca_Zona_Once_Las_Horquetas_Sarapiquí_H,22,Finca Zona Once,district_Las_Horquetas_Sarapiquí_H
 neighborhood_San_Roque_Liberia_Liberia_G,22,San Roque,district_Liberia_Liberia_G
@@ -3092,7 +3092,7 @@ neighborhood_Unión_San_José_O_Pizote_Upala_A,25,Unión,district_San_José_O_Pi
 neighborhood_Medio_Queso_Los_Chiles_Los_Chiles_A,25,Medio Queso,district_Los_Chiles_Los_Chiles_A
 neighborhood_Chiz_Turrialba_Turrialba_C,25,Chiz,district_Turrialba_Turrialba_C
 neighborhood_La_Paz_San_Isidro_El_Guarco_C,25,La Paz,district_San_Isidro_El_Guarco_C
-neighborhood_Jardín_Puerto_Viejo_Sarapiquí_H,25,Jardín,district_Puerto_Viejo_Sarapiquí_H
+neighborhood_Jardín_Puerto_Viejo_Sarapiquí_H_25,25,Jardín,district_Puerto_Viejo_Sarapiquí_H
 neighborhood_San_Ramón_La_Virgen_Sarapiquí_H,25,San Ramón,district_La_Virgen_Sarapiquí_H
 neighborhood_Victoria_Liberia_Liberia_G,25,Victoria,district_Liberia_Liberia_G
 neighborhood_Gamalotal_Nicoya_Nicoya_G,25,Gamalotal,district_Nicoya_Nicoya_G
@@ -3345,7 +3345,7 @@ neighborhood_Sándalo_Puerto_Jiménez_Golfito_P,29,Sándalo,district_Puerto_Jim�
 neighborhood_Unión_del_Sur_Pavón_Golfito_P,29,Unión del Sur,district_Pavón_Golfito_P
 neighborhood_Santa_Teresa_Sabalito_Coto_Brus_P,29,Santa Teresa,district_Sabalito_Coto_Brus_P
 neighborhood_Coto_52-53_Corredor_Corredores_P,29,Coto 52-53,district_Corredor_Corredores_P
-neighborhood_Buenos_Aires_Limón_Limón_L,29,Buenos Aires,district_Limón_Limón_L
+neighborhood_Buenos_Aires_Limón_Limón_L_29,29,Buenos Aires,district_Limón_Limón_L
 neighborhood_Gavilán_Valle_La_Estrella_Limón_L,29,Gavilán,district_Valle_La_Estrella_Limón_L
 neighborhood_Suerte_Rita_Pococí_L,29,Suerte,district_Rita_Pococí_L
 neighborhood_San_Miguel_Cariari_Pococí_L,29,San Miguel,district_Cariari_Pococí_L
@@ -3643,7 +3643,7 @@ neighborhood_Bosques_de_Doña_Rosa_La_Asunción_Belén_H,03,Bosques de Doña Ros
 neighborhood_Luisiana_San_Joaquín_Flores_H,03,Luisiana,district_San_Joaquín_Flores_H
 neighborhood_Cristo_Rey_(parte)_Llorente_Flores_H,03,Cristo Rey (parte),district_Llorente_Flores_H
 neighborhood_Asovigui_San_Pablo_San_Pablo_H,03,Asovigui,district_San_Pablo_San_Pablo_H
-neighborhood_Jardín_Puerto_Viejo_Sarapiquí_H,03,Jardín,district_Puerto_Viejo_Sarapiquí_H
+neighborhood_Jardín_Puerto_Viejo_Sarapiquí_H_03,03,Jardín,district_Puerto_Viejo_Sarapiquí_H
 neighborhood_Bajos_de_Chilamate_La_Virgen_Sarapiquí_H,03,Bajos de Chilamate,district_La_Virgen_Sarapiquí_H
 neighborhood_Colonia_Bambú_Las_Horquetas_Sarapiquí_H,03,Colonia Bambú,district_Las_Horquetas_Sarapiquí_H
 neighborhood_Chirriposito_Llanuras_Del_Gaspar_Sarapiquí_H,03,Chirriposito,district_Llanuras_Del_Gaspar_Sarapiquí_H
@@ -4503,7 +4503,7 @@ neighborhood_Bajo_Canoas_Corredores_P,04,Bajo,district_Canoas_Corredores_P
 neighborhood_Bijagual_Laurel_Corredores_P,04,Bijagual,district_Laurel_Corredores_P
 neighborhood_Cerro_Fresco_Jacó_Garabito_P,04,Cerro Fresco,district_Jacó_Garabito_P
 neighborhood_Caletas_Tárcoles_Garabito_P,04,Caletas,district_Tárcoles_Garabito_P
-neighborhood_Buenos_Aires_Limón_Limón_L,04,Buenos Aires,district_Limón_Limón_L
+neighborhood_Buenos_Aires_Limón_Limón_L_04,04,Buenos Aires,district_Limón_Limón_L
 neighborhood_Loras_Valle_La_Estrella_Limón_L,04,Loras,district_Valle_La_Estrella_Limón_L
 neighborhood_Bearesem_Matama_Limón_L,04,Bearesem,district_Matama_Limón_L
 neighborhood_Cecilia_Guápiles_Pococí_L,04,Cecilia,district_Guápiles_Pococí_L
@@ -5102,7 +5102,7 @@ neighborhood_San_Juan_(Quebrada_Palo)_Quesada_San_Carlos_A,55,San Juan (Quebrada
 neighborhood_Zompopa._Nicoya_Nicoya_G,55,Zompopa.,district_Nicoya_Nicoya_G
 neighborhood_Trenzas_Golfito_Golfito_P,55,Trenzas,district_Golfito_Golfito_P
 neighborhood_Valle_Vasconia_Parrita_Parrita_P,55,Valle Vasconia,district_Parrita_Parrita_P
-neighborhood_Brisas_Valle_La_Estrella_Limón_L,55,Brisas,district_Valle_La_Estrella_Limón_L
+neighborhood_Brisas_Valle_La_Estrella_Limón_L_55,55,Brisas,district_Valle_La_Estrella_Limón_L
 neighborhood_Higuerones_San_Isidro_De_El_General_Pérez_Zeledón_SJ,56,Higuerones,district_San_Isidro_De_El_General_Pérez_Zeledón_SJ
 neighborhood_Ronrón_Abajo_Quesada_San_Carlos_A,56,Ronrón Abajo,district_Quesada_San_Carlos_A
 neighborhood_Unión_de_Coto_Golfito_Golfito_P,56,Unión de Coto,district_Golfito_Golfito_P
