@@ -60,9 +60,9 @@
             </field>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='name']" position="after">
-                <field name="categ_name" invisible="1" readonly="1"/>
-                <field name="product_code" invisible="1" readonly="1"/>
-                <field name="third_party_id" invisible="product_code != '04'"/>
+                <field name="categ_name" column_invisible="True" readonly="1"/>
+                <field name="product_code" column_invisible="True" readonly="1"/>
+                <field name="third_party_id" invisible="product_code != '04'" optional="hide"/>
             </xpath>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='discount']" position="after">
