@@ -262,7 +262,7 @@ class ResCurrencyRate(models.Model):
                         url = ('https://api.hacienda.go.cr/indicadores/tc/dolar/historico/?d='
                                + chunk_start.strftime('%Y-%m-%d') + '&h=' + chunk_end.strftime('%Y-%m-%d'))
                         _logger.info('Hacienda request chunk %s → %s', chunk_start, chunk_end)
-                        response = requests.get(url, timeout=10, verify=False)
+                        response = requests.get(url, timeout=10)
                         if response.status_code == 200:
                             chunk_data = response.json()
                             _logger.info('Hacienda chunk returned %d records', len(chunk_data))
@@ -307,7 +307,7 @@ class ResCurrencyRate(models.Model):
             else:
                 try:
                     url = 'https://api.hacienda.go.cr/indicadores/tc'
-                    response = requests.get(url, timeout=5, verify=False)
+                    response = requests.get(url, timeout=5)
 
                 except requests.exceptions.RequestException as e:
                     _logger.error('RequestException %s', e)
@@ -461,7 +461,7 @@ class ResCurrencyRate(models.Model):
 
                 try:
                     url = 'https://api.hacienda.go.cr/indicadores/tc/dolar/historico/?d='+initial_date+'&h='+end_date
-                    response = requests.get(url, timeout=5, verify=False)
+                    response = requests.get(url, timeout=5)
 
                 except requests.exceptions.RequestException as e:
                     _logger.error('RequestException %s', e)
@@ -493,7 +493,7 @@ class ResCurrencyRate(models.Model):
             else:
                 try:
                     url = 'https://api.hacienda.go.cr/indicadores/tc'
-                    response = requests.get(url, timeout=5, verify=False)
+                    response = requests.get(url, timeout=5)
 
                 except requests.exceptions.RequestException as e:
                     _logger.error('RequestException %s', e)
