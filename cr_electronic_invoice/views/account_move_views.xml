@@ -7,13 +7,13 @@
         <field name="arch" type="xml">
 
             <xpath expr="//div[@name='button_box']" position="after">
-                <div invisible="move_type in ('in_invoice', 'in_refund', 'entry')">
+                <div invisible="move_type in ('in_invoice', 'in_refund', 'entry') or company_id.frm_ws_ambiente == 'disabled'">
                     <div class="alert alert-danger" role="alert" invisible="state_tributacion != False or state in ('draft', 'cancel')">
                         The document has not yet been issued, it will be sent automatically in 5 minutes, if you need to send it manually press
                         <button class="btn btn-primary" name="generate_and_send_invoice" type="object" string="Send Document"/>
                     </div>
                 </div>
-                <div invisible="move_type == 'entry'">
+                <div invisible="move_type == 'entry' or company_id.frm_ws_ambiente == 'disabled'">
                     <div class="alert alert-warning" role="alert" invisible="state_tributacion != 'procesando' or state in ('draft', 'cancel')">
                         The document was issued successfully, however we still do not have the answer, it will be consulted in 10 minutes, if you wish to consult it manually press
                         <button class="btn btn-primary" name="action_check_hacienda" type="object" string="Consult Document"/>

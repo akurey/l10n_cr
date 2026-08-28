@@ -33,6 +33,19 @@ class ProductElectronic(models.Model):
         help='Si está activo, el IVA de este producto/servicio se devuelve automáticamente cuando el pago es con tarjeta.'
     )
 
+    frm_ws_ambiente = fields.Selection(
+        selection=[('disabled', 'Deshabilitado'),
+                  ('api-stag', 'Pruebas'),
+                  ('api-prod', 'Producción')],
+        string="Environment",
+        compute="_compute_frm_ws_ambiente",
+    )
+
+    def _compute_frm_ws_ambiente(self):
+        ambiente = self.env.company.frm_ws_ambiente
+        for product in self:
+            product.frm_ws_ambiente = ambiente
+
 
 class ProductCategory(models.Model):
     _inherit = "product.category"
