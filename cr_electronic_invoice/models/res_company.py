@@ -38,7 +38,14 @@ class CompanyElectronic(models.Model):
         'activity_id',
         string='Economic Activities',
     )
-    signature = fields.Binary(string="Cryptographic Key", )
+    # groups='base.group_system': res.company is readable by essentially any
+    # internal user (needed for the multi-company switcher), so without this
+    # any employee could read/exfiltrate the signing certificate, its PIN,
+    # and the Hacienda API password via a plain ORM/RPC read - enough to
+    # forge this company's electronic tax documents. The password="True"
+    # widget on the form view only masks the UI field, it does nothing
+    # against ORM/RPC reads, hence the explicit groups= here.
+    signature = fields.Binary(string="Cryptographic Key", groups='base.group_system')
     date_expiration_sign = fields.Datetime(string="Due date", default='1985-08-28 00:00:00')
     range_days = fields.Integer(string='Days range', default=5)
     send_user_ids = fields.Many2many('res.users', 'res_company_res_sendusers_rel', string='Users')
@@ -46,7 +53,7 @@ class CompanyElectronic(models.Model):
 
     identification_id = fields.Many2one("identification.type", string="Id Type")
     frm_ws_identificador = fields.Char(string="Electronic invoice user")
-    frm_ws_password = fields.Char(string="Electronic invoice password")
+    frm_ws_password = fields.Char(string="Electronic invoice password", groups='base.group_system')
 
     frm_ws_ambiente = fields.Selection(selection=[('disabled', 'Deshabilitado'),
                                                   ('api-stag', 'Pruebas'),
@@ -58,7 +65,7 @@ class CompanyElectronic(models.Model):
                                        'Para el ambiente de calidad (stag), para el ambiente de producción (prod). '
                                        'Requerido.')
 
-    frm_pin = fields.Char(string="Pin", help='Es el pin correspondiente al certificado. Requerido')
+    frm_pin = fields.Char(string="Pin", help='Es el pin correspondiente al certificado. Requerido', groups='base.group_system')
 
     sucursal_MR = fields.Integer(string="Sucursal para secuencias de MRs", default="1")
 
