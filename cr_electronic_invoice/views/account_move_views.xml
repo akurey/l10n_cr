@@ -51,7 +51,7 @@
                 <field name="date_issuance" readonly="1" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
                 <field name="tipo_documento"
                     readonly="state != 'draft'"
-                    invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
+                    invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or company_id.frm_ws_ambiente == 'disabled'"
                     required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and company_id.frm_ws_ambiente != 'disabled'"/>
                 <field name="payment_methods_id"
                     readonly="state != 'draft'"
@@ -62,7 +62,7 @@
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='name']" position="after">
                 <field name="categ_name" column_invisible="True" readonly="1"/>
                 <field name="product_code" column_invisible="True" readonly="1"/>
-                <field name="third_party_id" invisible="product_code != '04'" optional="hide"/>
+                <field name="third_party_id" invisible="product_code != '04' or company_id.frm_ws_ambiente == 'disabled'" optional="hide"/>
             </xpath>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='discount']" position="after">
@@ -84,7 +84,7 @@
             </xpath>
 
             <xpath expr="//page[2]" position="after">
-                <page name="fe_invoice_data" string="Electronic Information" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or (move_type in ('out_invoice', 'out_refund') and company_id.frm_ws_ambiente == 'disabled')">
+                <page name="fe_invoice_data" string="Electronic Information" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or company_id.frm_ws_ambiente == 'disabled'">
                     <group id="fe_tab_group" col="2">
                         <group string="Electronic Acceptance" name="fe_in_info_group" colspan="2" col="5" invisible="tipo_documento == 'FEC' or move_type in ('out_invoice', 'out_refund')">
                             <field name="fname_xml_supplier_approval" invisible="1" colspan="5" />
