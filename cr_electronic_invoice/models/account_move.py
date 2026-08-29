@@ -337,8 +337,6 @@ class AccountInvoiceElectronic(models.Model):
     def action_invoice_sent(self):
         self.ensure_one()
 
-        self.set_currency_rate()
-
         email_template = self.move_type in ['in_invoice', 'in_refund'] and \
             self.env.ref('cr_electronic_invoice.email_template_invoice_vendor', raise_if_not_found=False) or \
             self.env.ref('account.email_template_edi_invoice',
