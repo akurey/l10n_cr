@@ -23,6 +23,10 @@ EXONERATION_FISCAL_POSITION = "Exonerado 13%"
 class InvoiceLineElectronic(models.Model):
     _inherit = "account.move.line"
 
+    # See AccountInvoiceElectronic.frm_ws_ambiente for why this can't just
+    # be "company_id.frm_ws_ambiente" in the view.
+    frm_ws_ambiente = fields.Selection(related="company_id.frm_ws_ambiente")
+
     discount_note = fields.Char()
     total_tax = fields.Float()
     third_party_id = fields.Many2one("res.partner", string="Third - other charges")
@@ -71,6 +75,15 @@ class InvoiceLineElectronic(models.Model):
 
 class AccountInvoiceElectronic(models.Model):
     _inherit = "account.move"
+
+    # Odoo's client flattens a many2one to its bare id in the invisible/
+    # required expression eval context, so "company_id.frm_ws_ambiente"
+    # cannot be read there -- it silently resolves to undefined, meaning
+    # any invisible/required condition built on it never fires (fails
+    # open: elements meant to hide when disabled stay visible). This related
+    # field surfaces the value directly on the record so view expressions
+    # can reference "frm_ws_ambiente" as a plain field name instead.
+    frm_ws_ambiente = fields.Selection(related="company_id.frm_ws_ambiente")
 
     number_electronic = fields.Char(string="Electronic number", copy=False, index=True)
     date_issuance = fields.Char(string="Date of issue", copy=False)

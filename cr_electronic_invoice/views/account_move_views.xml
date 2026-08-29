@@ -7,13 +7,13 @@
         <field name="arch" type="xml">
 
             <xpath expr="//div[@name='button_box']" position="after">
-                <div invisible="move_type in ('in_invoice', 'in_refund', 'entry') or company_id.frm_ws_ambiente == 'disabled'">
+                <div invisible="move_type in ('in_invoice', 'in_refund', 'entry') or frm_ws_ambiente == 'disabled'">
                     <div class="alert alert-danger" role="alert" invisible="state_tributacion != False or state in ('draft', 'cancel')">
                         The document has not yet been issued, it will be sent automatically in 5 minutes, if you need to send it manually press
                         <button class="btn btn-primary" name="generate_and_send_invoice" type="object" string="Send Document"/>
                     </div>
                 </div>
-                <div invisible="move_type == 'entry' or company_id.frm_ws_ambiente == 'disabled'">
+                <div invisible="move_type == 'entry' or frm_ws_ambiente == 'disabled'">
                     <div class="alert alert-warning" role="alert" invisible="state_tributacion != 'procesando' or state in ('draft', 'cancel')">
                         The document was issued successfully, however we still do not have the answer, it will be consulted in 10 minutes, if you wish to consult it manually press
                         <button class="btn btn-primary" name="action_check_hacienda" type="object" string="Consult Document"/>
@@ -32,10 +32,11 @@
             </field>
 
             <field name="partner_id" position="after">
+                <field name="frm_ws_ambiente" invisible="1"/>
                 <field name="economic_activities_ids" invisible="1" readonly="1" options='{"active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
                 <field name="economic_activity_id"
-                    required="move_type in ('out_invoice', 'out_refund') and company_id.frm_ws_ambiente != 'disabled'"
-                    invisible="(move_type not in ('out_invoice', 'out_refund') and tipo_documento != 'FEC') or company_id.frm_ws_ambiente == 'disabled'"
+                    required="move_type in ('out_invoice', 'out_refund') and frm_ws_ambiente != 'disabled'"
+                    invisible="(move_type not in ('out_invoice', 'out_refund') and tipo_documento != 'FEC') or frm_ws_ambiente == 'disabled'"
                     domain="[('id', 'in', economic_activities_ids),]"
                     options='{"no_open": True, "no_create": True, "active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
                 <field name="show_exoneration" invisible="1"/>
@@ -51,24 +52,25 @@
                 <field name="date_issuance" readonly="1" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
                 <field name="tipo_documento"
                     readonly="state != 'draft'"
-                    invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or company_id.frm_ws_ambiente == 'disabled'"
-                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and company_id.frm_ws_ambiente != 'disabled'"/>
+                    invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or frm_ws_ambiente == 'disabled'"
+                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and frm_ws_ambiente != 'disabled'"/>
                 <field name="payment_methods_id"
                     readonly="state != 'draft'"
                     invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"
-                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and company_id.frm_ws_ambiente != 'disabled'"/>
+                    required="move_type in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') and frm_ws_ambiente != 'disabled'"/>
             </field>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='name']" position="after">
                 <field name="categ_name" column_invisible="True" readonly="1"/>
                 <field name="product_code" column_invisible="True" readonly="1"/>
-                <field name="third_party_id" invisible="product_code != '04' or company_id.frm_ws_ambiente == 'disabled'" optional="hide"/>
+                <field name="frm_ws_ambiente" column_invisible="True"/>
+                <field name="third_party_id" invisible="product_code != '04' or frm_ws_ambiente == 'disabled'" optional="hide"/>
             </xpath>
 
             <xpath expr="//field[@name='invoice_line_ids']//list//field[@name='discount']" position="after">
                 <field name="company_id" column_invisible="True"/>
                 <field name="discount_note" optional="hide" />
-                <field name="discount_code_id" optional="hide" required="discount != 0 and company_id.frm_ws_ambiente != 'disabled'"/>
+                <field name="discount_code_id" optional="hide" required="discount != 0 and frm_ws_ambiente != 'disabled'"/>
                 <field name="discount_code_code" column_invisible="True"/>
                 <field name="other_discount_code" invisible="discount_code_code != '99'" optional="hide"/>
                 <field name="tariff_head"/>
@@ -84,7 +86,7 @@
             </xpath>
 
             <xpath expr="//page[2]" position="after">
-                <page name="fe_invoice_data" string="Electronic Information" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or company_id.frm_ws_ambiente == 'disabled'">
+                <page name="fe_invoice_data" string="Electronic Information" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or frm_ws_ambiente == 'disabled'">
                     <group id="fe_tab_group" col="2">
                         <group string="Electronic Acceptance" name="fe_in_info_group" colspan="2" col="5" invisible="tipo_documento == 'FEC' or move_type in ('out_invoice', 'out_refund')">
                             <field name="fname_xml_supplier_approval" invisible="1" colspan="5" />
@@ -92,7 +94,7 @@
                             <button name="load_xml_data" type="object" string="Cargar datos del XML" colspan="1" invisible="xml_supplier_approval == False or move_type in ('out_invoice', 'out_refund') or tipo_documento == 'FEC' or state != 'draft'"/>
                             <field name="state_invoice_partner" colspan="5" invisible="move_type in ('out_invoice', 'out_refund') or tipo_documento == 'FEC'"/>
                         </group>
-                        <group name="eref_info_group" colspan="2" invisible="company_id.frm_ws_ambiente == 'disabled'">
+                        <group name="eref_info_group" colspan="2" invisible="frm_ws_ambiente == 'disabled'">
                             <group string="Electronic Document Reference" name="eref_info_group1" colspan="2">
                                 <field name="reference_code_id" readonly="state != 'draft'"/>
                                 <field name="reference_document_id" readonly="state != 'draft'"/>

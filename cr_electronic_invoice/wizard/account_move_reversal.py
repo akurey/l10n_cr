@@ -10,6 +10,9 @@ class AccountMoveReversal(models.TransientModel):
 
     reference_code_id = fields.Many2one("reference.code", string="Reference Code")
     reference_document_id = fields.Many2one("reference.document", string="Reference Document")
+    # See account_move.py's AccountInvoiceElectronic.frm_ws_ambiente for why
+    # this can't just be "company_id.frm_ws_ambiente" in the view.
+    frm_ws_ambiente = fields.Selection(related="company_id.frm_ws_ambiente")
 
     def _prepare_default_reversal(self, move):
         default_values = super()._prepare_default_reversal(move)
