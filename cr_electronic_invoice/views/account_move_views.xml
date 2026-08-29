@@ -73,7 +73,7 @@
                 <field name="discount_code_id" optional="hide" required="discount != 0 and frm_ws_ambiente != 'disabled'"/>
                 <field name="discount_code_code" column_invisible="True"/>
                 <field name="other_discount_code" invisible="discount_code_code != '99'" optional="hide"/>
-                <field name="tariff_head" invisible="frm_ws_ambiente == 'disabled'"/>
+                <field name="tariff_head" column_invisible="parent.frm_ws_ambiente == 'disabled'"/>
             </xpath>
 
             <xpath expr="//button[@name='action_invoice_sent']" position="attributes">
