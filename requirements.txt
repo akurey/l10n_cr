@@ -3,7 +3,6 @@ xmlsig==0.1.3
 jsonschema
 pyopenssl
 zeep
-PyPDF2
 passlib
 werkzeug
 python-dateutil
