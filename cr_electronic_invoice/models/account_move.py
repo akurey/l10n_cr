@@ -1197,12 +1197,14 @@ class AccountInvoiceElectronic(models.Model):
                                 line["impuesto"] = taxes
                                 line["impuestoNeto"] = round(_line_tax, 5)
 
-                            # Si no hay product_uom_id se asume como Servicio
+                            # Si no hay product_uom_id se asume como Servicio.
+                            # 19-port: uom.uom.category_id / the uom.category model
+                            # were removed - Odoo 19 replaced UoM categories with a
+                            # self-referencing relative_uom_id tree with no
+                            # "category name" left to check. product.type == 'service'
+                            # is the actual, still-present flag for this distinction.
                             if not inv_line.product_uom_id or \
-                                inv_line.product_uom_id.category_id.name in ('Service',
-                                                                                'Services',
-                                                                                'Servicio',
-                                                                                'Servicios'):
+                                inv_line.product_id.type == 'service':
                                 if taxes:
                                     if _tax_exoneration:
                                         if _percentage_exoneration < 1:
