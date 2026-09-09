@@ -96,8 +96,8 @@
                         </group>
                         <group name="eref_info_group" colspan="2" invisible="frm_ws_ambiente == 'disabled'">
                             <group string="Electronic Document Reference" name="eref_info_group1" colspan="2">
-                                <field name="reference_code_id" readonly="state != 'draft' and state_tributacion != 'rechazado'"/>
-                                <field name="reference_document_id" readonly="state != 'draft' and state_tributacion != 'rechazado'"/>
+                                <field name="reference_code_id" required="tipo_documento == 'FEC'" readonly="state != 'draft' and state_tributacion != 'rechazado'"/>
+                                <field name="reference_document_id" required="tipo_documento == 'FEC'" readonly="state != 'draft' and state_tributacion != 'rechazado'"/>
                                 <field name="invoice_id" domain="[('number_electronic', '!=', False)]" readonly="state != 'draft' and state_tributacion != 'rechazado'"/>
                             </group>
                             <group string="Electronic Receipts" name="eref_info_group2" colspan="2">
