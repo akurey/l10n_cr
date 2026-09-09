@@ -176,7 +176,12 @@ class CompanyElectronic(models.Model):
             return
 
         template_values = {
-            'email_to': '${object.email|safe}',
+            # 19-port: was Mako "${object.email|safe}" - not valid in Odoo 19's
+            # Jinja-style inline_template engine, so it rendered literally as the
+            # recipient address (every notification silently undelivered). This
+            # write() runs on every cron execution, so it was also re-breaking
+            # the email_to the data file (mail_template_data.xml) fixes.
+            'email_to': '{{ object.email }}',
             'email_cc': False,
             'auto_delete': True,
             'partner_to': False,

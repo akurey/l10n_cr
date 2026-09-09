@@ -3,21 +3,34 @@
 
     <!-- Mail template are declared in a NOUPDATE block so users can freely customize/delete them -->
     <!--Email template -->
+    <!-- 19-port: every template below was still pre-v10 Mako syntax (${...},
+         % set/% if/% endif, |safe filter) - none of it valid in Odoo 19's
+         Jinja-style inline_template/QWeb engines. The lang field on 2 of these
+         3 templates rendered its literal string and got used as-is as the
+         language code ("Invalid language code: ${object.partner_id.lang}" /
+         "${object.lang}"), crashing every send - same root cause as akcr's
+         Purchase Order confirm crash (AK-Odoo#2011). email_template_invoice_vendor
+         is the CR vendor-invoice template akcr's account_move.py
+         _get_mail_template() override wires up for in_invoice/in_refund moves.
+         Ported to {{ }} expressions and <t t-out=".."/>/<t t-if="..">.
+         Dropped the "access_action"/"is_online" Mako % set lines in
+         email_template_invoice_vendor - neither was actually referenced
+         anywhere else in that body, confirmed dead. -->
     <record id="email_template_edi_expiration_notice" model="mail.template">
         <field name="name">Key Expiration Notice</field>
         <field name="model_id" ref="base.model_res_users"/>
-        <field name="email_from">${('"%s" &lt;%s&gt;' % (object.company_id.name, object.company_id.email))|safe}</field>
-        <field name="email_to">${object.email_formatted | safe}</field>
+        <field name="email_from">{{ ('"%s" &lt;%s&gt;' % (object.company_id.name, object.company_id.email)) }}</field>
+        <field name="email_to">{{ object.email_formatted }}</field>
         <field name="subject">NOTIFICACIÓN IMPORTANTE!!</field>
-        <field name="lang">${object.partner_id.lang}</field>
+        <field name="lang">{{ object.partner_id.lang }}</field>
         <field name="auto_delete" eval="True"/>
-        <field name="body_html" type="html">
+        <field name="body_html" type="xml">
             <div style="margin: 0px; padding: 0px;">
 
                 <h1>NOTIFICACIÓN IMPORTANTE!!</h1>
 
                 <p>
-                    ${object.company_id.get_message_to_send()}
+                    <t t-out="object.company_id.get_message_to_send()"/>
                 </p>
 
             </div>
@@ -26,86 +39,83 @@
     <!--Email template -->
     <record id="email_template_invoice_vendor" model="mail.template">
         <field name="name">Invoicing: Vendor Invoice email</field>
-        <field name="email_from">${(object.user_id.email and '&quot;%s&quot; &lt;%s&gt;' % (object.user_id.name, object.user_id.email) or '')|safe}</field>
-        <field name="subject">${object.company_id.name} Invoice (Ref ${object.number or 'n/a'})</field>
-        <field name="partner_to">${object.partner_id.id}, ${object.company_id.id}</field>
+        <field name="email_from">{{ (object.user_id.email and '&quot;%s&quot; &lt;%s&gt;' % (object.user_id.name, object.user_id.email) or '') }}</field>
+        <field name="subject">{{ object.company_id.name }} Invoice (Ref {{ object.number or 'n/a' }})</field>
+        <field name="partner_to">{{ object.partner_id.id }}, {{ object.company_id.id }}</field>
         <field name="model_id" ref="account.model_account_move" />
         <field name="auto_delete" eval="True" />
-        <field name="lang">${object.partner_id.lang}</field>
-        <field name="body_html" type="html">
+        <field name="lang">{{ object.partner_id.lang }}</field>
+        <field name="body_html" type="xml">
             <div>
                 <p>
-                    Dear ${object.partner_id.name}
-                    % set access_action = object.with_context(force_website=True).get_access_action()
-                    % set is_online = access_action and access_action['type'] == 'ir.actions.act_url'
-
-                    % if object.partner_id.parent_id:
-                    (<i>${object.partner_id.parent_id.name}</i>)
-                    % endif
+                    Dear <t t-out="object.partner_id.name or ''"/>
+                    <t t-if="object.partner_id.parent_id">
+                    (<i><t t-out="object.partner_id.parent_id.name or ''"/></i>)
+                    </t>
                     ,
                 </p>
                 <p>
-                    ${object.company_id.name} has accepted in "Ministerio de Hacienda" your
-                    % if object.number:
-                    invoice <strong>${object.number}</strong>
-                    % else:
+                    <t t-out="object.company_id.name or ''"/> has accepted in "Ministerio de Hacienda" your
+                    <t t-if="object.number">
+                    invoice <strong><t t-out="object.number"/></strong>
+                    </t>
+                    <t t-else="">
                     invoice
-                    % endif
-                    % if object.origin:
-                    (with reference: ${object.origin})
-                    % endif
-                    amounting in <strong>${format_amount(object.amount_total, object.currency_id)}</strong>
-                    from ${object.company_id.name}.
+                    </t>
+                    <t t-if="object.origin">
+                    (with reference: <t t-out="object.origin"/>)
+                    </t>
+                    amounting in <strong><t t-out="format_amount(object.amount_total, object.currency_id)"/></strong>
+                    from <t t-out="object.company_id.name or ''"/>.
                 </p>
 
                 <br />
-                <strong>Electronic number: </strong> ${object.number_electronic}
+                <strong>Electronic number: </strong> <t t-out="object.number_electronic"/>
                 <br />
-                <strong>Confirmation date: </strong> ${object.date_issuance}
+                <strong>Confirmation date: </strong> <t t-out="object.date_issuance"/>
                 <br />
-                <strong>Confirmation Message: </strong> ${object.state_invoice_partner}
+                <strong>Confirmation Message: </strong> <t t-out="object.state_invoice_partner"/>
                 <br />
-                <strong>"Hacienda" status: </strong> ${object.state_tributacion}
+                <strong>"Hacienda" status: </strong> <t t-out="object.state_tributacion"/>
 
                 <br /><br />
                 <strong>Issuing company </strong>
                 <br />
-                <strong>Name: </strong>${object.partner_id.name}
+                <strong>Name: </strong><t t-out="object.partner_id.name or ''"/>
                 <br />
-                <strong>Id: </strong>${object.partner_id.vat}
+                <strong>Id: </strong><t t-out="object.partner_id.vat or ''"/>
 
                 <br /><br />
                 <strong>Receiving company </strong>
                 <br />
-                <strong>Name: </strong>${object.company_id.name}
+                <strong>Name: </strong><t t-out="object.company_id.name or ''"/>
                 <br />
-                <strong>Id: </strong>${object.company_id.vat}
+                <strong>Id: </strong><t t-out="object.company_id.vat or ''"/>
                 <br /><br />
                 Attached you'll find the XMLs with the message sent to "Hacienda" and its response for your backup
                 <br /><br />
                 <p>Thank you,</p>
                 <p style="color:#888888">
-                    % if object.user_id and object.user_id.signature:
-                    ${object.user_id.signature | safe}
-                    % endif
+                    <t t-if="object.user_id and object.user_id.signature">
+                    <t t-out="object.user_id.signature"/>
+                    </t>
                 </p>
             </div>
         </field>
     </record>
     <record id="email_template_client_exoneration_expired" model="mail.template">
         <field name="name">Exoneration Expired</field>
-        <field name="email_from">${(user.email or '')|safe}</field>
-        <field name="subject">${user.company_id.commercial_name}: VAT exoneration expired</field>
-        <field name="email_to">${object.email|safe}</field>
-        <field name="lang">${object.lang}</field>
+        <field name="email_from">{{ (user.email or '') }}</field>
+        <field name="subject">{{ user.company_id.commercial_name }}: VAT exoneration expired</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="lang">{{ object.lang }}</field>
         <field name="model_id" ref="base.model_res_partner"/>
         <field name="auto_delete" eval="True"/>
-        <field name="body_html">
-        <![CDATA[
+        <field name="body_html" type="xml">
             <div style="font-family: 'Lucica Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: rgb(255, 255, 255); ">
-                <p>Dear ${object.name},</p>
+                <p>Dear <t t-out="object.name or ''"/>,</p>
                 <p>
-                We realized that your VAT exoneration number ${object.exoneration_number} is expired. Please update this information as soon as possible or we'll have to create new invoices including this tax.
+                We realized that your VAT exoneration number <t t-out="object.exoneration_number"/> is expired. Please update this information as soon as possible or we'll have to create new invoices including this tax.
                 </p>
                 <br/>
                 <p>
@@ -115,12 +125,11 @@
                 Best Regards,
                 <br/>
                 <br/>
-                ${user.name}
+                <t t-out="user.name or ''"/>
                 <br/>
                 <br/>
                 <br/>
             </div>
-        ]]>
         </field>
     </record>
 
