@@ -39,7 +39,7 @@
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
                 <notebook>
-                    <page name="electronic_information" string="Electronic Information" invisible="reconciled_invoices_count == 0 and payment_type == 'inbound'">
+                    <page name="electronic_information" string="Electronic Information" invisible="reconciled_invoices_count == 0 and reconciled_bills_count == 0">
                         <group id="fe_tab_group" col="2">
                             <group name="eref_info_group" colspan="2">
                                 <group string="Electronic Receipts" name="eref_info_group2" colspan="2">
