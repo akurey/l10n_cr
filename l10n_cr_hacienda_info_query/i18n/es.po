@@ -17,6 +17,7 @@ msgstr ""
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "Barcode"
@@ -24,6 +25,7 @@ msgstr "Código de Barras"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
@@ -42,6 +44,7 @@ msgstr "Contacto"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "Country"
@@ -49,6 +52,7 @@ msgstr "País"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "County"
@@ -62,6 +66,7 @@ msgstr "Mostrar nombre"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "District"
@@ -74,6 +79,7 @@ msgstr "Facturación Electrónica Costa Rica"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "Email"
@@ -81,6 +87,7 @@ msgstr "Correo Electrónico"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-javascript
 #: code:addons/l10n_cr_hacienda_info_query/static/src/js/Screens/ClientListScreen/ClientDetailsEdit.js:0
 #, python-format
 msgid "Encountered error when loading image. Please try again."
@@ -88,6 +95,7 @@ msgstr "Error encontrado al cargar la imagen. Inténtalo de nuevo."
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #: model:ir.model.fields,field_description:l10n_cr_hacienda_info_query.field_res_config_settings__id
 #: model:ir.model.fields,field_description:l10n_cr_hacienda_info_query.field_res_partner__id
@@ -97,6 +105,7 @@ msgstr "Identificación"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "Language"
@@ -120,6 +129,7 @@ msgstr "Última respuesta de la API"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-javascript
 #: code:addons/l10n_cr_hacienda_info_query/static/src/js/Screens/ClientListScreen/ClientDetailsEdit.js:0
 #, python-format
 msgid "Loading Image Error"
@@ -127,6 +137,7 @@ msgstr "Error al cargar la imagen"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "None"
@@ -134,6 +145,7 @@ msgstr "Ningúno"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-javascript
 #: code:addons/l10n_cr_hacienda_info_query/static/src/js/Screens/ClientListScreen/ClientDetailsEdit.js:0
 #, python-format
 msgid "Only web-compatible Image formats such as .png or .jpeg are supported."
@@ -143,6 +155,7 @@ msgstr ""
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "Phone"
@@ -150,6 +163,7 @@ msgstr "Teléfono"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "Pricelist"
@@ -157,6 +171,7 @@ msgstr "Lista de Precios"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
 msgid "State"
@@ -164,6 +179,7 @@ msgstr "Provincia"
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #: code:addons/l10n_cr_hacienda_info_query/static/src/xml/Screens/ClientListScreen/ClientDetailsEdit.xml:0
 #, python-format
@@ -188,6 +204,7 @@ msgstr ""
 
 #. module: l10n_cr_hacienda_info_query
 #. openerp-web
+#. odoo-javascript
 #: code:addons/l10n_cr_hacienda_info_query/static/src/js/Screens/ClientListScreen/ClientDetailsEdit.js:0
 #, python-format
 msgid "Unsupported File Format"

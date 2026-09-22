@@ -129,6 +129,7 @@ msgstr ""
 "            "
 
 #. module: cr_electronic_invoice_pos
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
 #, python-format
 msgid " REFUND"
@@ -218,6 +219,7 @@ msgstr ""
 
 #. module: cr_electronic_invoice_pos
 #. openerp-web
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/static/src/xml/pos.xml:0
 #, python-format
 msgid "Clave:"
@@ -235,6 +237,7 @@ msgstr "Consecutivo"
 
 #. module: cr_electronic_invoice_pos
 #. openerp-web
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/static/src/xml/pos.xml:0
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice_pos.pos_order_report
 #, python-format
@@ -323,6 +326,7 @@ msgid "Email state"
 msgstr "Estado del correo electrónico"
 
 #. module: cr_electronic_invoice_pos
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
@@ -590,6 +594,7 @@ msgid "Res DGT-R-033-2019 del 20 / 06 / 2019"
 msgstr ""
 
 #. module: cr_electronic_invoice_pos
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
 #, python-format
 msgid "Return Products"
@@ -670,6 +675,7 @@ msgid "Terminal number"
 msgstr ""
 
 #. module: cr_electronic_invoice_pos
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
 #, python-format
 msgid ""
@@ -725,6 +731,7 @@ msgid "XML receipt filename"
 msgstr "Nombre del comprobante XML"
 
 #. module: cr_electronic_invoice_pos
+#. odoo-python
 #: code:addons/cr_electronic_invoice_pos/models/electronic_invoice.py:0
 #, python-format
 msgid "Ya recibido anteriormente, se pasa a consultar"
