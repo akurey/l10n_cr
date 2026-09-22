@@ -282,7 +282,20 @@
 </t>
 </template>
 
-<report id="pos_orders" model="pos.order" string="PosOrders" report_type="qweb-pdf" name="cr_electronic_invoice_pos.pos_order_report" file="cr_electronic_invoice_pos.pos_order_report" attachment_use="True" attachment="(object.state in ('paid','done','invoiced')) and ('FE_'+(object.number_electronic or '').replace('/','')+'.pdf')" />
+<!-- 19-port: the <report> shortcut tag no longer exists (not an allowed element in
+     odoo/odoo/import_xml.rng; a fresh install failed "element report not allowed here").
+     Same xml id, and binding_model_id to keep the Print-menu entry the tag created. -->
+<record id="pos_orders" model="ir.actions.report">
+<field name="name">PosOrders</field>
+<field name="model">pos.order</field>
+<field name="report_type">qweb-pdf</field>
+<field name="report_name">cr_electronic_invoice_pos.pos_order_report</field>
+<field name="report_file">cr_electronic_invoice_pos.pos_order_report</field>
+<field name="attachment_use" eval="True"/>
+<field name="attachment">(object.state in ('paid','done','invoiced')) and ('FE_'+(object.number_electronic or '').replace('/','')+'.pdf')</field>
+<field name="binding_model_id" ref="point_of_sale.model_pos_order"/>
+<field name="binding_type">report</field>
+</record>
 
 <record id="paperformat_posreceipt" model="report.paperformat">
 <field name="name">Point Of Sale Receipt</field>
