@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
-
-    <template id="sale.report_invoice_document_inherit_sale" inherit_id="account.report_invoice_document">
-    </template>
-
-    <template id="sale_stock.sale_stock_report_invoice_document" inherit_id="account.report_invoice_document">
-    </template>
-    <template id="account.report_invoice_document">
+<odoo>
+    <!-- 19-port: this used to REPLACE core account.report_invoice_document (and blank out
+         sale/sale_stock's inherits of it) under noupdate. In Odoo 19 that view is extended by many
+         modules, so overwriting it broke their xpaths and the install. It is now a template of its
+         own, selected through account.move._get_name_invoice_report() - the hook Odoo provides for
+         localisations (see l10n_ar / l10n_cl) - and dispatched from account.report_invoice below. -->
+    <template id="report_invoice_document" name="Costa Rica Electronic Invoice">
         <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
             <div class="header">
                 <table style="width:100%">
@@ -61,7 +60,7 @@
                                     <span style="font-weight:bolder" t-if="not o.number_electronic">NOTA DE CRÉDITO</span>
                                     <br/>
                                 </t>
-                                <span t-if="o.move_type == 'in_invoice' or o.move_type == 'in_refund'" t-esc="o.reference"/>
+                                <span t-if="o.move_type == 'in_invoice' or o.move_type == 'in_refund'" t-esc="o.ref"/>
                                 <span t-if="o.move_type == 'out_invoice' or o.move_type == 'out_refund'" t-esc="o.number_electronic and o.number_electronic[21:41] or o.name"/>
                             </div>
                             <div class="text-center">
@@ -74,13 +73,13 @@
                                     </tr>
                                     <tr>
                                         <td class="dtcls text-center dtbg">
-                                            <span t-esc="o.date_issuance and (o.date_issuance[8:10]) or o.invoice_date and (o.invoice_date[8:10]) or ''"/>
+                                            <span t-esc="o.date_issuance and (o.date_issuance[8:10]) or o.invoice_date and o.invoice_date.strftime('%d') or ''"/>
                                         </td>
                                         <td class="dtcls text-center dtbg">
-                                            <span t-esc="o.date_issuance and (o.date_issuance[5:7]) or o.invoice_date and (o.invoice_date[5:7]) or ''"/>
+                                            <span t-esc="o.date_issuance and (o.date_issuance[5:7]) or o.invoice_date and o.invoice_date.strftime('%m') or ''"/>
                                         </td>
                                         <td class="dtcls text-center dtbg">
-                                            <span t-esc="o.date_issuance and (o.date_issuance[0:4]) or o.invoice_date and (o.invoice_date[0:4]) or ''"/>
+                                            <span t-esc="o.date_issuance and (o.date_issuance[0:4]) or o.invoice_date and o.invoice_date.strftime('%Y') or ''"/>
                                         </td>
                                         <td class="dtcls text-center dtbg">
                                             <span t-esc="o.date_issuance and (o.date_issuance[11:16]) or ''"/>
@@ -410,7 +409,7 @@
                                 <strong>TIPO CAMBIO:</strong>
                             </td>
                             <td>
-                                <span t-esc="round(o.amount_total_signed / o.amount_total, 5)"/>
+                                <span t-esc="round(abs(o.amount_total_signed / o.amount_total), 5) if o.amount_total else 1"/>
                             </td>
                         </tr>
                     </tbody>
@@ -427,11 +426,11 @@
                                 <th>Producto</th>
                                 <!--Source Document solo está disponible en la factura y no en la linea -->
                                 <!--th class="hidden">Source Document</th-->
-                                <th class="text-right">Cant.</th>
-                                <th width="15%" class="text-right">Precio</th>
-                                <th t-if="display_discount" class="text-right" groups="sale.group_discount_per_so_line">Disc.(%)</th>
-                                <th width="15%" class="text-right">Impuesto</th>
-                                <th width="20%" class="text-right">Total</th>
+                                <th class="text-end">Cant.</th>
+                                <th width="15%" class="text-end">Precio</th>
+                                <th t-if="display_discount" class="text-end" groups="sale.group_discount_per_so_line">Disc.(%)</th>
+                                <th width="15%" class="text-end">Impuesto</th>
+                                <th width="20%" class="text-end">Total</th>
                             </tr>
                         </thead>
                         <tbody class="invoice_tbody">
@@ -441,17 +440,17 @@
                                 </td>
                                 <!--Source Document solo está disponible en la factura y no en la linea -->
                                 <!--td class="hidden"><span t-field="l.invoice_origin"/></td-->
-                                <td class="text-right">
+                                <td class="text-end">
                                     <span t-field="l.quantity"/>
-                                    <span t-field="l.uom_id" groups="product.group_uom"/>
+                                    <span t-field="l.product_uom_id" groups="uom.group_uom"/>
                                 </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     <span t-field="l.price_unit"/>
                                 </td>
-                                <td t-if="display_discount" class="text-right" groups="sale.group_discount_per_so_line">
+                                <td t-if="display_discount" class="text-end" groups="sale.group_discount_per_so_line">
                                     <span t-field="l.discount"/>
                                 </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     <!-- 19-port: same fix as cr_electronic_invoice/views/report_invoice_document.xml -
                                          account.tax.description became an Html field (core auto-wraps plain
                                          text in a <div>), so t-esc'ing it printed the raw markup. Use
@@ -459,7 +458,7 @@
                                     <span t-if="l.tax_ids" t-esc="', '.join(map(lambda x: x.tax_label, l.tax_ids))"/>
                                     <span t-if="not l.tax_ids">EXE</span>
                                 </td>
-                                <td class="text-right">
+                                <td class="text-end">
                                     <span t-field="l.price_subtotal" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.currency_id}"/>
                                 </td>
                             </tr>
@@ -505,44 +504,29 @@ No.Cédula
 _____________________<br/>
 Firma
                         </td>
-                        <td style="border:1px solid black;" class="text-right">
+                        <td style="border:1px solid black;" class="text-end">
                             <div id="right-elements">
                             <table class="table table-sm">
                                 <tr class="border-black o_subtotal" style="">
                                     <td>
                                         <strong>Subtotal</strong>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         <span t-field="o.amount_untaxed"/>
                                     </td>
                                 </tr>
-                                <t t-foreach="o.amount_by_group" t-as="amount_by_group">
-                                    <tr style="">
-                                        <!--t t-if="len(o.tax_line_ids) == 1 and o.amount_untaxed == amount_by_group[2]">
-                                                    <td><span t-esc="amount_by_group[0]"/></td>
-                                                    <td class="text-right o_price_total">
-                                                        <span t-esc="amount_by_group[3]"/>
-                                                    </td>
-                                                </t>
-                                                <t t-else="">
-                                                    <td>
-                                                        <span t-esc="amount_by_group[0]"/>
-                                                        <span>&amp;nbsp;<span>on</span>
-                                                            <t t-esc="amount_by_group[4]"/>
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-right o_price_total">
-                                                        <span t-esc="amount_by_group[3]"/>
-                                                    </td>
-                                                </t-->
+                                <!-- 19-port: amount_by_group was removed in Odoo 15; tax_totals is its
+                                     replacement (same data the core invoice prints). -->
+                                <t t-foreach="o.tax_totals['subtotals']" t-as="subtotal">
+                                    <tr t-foreach="subtotal['tax_groups']" t-as="tax_group">
                                         <td>
-                                            <span t-esc="amount_by_group[0]"/>
-                                            <span>&amp;nbsp;<span>on</span>
-                                                <t t-esc="amount_by_group[4]"/>
+                                            <span t-out="tax_group['group_name']"/>
+                                            <span t-if="not o.tax_totals['same_tax_base']">&amp;nbsp;<span>on</span>
+                                                <t t-out="tax_group['base_amount_currency']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
                                             </span>
                                         </td>
-                                        <td class="text-right o_price_total">
-                                            <span t-esc="amount_by_group[3]"/>
+                                        <td class="text-end o_price_total">
+                                            <span t-out="tax_group['tax_amount_currency']" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
                                         </td>
                                     </tr>
                                 </t>
@@ -550,7 +534,7 @@ Firma
                                     <td>
                                         <strong>Total</strong>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-end">
                                         <span t-field="o.amount_total"/>
                                     </td>
                                 </tr>
@@ -603,7 +587,7 @@ __________________________</td>
                         <table width="100%;" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td width="50%">
-                                    <t t-raw="o.company_id.html_bank_account1"/>
+                                    <t t-out="o.company_id.html_bank_account1"/>
                                     <!--p style="font-size:16px;">
                                         <strong>XXXXXX</strong><br/>
                                         Cuenta: XXXXX<br/>
@@ -612,7 +596,7 @@ __________________________</td>
                                     </p-->
                                 </td>
                                 <td>
-                                    <t t-raw="o.company_id.html_bank_account2"/>
+                                    <t t-out="o.company_id.html_bank_account2"/>
                                     <!--p style="font-size:16px;">
                                         <strong>XXXXX</strong><br/>
                                         Cuenta: XXXXX<br/>
@@ -694,5 +678,13 @@ __________________________</td>
 </div>
 </div>
 </template>
+
+    <template id="report_invoice" inherit_id="account.report_invoice">
+        <xpath expr="//t[@t-call='account.report_invoice_document']" position="after">
+            <t t-elif="o._get_name_invoice_report() == 'cr_electronic_invoice_qweb_fe.report_invoice_document'"
+               t-call="cr_electronic_invoice_qweb_fe.report_invoice_document"
+               t-lang="lang"/>
+        </xpath>
+    </template>
 
 </odoo>
