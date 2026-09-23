@@ -10,6 +10,7 @@ from odoo.exceptions import UserError
 from odoo.tools.misc import get_lang
 from .qr_generator import GenerateQrCode
 from odoo.tools import html2plaintext
+from markupsafe import Markup
 from num2words import num2words
 
 from . import api_facturae
@@ -520,7 +521,10 @@ class AccountInvoiceElectronic(models.Model):
 
                     if inv.company_id.frm_ws_ambiente != 'disabled' and inv.state_invoice_partner:
 
-                        message_description = _("<p><b>Enviando Mensaje Receptor</b></p>")
+                        # 19-port: chatter bodies must be Markup - since Odoo 17 message_post escapes a
+                        # plain str, so these tags were shown as text. The literals are Markup; the values
+                        # added below (plain str) are escaped by Markup's + operator.
+                        message_description = Markup(_("<p><b>Enviando Mensaje Receptor</b></p>"))
 
                         # '''Si por el contrario es un documento nuevo, asignamos todos los valores'''
                         if not inv.xml_comprobante or inv.state_invoice_partner not in ['procesando', 'aceptado']:
@@ -544,15 +548,15 @@ class AccountInvoiceElectronic(models.Model):
 
                             # '''Si el mensaje fue rechazado, necesitamos generar un nuevo id'''
                             if inv.state_tributacion in ['rechazado', 'error']:
-                                message_description += '<p><b>'
-                                message_description += _('Consecutive Switching of Receiver Message</b><br/>')
-                                message_description += '</b><br/>'
-                                message_description += _('<b>Previous consecutive:</b>')
+                                message_description += Markup('<p><b>')
+                                message_description += Markup(_('Consecutive Switching of Receiver Message</b><br/>'))
+                                message_description += Markup('</b><br/>')
+                                message_description += Markup(_('<b>Previous consecutive:</b>'))
                                 message_description += inv.consecutive_number_receiver
-                                message_description += '<br/>'
-                                message_description += _('<b>Previous state: </b>')
+                                message_description += Markup('<br/>')
+                                message_description += Markup(_('<b>Previous state: </b>'))
                                 message_description += inv.state_tributacion
-                                message_description += '</p>'
+                                message_description += Markup('</p>')
 
                             # '''Solicitamos la clave para el Mensaje Receptor'''
                             response_json = api_facturae.get_clave_hacienda(inv,
@@ -652,14 +656,15 @@ class AccountInvoiceElectronic(models.Model):
                                             'E-INV CR - Estado Documento: %s',
                                             inv.state_tributacion)
 
-                                        message_description += _('<p><b>Ha enviado Mensaje de Receptor</b>') + \
-                                                               _('<br /><b>Documento: </b>') + inv.number_electronic + \
-                                                               _('<br /><b>Consecutivo de mensaje: </b>') + \
+                                        message_description += Markup(_('<p><b>Ha enviado Mensaje de Receptor</b>')) + \
+                                                               Markup(_('<br /><b>Documento: </b>')) + inv.number_electronic + \
+                                                               Markup(_('<br /><b>Consecutivo de mensaje: </b>')) + \
                                                                inv.consecutive_number_receiver + \
-                                                               _('<br/><b>Mensaje indicado:</b>') \
-                                                               + detalle_mensaje + '</p>'
+                                                               Markup(_('<br/><b>Mensaje indicado:</b>')) \
+                                                               + detalle_mensaje + Markup('</p>')
 
-                                        self.message_post(
+                                        # inv, not self: this loops over several invoices
+                                        inv.message_post(
                                             body=message_description)
 
                                         _logger.info('E-INV CR - Document Status: %s', inv.state_tributacion)
