@@ -297,6 +297,8 @@
 <field name="attachment">(object.state in ('paid','done','invoiced')) and ('FE_'+(object.number_electronic or '').replace('/','')+'.pdf')</field>
 <field name="binding_model_id" ref="point_of_sale.model_pos_order"/>
 <field name="binding_type">report</field>
+<!-- the file name the mail template's old report_name produced -->
+<field name="print_report_name">'FE_%s_%s' % ((object.number_electronic or '').replace('/', '_'), object.state == 'draft' and 'draft' or '')</field>
 </record>
 
 <record id="paperformat_posreceipt" model="report.paperformat">
@@ -332,8 +334,9 @@
 <field name="partner_to">{{ object.partner_id.id }}</field>
 <field name="model_id" ref="point_of_sale.model_pos_order"/>
 <field name="auto_delete" eval="True"/>
-<field name="report_template" ref="cr_electronic_invoice_pos.pos_orders"/>
-<field name="report_name">FE_{{ (object.number_electronic or '').replace('/','_') }}_{{ object.state == 'draft' and 'draft' or '' }}</field>
+<!-- 19-port: mail.template.report_template became the many2many report_template_ids, and
+     report_name was removed - the attachment name now comes from the report's print_report_name. -->
+<field name="report_template_ids" eval="[(4, ref('cr_electronic_invoice_pos.pos_orders'))]"/>
 <field name="lang">{{ object.partner_id.lang }}</field>
 <field name="body_html" type="xml">
 <div style="font-family: 'Lucica Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: #FFF; ">
