@@ -31,6 +31,15 @@
                 <field name="invoice_amount_text"/>
             </field>
 
+            <!-- Editable after posting too: it only adds an email recipient, so it can be
+                 set on an accepted invoice before sending it again. -->
+            <xpath expr="//field[@name='partner_shipping_id']" position="before">
+                <field name="additional_contact_id"
+                       invisible="move_type not in ('out_invoice', 'out_refund')"
+                       readonly="state == 'cancel'"
+                       options="{'no_quick_create': True}"/>
+            </xpath>
+
             <field name="partner_id" position="after">
                 <field name="frm_ws_ambiente" invisible="1"/>
                 <field name="economic_activities_ids" invisible="1" readonly="1" options='{"active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>

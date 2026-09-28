@@ -119,6 +119,13 @@ class AccountInvoiceElectronic(models.Model):
 
     invoice_id = fields.Many2one("account.move", string="Reference document", copy=False)
 
+    # Also receives every email sent for a customer invoice/credit note: the
+    # e-invoice sent once Hacienda accepts it and the one sent from the "Send"
+    # wizard. See _message_add_default_recipients below.
+    additional_contact_id = fields.Many2one(
+        "res.partner", string="Additional Contact", tracking=True,
+        help="Contact that receives the invoice emails in addition to the customer.")
+
     xml_respuesta_tributacion = fields.Binary(string="XML Tributación Response", copy=False, attachment=True)
 
     electronic_invoice_return_message = fields.Char(string='Hacienda answer', readonly=True)
@@ -272,6 +279,18 @@ class AccountInvoiceElectronic(models.Model):
                 self.tipo_documento = 'FE'
         else:
             self.tipo_documento = 'TE'
+
+    def _message_add_default_recipients(self):
+        # Every invoice mail template has use_default_to=True, so its recipients come
+        # from here - both for template.send_mail() (Hacienda acceptance) and for
+        # account.move.send's _get_default_mail_partner_ids (the "Send" wizard).
+        # Not _mail_get_partners: portal notifications read .id on its result and
+        # would fail with "Expected singleton" once it holds two partners.
+        results = super()._message_add_default_recipients()
+        for move in self:
+            if move.is_sale_document() and move.additional_contact_id:
+                results[move.id]['partners'] |= move.additional_contact_id
+        return results
 
     def action_invoice_sent_mass(self):
 

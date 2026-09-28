@@ -2541,3 +2541,25 @@ msgstr ""
 #: model:ir.model,name:cr_electronic_invoice.model_sale_conditions
 msgid "sale.conditions"
 msgstr ""
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__additional_contact_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__additional_contact_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_sale_order__additional_contact_id
+msgid "Additional Contact"
+msgstr "Contacto adicional"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__additional_contact_id
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_move__additional_contact_id
+msgid "Contact that receives the invoice emails in addition to the customer."
+msgstr "Contacto que recibe los correos de la factura además del cliente."
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_sale_order__additional_contact_id
+msgid ""
+"Contact that receives the quotation and order emails in addition to the "
+"customer. It is carried over to the invoices created from this order."
+msgstr ""
+"Contacto que recibe los correos de la cotización y de la orden además del "
+"cliente. Se copia a las facturas creadas desde esta orden."

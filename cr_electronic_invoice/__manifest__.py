@@ -2,7 +2,7 @@
 
 {
     'name': 'Facturación electrónica Costa Rica',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'author': 'Odoo CR',
     'license': 'AGPL-3',
     'website': 'https://github.com/odoocr',
@@ -55,6 +55,7 @@
         'views/res_partner_views.xml',
         'views/resolution_views.xml',
         'views/sale_condition_views.xml',
+        'views/sale_order_views.xml',
         'views/account_tax_views.xml',
         'views/economic_activity_views.xml',
         'views/menu_views.xml',
