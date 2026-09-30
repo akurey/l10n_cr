@@ -345,6 +345,15 @@ def gen_xml_mr_4_4(clave, cedula_emisor, fecha_emision, id_mensaje,
 
     return str(sb)
 
+
+def credit_term_days(inv):
+    """Days of the invoice's payment term for <PlazoCredito>: the first term line, as in 16.0.
+    Odoo 17 renamed account.payment.term.line.days to nb_days; reading the old name raised
+    "'account.payment.term.line' object has no attribute 'days'" and blocked validation."""
+    lines = inv.invoice_payment_term_id.line_ids
+    return lines[:1].nb_days or 0
+
+
 def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                 total_servicio_exento, totalServExonerado,
                 total_mercaderia_gravado, total_mercaderia_exento,
@@ -369,7 +378,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         cod_moneda = str(inv.company_id.currency_id.name)
     else:
         payment_methods_id.append(str(inv.payment_methods_id.sequence))
-        plazo_credito = str(inv.invoice_payment_term_id and inv.invoice_payment_term_id.line_ids[0].days or 0)
+        plazo_credito = str(credit_term_days(inv))
         cod_moneda = str(inv.currency_id.name)
 
     if inv.tipo_documento == 'FEC':
@@ -714,7 +723,7 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
     cod_moneda = str(inv.currency_id.name)
     payment_methods_id = []
     payment_methods_id.append(str(inv.payment_methods_id.sequence))
-    plazo_credito = str(inv.invoice_payment_term_id and inv.invoice_payment_term_id.line_ids[0].days or 0)
+    plazo_credito = str(credit_term_days(inv))
     cod_moneda = str(inv.currency_id.name)
     id_code = '02'
     vat = re.sub('[^0-9]', '', inv.company_id.vat)
