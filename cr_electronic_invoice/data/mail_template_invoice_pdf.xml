@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 19-port: in 16.0 core's account.email_template_edi_invoice carried
+         report_template = account.report_invoice_with_payments, so every
+         template.send_mail() also attached the invoice PDF. 19.0 replaced it
+         with report_template_ids and ships the template with none, because
+         the Send wizard now generates the PDF itself. Our Hacienda-accepted
+         send paths (action_invoice_sent_mass, the Hacienda status query and
+         its cron) still call send_mail() directly, so customers got only the
+         two XMLs. Link the standard invoice report back; the Send wizard
+         explicitly excludes account.account_invoices from its template
+         reports, so it does not attach the PDF twice.
+         A <function> instead of a <record>: the template belongs to
+         `account` with noupdate=1, so a record override would be skipped on
+         module update. Command.link is idempotent. -->
+    <function model="mail.template" name="write">
+        <value eval="[ref('account.email_template_edi_invoice')]"/>
+        <value eval="{'report_template_ids': [Command.link(ref('account.account_invoices'))]}"/>
+    </function>
+</odoo>

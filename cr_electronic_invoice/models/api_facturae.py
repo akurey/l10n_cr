@@ -1173,7 +1173,7 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
                                                                                             raise_exception=False,
                                                                                             force_send=True)
             except Exception:
-                _logger.error('FECR - consulta documento error al enviar correo: %s', inv.number_electronic)
+                _logger.exception('FECR - consulta documento error al enviar correo: %s', inv.number_electronic)
 
             # limpia el template de los attachments
             email_template.attachment_ids = [(5, 0, 0)]
