@@ -29,6 +29,7 @@
         'data/identification_type_data.xml',
         'data/ir_cron_data.xml',
         'data/mail_template_data.xml',
+        'data/mail_template_invoice_pdf.xml',
         'data/payment_methods_data.xml',
         'data/reference_code_data.xml',
         'data/reference_document_data.xml',
