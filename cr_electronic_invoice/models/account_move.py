@@ -1439,16 +1439,30 @@ class AccountInvoiceElectronic(models.Model):
         return (tipo_documento, sequence)
 
     def action_post(self):
+        # 19-port: the form's Confirm button enables Odoo 19's abnormal invoice detection.
+        # When an amount or date looks unusual, core posts nothing and returns its
+        # "Confirm Entries" dialog (validate.account.move). That return value used to be
+        # discarded below, so the user saw nothing and the invoice stayed in draft. Hand
+        # the dialog back untouched; its Confirm comes back through action_post with
+        # detection disabled (wizard/validate_account_move.py), so the Hacienda steps
+        # below still run.
+        if (
+            not self.env.context.get('disable_abnormal_invoice_detection', True)
+            and self.filtered(lambda m: m.abnormal_amount_warning or m.abnormal_date_warning)
+        ):
+            return super().action_post()
+
+        result = False
         # Revisamos si el ambiente para Hacienda está habilitado
         for inv in self:
             if inv.company_id.frm_ws_ambiente == 'disabled':
-                super(AccountInvoiceElectronic, inv).action_post()
+                result = super(AccountInvoiceElectronic, inv).action_post() or result
                 inv.tipo_documento = 'disabled'
                 continue
-            
+
             if inv.state_tributacion in ['aceptado', 'rechazado', 'procesando'] or inv.move_type in ('entry'):
                 if inv.state == 'draft':
-                    super(AccountInvoiceElectronic, inv).action_post()
+                    result = super(AccountInvoiceElectronic, inv).action_post() or result
                     continue
             
             if inv.show_exoneration:
@@ -1534,7 +1548,7 @@ class AccountInvoiceElectronic(models.Model):
                     inv.tipo_documento = tipo_documento
                 else:
                     if inv.state == 'draft':
-                        super().action_post()
+                        result = super(AccountInvoiceElectronic, inv).action_post() or result
                         continue
 
             # Calcular si aplica IVA Devuelto
@@ -1559,7 +1573,7 @@ class AccountInvoiceElectronic(models.Model):
                         'quantity': 1,
                     })
             if inv.state == 'draft':
-                super().action_post()
+                result = super(AccountInvoiceElectronic, inv).action_post() or result
             if not inv.number_electronic:
                 # if journal doesn't have sucursal use default from company
                 sucursal_id = inv.journal_id.sucursal or inv.company_id.sucursal_MR
@@ -1579,6 +1593,8 @@ class AccountInvoiceElectronic(models.Model):
             if inv.sequence:
                 inv.name = inv.sequence
             inv.state_tributacion = False
+        # e.g. core's "auto-post similar bills?" suggestion, shown after posting
+        return result
 
     @api.onchange('amount_total')
     def update_text_amount(self):
