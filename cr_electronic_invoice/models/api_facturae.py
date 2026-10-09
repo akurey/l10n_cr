@@ -398,14 +398,21 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     sb.append('<Clave>' + inv.number_electronic + '</Clave>')
     sb.append('<ProveedorSistemas>' + issuing_company.vat + '</ProveedorSistemas>')
+    # The activities chosen on the invoice win; the partner/company defaults are the fallback
+    # (vendor credit/debit notes keep using the company's default activity as issuer)
+    if inv._name == 'account.move' and (
+            inv.tipo_documento == 'FEC' or inv.move_type in ('out_invoice', 'out_refund')):
+        issuer_activity = inv.economic_activity_id or issuing_company.activity_id
+        receiver_activity = inv.receiver_economic_activity_id or receiver_company.activity_id
+    else:
+        issuer_activity = issuing_company.activity_id
+        receiver_activity = receiver_company.activity_id
     if inv.tipo_documento != 'FEC':
-        sb.append('<CodigoActividadEmisor>' + inv.company_id.activity_id.code + '</CodigoActividadEmisor>')
-    elif inv.tipo_documento == 'FEC' and issuing_company.activity_id.code:
-        sb.append('<CodigoActividadEmisor>' + inv.partner_id.activity_id.code + '</CodigoActividadEmisor>')
-    if inv.tipo_documento not in ['FEE', 'TE'] and inv.partner_id.activity_id.code:
-        sb.append('<CodigoActividadReceptor>' + inv.partner_id.activity_id.code + '</CodigoActividadReceptor>')
-    elif inv.tipo_documento == 'FEC':
-        sb.append('<CodigoActividadReceptor>' + receiver_company.activity_id.code + '</CodigoActividadReceptor>')
+        sb.append('<CodigoActividadEmisor>' + issuer_activity.code + '</CodigoActividadEmisor>')
+    elif issuer_activity.code:
+        sb.append('<CodigoActividadEmisor>' + issuer_activity.code + '</CodigoActividadEmisor>')
+    if inv.tipo_documento not in ['FEE', 'TE'] and receiver_activity.code:
+        sb.append('<CodigoActividadReceptor>' + receiver_activity.code + '</CodigoActividadReceptor>')
     sb.append('<NumeroConsecutivo>' + inv.number_electronic[21:41] + '</NumeroConsecutivo>')
     sb.append('<FechaEmision>' + inv.date_issuance + '</FechaEmision>')
     sb.append('<Emisor>')

@@ -42,16 +42,27 @@
 
             <field name="partner_id" position="after">
                 <field name="frm_ws_ambiente" invisible="1"/>
+                <field name="show_exoneration" invisible="1"/>
+                <field name="number_electronic" readonly="1" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
+                <field name="sequence" readonly="1" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
+            </field>
+
+            <!-- Outside the partner's o_col div, so it gets its own label row -->
+            <xpath expr="//group[@id='header_left_group']/div[hasclass('o_col')]" position="after">
                 <field name="economic_activities_ids" invisible="1" readonly="1" options='{"active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
                 <field name="economic_activity_id"
                     required="move_type in ('out_invoice', 'out_refund') and frm_ws_ambiente != 'disabled'"
                     invisible="(move_type not in ('out_invoice', 'out_refund') and tipo_documento != 'FEC') or frm_ws_ambiente == 'disabled'"
                     domain="[('id', 'in', economic_activities_ids),]"
                     options='{"no_open": True, "no_create": True, "active_test": [("type","in", ("in_invoice", "in_refund"))]}'/>
-                <field name="show_exoneration" invisible="1"/>
-                <field name="number_electronic" readonly="1" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
-                <field name="sequence" readonly="1" invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund')"/>
-            </field>
+                <field name="receiver_economic_activities_ids" invisible="1"/>
+                <field name="receiver_economic_activity_id"
+                    invisible="(move_type not in ('out_invoice', 'out_refund') and tipo_documento != 'FEC') or tipo_documento in ('FEE', 'TE') or frm_ws_ambiente == 'disabled'"
+                    readonly="state != 'draft'"
+                    domain="[('id', 'in', receiver_economic_activities_ids)]"
+                    context="{'active_test': False}"
+                    options='{"no_open": True, "no_create": True}'/>
+            </xpath>
 
             <field name="invoice_date" position="attributes">
                 <attribute name="readonly"></attribute>

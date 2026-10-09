@@ -167,11 +167,23 @@ class AccountInvoiceElectronic(models.Model):
 
     error_count = fields.Integer(string="Number of errors", default="0", copy=False)
 
+    # Activity of whoever issues the voucher: the company on sales, the vendor on purchases (FEC).
+    # akcr's IVA report reads it to classify lines as goods or services.
     economic_activity_id = fields.Many2one("economic.activity",
-                                           string="Economic Activity", context={'active_test': False})
+                                           string="Issuer Economic Activity", context={'active_test': False})
 
     economic_activities_ids = fields.Many2many('economic.activity', string='Economic activities',
                                                compute='_compute_economic_activities', context={'active_test': False})
+
+    # Activity of whoever receives the voucher (CodigoActividadReceptor): the customer on sales,
+    # the company on FEC. Empty on every other document.
+    receiver_economic_activity_id = fields.Many2one(
+        "economic.activity", string="Receiver Economic Activity",
+        compute='_compute_receiver_economic_activity_id', store=True, readonly=False,
+        context={'active_test': False})
+    receiver_economic_activities_ids = fields.Many2many(
+        'economic.activity', string='Receiver economic activities',
+        compute='_compute_receiver_economic_activities_ids', context={'active_test': False})
 
     # Show exoneration form when fiscal_position_id = Exonerado 13%
     show_exoneration = fields.Boolean(
@@ -249,6 +261,32 @@ class AccountInvoiceElectronic(models.Model):
             else:
                 inv.economic_activities_ids = self.env['economic.activity'].search([('active', '=', False)])
                 inv.economic_activity_id = inv.company_id.activity_id
+
+    @api.depends('partner_id', 'company_id', 'move_type', 'tipo_documento')
+    def _compute_receiver_economic_activity_id(self):
+        for inv in self:
+            if inv.move_type in ('out_invoice', 'out_refund'):
+                default_activity = inv.partner_id.activity_id
+            elif inv.tipo_documento == 'FEC':
+                default_activity = inv.company_id.activity_id
+            else:
+                inv.receiver_economic_activity_id = False
+                continue
+            # action_post rewrites tipo_documento: keep the user's choice while it is still valid
+            if inv.receiver_economic_activity_id not in inv.receiver_economic_activities_ids:
+                inv.receiver_economic_activity_id = default_activity
+
+    @api.depends('partner_id', 'company_id', 'move_type', 'tipo_documento')
+    def _compute_receiver_economic_activities_ids(self):
+        for inv in self:
+            if inv.move_type in ('out_invoice', 'out_refund'):
+                inv.receiver_economic_activities_ids = (
+                    inv.partner_id.economic_activities_ids | inv.partner_id.activity_id)
+            elif inv.tipo_documento == 'FEC':
+                inv.receiver_economic_activities_ids = (
+                    inv.company_id.economic_activity_ids | inv.company_id.activity_id)
+            else:
+                inv.receiver_economic_activities_ids = False
 
     @api.onchange('partner_id')
     def _onchange_partner_id(self):
