@@ -39,6 +39,9 @@ class AccountMoveReversal(models.TransientModel):
                      'reference_code_id': self.reference_code_id.id,
                      'reference_document_id': self.reference_document_id.id,
                      'economic_activity_id': move.economic_activity_id.id,
+                     'receiver_economic_activity_id': (
+                         move.receiver_economic_activity_id.id
+                         if move.move_type in ('out_invoice', 'out_refund') else False),
                      'payment_methods_id': move.payment_methods_id.id,
                      'state_tributacion': False}
 

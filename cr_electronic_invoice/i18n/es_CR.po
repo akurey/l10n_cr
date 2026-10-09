@@ -769,14 +769,32 @@ msgid "Economic Activities"
 msgstr "Actividades Económicas"
 
 #. module: cr_electronic_invoice
-#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__economic_activity_id
-#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__economic_activity_id
-#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__economic_activity_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_product_category__economic_activity_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_product_product__economic_activity_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_product_template__economic_activity_id
 msgid "Economic Activity"
 msgstr "Actividad Económica"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__economic_activity_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__economic_activity_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__economic_activity_id
+msgid "Issuer Economic Activity"
+msgstr "Actividad Económica del Emisor"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__receiver_economic_activity_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__receiver_economic_activity_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__receiver_economic_activity_id
+msgid "Receiver Economic Activity"
+msgstr "Actividad Económica del Receptor"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__receiver_economic_activities_ids
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__receiver_economic_activities_ids
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__receiver_economic_activities_ids
+msgid "Receiver economic activities"
+msgstr "Actividades Económicas del Receptor"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__economic_activities_ids
