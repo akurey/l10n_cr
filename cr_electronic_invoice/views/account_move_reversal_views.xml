@@ -12,9 +12,13 @@
                 <field name="reference_code_id" string="Código Referencia"
                     invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or frm_ws_ambiente == 'disabled'"
                     required="move_type in ('out_refund', 'in_refund') and frm_ws_ambiente != 'disabled'"/>
+                <field name="reference_code_code" invisible="1"/>
+                <field name="reference_code_other" invisible="reference_code_code != '99'" required="reference_code_code == '99'"/>
                 <field name="reference_document_id" string="Documento Referencia"
                     invisible="move_type not in ('out_invoice', 'out_refund', 'in_invoice', 'in_refund') or frm_ws_ambiente == 'disabled'"
                     required="move_type in ('out_refund', 'in_refund') and frm_ws_ambiente != 'disabled'"/>
+                <field name="reference_document_code" invisible="1"/>
+                <field name="reference_document_other" invisible="reference_document_code != '99'" required="reference_document_code == '99'"/>
             </xpath>
 
             <xpath expr="//field[@name='reason']" position="attributes">

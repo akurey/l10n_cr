@@ -117,6 +117,13 @@ class AccountInvoiceElectronic(models.Model):
 
     reference_document_id = fields.Many2one("reference.document", string="Reference Document Type")
 
+    # Code 99 "Otros" (notas 9 and 10) requires describing the code actually used:
+    # CodigoReferenciaOTRO / TipoDocRefOTRO in the XML, 5 to 100 characters.
+    reference_code_other = fields.Char(string="Other reference code", copy=False)
+    reference_document_other = fields.Char(string="Other reference document type", copy=False)
+    reference_code_code = fields.Char(related="reference_code_id.code")
+    reference_document_code = fields.Char(related="reference_document_id.code")
+
     payment_methods_id = fields.Many2one("payment.methods", string="Payment methods",)
 
     invoice_id = fields.Many2one("account.move", string="Reference document", copy=False)
@@ -1533,6 +1540,7 @@ class AccountInvoiceElectronic(models.Model):
 
             currency = inv.currency_id
             sequence = False
+            inv._check_reference_other()
             if (inv.invoice_id) and not (inv.reference_code_id and inv.reference_document_id):
                 raise UserError(_('Incomplete reference data for credit note'))
             elif (inv.not_loaded_invoice or inv.not_loaded_invoice_date) and not \
@@ -1635,6 +1643,16 @@ class AccountInvoiceElectronic(models.Model):
             inv.state_tributacion = False
         # e.g. core's "auto-post similar bills?" suggestion, shown after posting
         return result
+
+    def _check_reference_other(self):
+        """Code 99 "Otros" must be described in 5 to 100 characters, or Hacienda rejects it."""
+        self.ensure_one()
+        for code, text, label in (
+            (self.reference_code_code, self.reference_code_other, _("Other reference code")),
+            (self.reference_document_code, self.reference_document_other, _("Other reference document type")),
+        ):
+            if code == '99' and not 5 <= len((text or '').strip()) <= 100:
+                raise UserError(_('Reference code 99 "Otros" requires "%s" (5 to 100 characters).', label))
 
     @api.onchange('amount_total')
     def update_text_amount(self):
