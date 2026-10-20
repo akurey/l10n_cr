@@ -1,6 +1,8 @@
 
 from odoo import models, fields
 
+from ..models.reference_code import MANUAL_REFERENCE_CODE_DOMAIN
+
 
 class AccountMoveReversal(models.TransientModel):
     _inherit = "account.move.reversal"
@@ -8,7 +10,8 @@ class AccountMoveReversal(models.TransientModel):
     Account move reversal wizard, it cancel an account move by reversing it.
     """
 
-    reference_code_id = fields.Many2one("reference.code", string="Reference Code")
+    reference_code_id = fields.Many2one("reference.code", string="Reference Code",
+                                        domain=MANUAL_REFERENCE_CODE_DOMAIN)
     reference_document_id = fields.Many2one("reference.document", string="Reference Document")
     reference_code_other = fields.Char(string="Other reference code")
     reference_document_other = fields.Char(string="Other reference document type")

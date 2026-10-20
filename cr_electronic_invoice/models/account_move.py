@@ -14,6 +14,7 @@ from markupsafe import Markup
 from num2words import num2words
 
 from . import api_facturae
+from .reference_code import MANUAL_REFERENCE_CODE_DOMAIN
 from .. import extensions
 
 _logger = logging.getLogger(__name__)
@@ -111,7 +112,8 @@ class AccountInvoiceElectronic(models.Model):
                                               ('2', 'Aceptacion parcial'),
                                               ('3', 'Rechazado')], 'Respuesta del Cliente')
 
-    reference_code_id = fields.Many2one("reference.code", string="Reference code")
+    reference_code_id = fields.Many2one("reference.code", string="Reference code",
+                                        domain=MANUAL_REFERENCE_CODE_DOMAIN)
 
     reference_document_id = fields.Many2one("reference.document", string="Reference Document Type")
 

@@ -2,6 +2,7 @@ import requests
 import datetime
 import json
 from . import fe_enums
+from .reference_code import REP_PAYMENT_CODE
 import io
 import re
 import os
@@ -836,7 +837,7 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
         sb.append('<TipoDocIR>' + str(fe_enums.TipoDocumento[inv.tipo_documento]) + '</TipoDocIR>')
         sb.append('<Numero>' + inv.number_electronic + '</Numero>')
         sb.append('<FechaEmisionIR>' + inv.date_issuance + '</FechaEmisionIR>')
-        sb.append('<Codigo>04</Codigo>')
+        sb.append('<Codigo>' + REP_PAYMENT_CODE + '</Codigo>')
         sb.append('<Razon>Recibo Electrónico de Pago de la factura' + inv.number_electronic +'</Razon>')
         sb.append('</InformacionReferencia>')
         

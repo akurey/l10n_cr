@@ -64,7 +64,37 @@
 
     <record id="cr_electronic_invoice.ReferenceCode_12" model="reference.code">
         <field name="code">12</field>
-        <field name="name">Crédito por exoneración posterior a la facturación</field>
+        <field name="name">Nota de crédito financiera por exoneración posterior a la facturación</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceCode_13" model="reference.code">
+        <field name="code">13</field>
+        <field name="name">Anula documento de referencia por error material</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceCode_14" model="reference.code">
+        <field name="code">14</field>
+        <field name="name">Corrige monto por error material</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceCode_15" model="reference.code">
+        <field name="code">15</field>
+        <field name="name">Sustituye comprobante electrónico por error material</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceCode_16" model="reference.code">
+        <field name="code">16</field>
+        <field name="name">Sustituye comprobante electrónico rechazado</field>
+        <field name="active">true</field>
+    </record>
+
+    <record id="cr_electronic_invoice.ReferenceCode_17" model="reference.code">
+        <field name="code">17</field>
+        <field name="name">Pago a comprobante electrónico</field>
         <field name="active">true</field>
     </record>
 
