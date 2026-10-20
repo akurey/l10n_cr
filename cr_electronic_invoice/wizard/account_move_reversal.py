@@ -10,6 +10,10 @@ class AccountMoveReversal(models.TransientModel):
 
     reference_code_id = fields.Many2one("reference.code", string="Reference Code")
     reference_document_id = fields.Many2one("reference.document", string="Reference Document")
+    reference_code_other = fields.Char(string="Other reference code")
+    reference_document_other = fields.Char(string="Other reference document type")
+    reference_code_code = fields.Char(related="reference_code_id.code")
+    reference_document_code = fields.Char(related="reference_document_id.code")
     # See account_move.py's AccountInvoiceElectronic.frm_ws_ambiente for why
     # this can't just be "company_id.frm_ws_ambiente" in the view.
     frm_ws_ambiente = fields.Selection(related="company_id.frm_ws_ambiente")
@@ -38,6 +42,8 @@ class AccountMoveReversal(models.TransientModel):
                      'tipo_documento': tipo_doc,
                      'reference_code_id': self.reference_code_id.id,
                      'reference_document_id': self.reference_document_id.id,
+                     'reference_code_other': self.reference_code_other,
+                     'reference_document_other': self.reference_document_other,
                      'economic_activity_id': move.economic_activity_id.id,
                      'receiver_economic_activity_id': (
                          move.receiver_economic_activity_id.id

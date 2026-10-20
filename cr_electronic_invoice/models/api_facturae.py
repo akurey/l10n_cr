@@ -704,13 +704,8 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('</ResumenFactura>')
 
     if tipo_documento_referencia:
-        sb.append('<InformacionReferencia>')
-        sb.append('<TipoDocIR>' + str(tipo_documento_referencia) + '</TipoDocIR>')
-        sb.append('<Numero>' + str(numero_documento_referencia) + '</Numero>')
-        sb.append('<FechaEmisionIR>' + fecha_emision_referencia + '</FechaEmisionIR>')
-        sb.append('<Codigo>' + str(codigo_referencia) + '</Codigo>')
-        sb.append('<Razon>' + str(razon_referencia) + '</Razon>')
-        sb.append('</InformacionReferencia>')
+        append_reference_info(sb, inv, tipo_documento_referencia, numero_documento_referencia,
+                              fecha_emision_referencia, codigo_referencia, razon_referencia)
     if invoice_comments:
         sb.append('<Otros>')
         sb.append('<OtroTexto>' + tools.html2plaintext(str(invoice_comments))[0:500] + '</OtroTexto>')
@@ -721,6 +716,23 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     return sb
 
 # Function to generate "Recibo Electronico de Pago" document
+def append_reference_info(sb, inv, tipo_documento_referencia, numero_documento_referencia,
+                          fecha_emision_referencia, codigo_referencia, razon_referencia):
+    """<InformacionReferencia>, in the XSD order. Code 99 "Otros" (notas 9 and 10) carries
+    its description in TipoDocRefOTRO / CodigoReferenciaOTRO."""
+    sb.append('<InformacionReferencia>')
+    sb.append('<TipoDocIR>' + str(tipo_documento_referencia) + '</TipoDocIR>')
+    if str(tipo_documento_referencia) == '99':
+        sb.append('<TipoDocRefOTRO>' + escape(inv.reference_document_other.strip()) + '</TipoDocRefOTRO>')
+    sb.append('<Numero>' + str(numero_documento_referencia) + '</Numero>')
+    sb.append('<FechaEmisionIR>' + fecha_emision_referencia + '</FechaEmisionIR>')
+    sb.append('<Codigo>' + str(codigo_referencia) + '</Codigo>')
+    if str(codigo_referencia) == '99':
+        sb.append('<CodigoReferenciaOTRO>' + escape(inv.reference_code_other.strip()) + '</CodigoReferenciaOTRO>')
+    sb.append('<Razon>' + str(razon_referencia) + '</Razon>')
+    sb.append('</InformacionReferencia>')
+
+
 def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
                     total_servicio_gravado, total_mercaderia_gravado, 
                     total_servicio_exento, total_mercaderia_exento,
