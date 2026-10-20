@@ -1,3 +1,4 @@
 from . import test_additional_contact
 from . import test_credit_term_days
 from . import test_reference_other
+from . import test_reference_xsd
