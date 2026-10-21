@@ -14,14 +14,23 @@ class TestIvaDevuelto(TransactionCase):
         super().setUpClass()
         cls.card = cls.env.ref('cr_electronic_invoice.PaymentMethods_2')
         cls.cash = cls.env.ref('cr_electronic_invoice.PaymentMethods_1')
+        country = cls.env.company.account_fiscal_country_id.id
         cls.tax_4 = cls.env['account.tax'].create({
-            'name': 'IVA 4% salud', 'amount': 4.0, 'type_tax_use': 'sale', 'country_id': cls.env.company.account_fiscal_country_id.id,
+            'name': 'IVA 4% salud', 'amount': 4.0, 'type_tax_use': 'sale', 'country_id': country,
+            'iva_tax_code': '04',
+        })
+        cls.tax_13 = cls.env['account.tax'].create({
+            'name': 'IVA 13%', 'amount': 13.0, 'type_tax_use': 'sale', 'country_id': country,
+            'iva_tax_code': '08',
         })
         cls.consult = cls.env['product.product'].create({
             'name': 'Consulta médica', 'iva_devuelto_tarjeta': True, 'taxes_id': [Command.set(cls.tax_4.ids)],
         })
         cls.medicine = cls.env['product.product'].create({
             'name': 'Medicamento', 'taxes_id': [Command.set(cls.tax_4.ids)],
+        })
+        cls.cream = cls.env['product.product'].create({
+            'name': 'Crema (marcada por error)', 'iva_devuelto_tarjeta': True, 'taxes_id': [Command.set(cls.tax_13.ids)],
         })
         cls.partner = cls.env['res.partner'].create({'name': 'Paciente'})
         cls.iva_devuelto = cls.env.ref('cr_electronic_invoice.product_iva_devuelto').product_variant_id
@@ -58,6 +67,16 @@ class TestIvaDevuelto(TransactionCase):
         invoice = self._invoice(self.cash)
         invoice._update_iva_devuelto_line()
         self.assertFalse(self._refund_lines(invoice))
+
+    def test_only_4_percent_lines_are_refunded(self):
+        """Hacienda caps the refund at the VAT of the 4% health lines: a flagged product
+        taxed at 13% adds nothing, instead of an excess Hacienda would reject."""
+        invoice = self._invoice(self.card)
+        invoice.write({'invoice_line_ids': [
+            Command.create({'product_id': self.cream.id, 'quantity': 1, 'price_unit': 10000.0}),
+        ]})
+        invoice._update_iva_devuelto_line()
+        self.assertAlmostEqual(self._refund_lines(invoice).price_unit, -2000.0)
 
     def test_xml_matches_the_product_variant(self):
         self.assertEqual(self.env['account.move']._iva_devuelto_product()._name, 'product.product')

@@ -1629,16 +1629,21 @@ class AccountInvoiceElectronic(models.Model):
 
     def _update_iva_devuelto_line(self):
         """Paid by card ("Tarjeta"): one "IVA Devuelto" line refunding the VAT of the
-        products flagged iva_devuelto_tarjeta, replacing any previous one."""
+        products flagged iva_devuelto_tarjeta, replacing any previous one.
+
+        Hacienda caps the refund at the VAT of the health-service lines taxed at 4%
+        ("Tarifa reducida 4%", code 04), so a flagged line with any other rate is left out
+        rather than refunded and rejected."""
         self.ensure_one()
         if self.payment_methods_id.sequence != '02':
             return
         product = self._iva_devuelto_product()
         self.invoice_line_ids.filtered(lambda line: line.product_id == product).unlink()
+        refundable = self.invoice_line_ids.filtered(
+            lambda line: line.product_id.iva_devuelto_tarjeta
+            and line.tax_ids and set(line.tax_ids.mapped('iva_tax_code')) == {'04'})
         # account.move.line has no price_tax in Odoo 19: the tax is total - subtotal.
-        iva_devuelto = sum(
-            line.price_total - line.price_subtotal
-            for line in self.invoice_line_ids.filtered(lambda line: line.product_id.iva_devuelto_tarjeta))
+        iva_devuelto = sum(line.price_total - line.price_subtotal for line in refundable)
         if iva_devuelto:
             vals = {
                 'move_id': self.id,
