@@ -1126,8 +1126,7 @@ class AccountInvoiceElectronic(models.Model):
                             continue
 
                         # Revisamos si está línea es de Otros Cargos
-                        env_iva_devuelto = self.env.ref('cr_electronic_invoice.product_iva_devuelto').id
-                        if inv_line.product_id and inv_line.product_id.id == env_iva_devuelto:
+                        if inv_line.product_id and inv_line.product_id == inv._iva_devuelto_product():
                             total_iva_devuelto = -inv_line.price_total
 
                         elif inv_line.product_id and inv_line.product_id.categ_id.name == 'Otros Cargos':
@@ -1599,27 +1598,7 @@ class AccountInvoiceElectronic(models.Model):
                         result = super(AccountInvoiceElectronic, inv).action_post() or result
                         continue
 
-            # Calcular si aplica IVA Devuelto
-            # Aplica cuando el pago es con tarjeta y el producto tiene el flag iva_devuelto_tarjeta
-            if inv.payment_methods_id.sequence == '02':
-                prod_iva_devuelto = self.env.ref('cr_electronic_invoice.product_iva_devuelto')
-                iva_devuelto = 0
-                for inv_line in inv.invoice_line_ids:
-                    if inv_line.product_id:
-                        # Remove any existing IVA Devuelto lines
-                        if inv_line.product_id.id == prod_iva_devuelto.id:
-                            inv_line.unlink()
-                        elif inv_line.product_id.iva_devuelto_tarjeta:
-                            iva_devuelto += inv_line.price_tax
-                if iva_devuelto:
-                    self.env['account.move.line'].create({
-                        'name': 'IVA Devuelto',
-                        'invoice_id': inv.id,
-                        'product_id': prod_iva_devuelto.id,
-                        'account_id': prod_iva_devuelto.property_account_income_id.id,
-                        'price_unit': -iva_devuelto,
-                        'quantity': 1,
-                    })
+            inv._update_iva_devuelto_line()
             if inv.state == 'draft':
                 result = super(AccountInvoiceElectronic, inv).action_post() or result
             if not inv.number_electronic:
@@ -1643,6 +1622,34 @@ class AccountInvoiceElectronic(models.Model):
             inv.state_tributacion = False
         # e.g. core's "auto-post similar bills?" suggestion, shown after posting
         return result
+
+    def _iva_devuelto_product(self):
+        # The xmlid is the product.template; invoice lines hold its product.product.
+        return self.env.ref('cr_electronic_invoice.product_iva_devuelto').product_variant_id
+
+    def _update_iva_devuelto_line(self):
+        """Paid by card ("Tarjeta"): one "IVA Devuelto" line refunding the VAT of the
+        products flagged iva_devuelto_tarjeta, replacing any previous one."""
+        self.ensure_one()
+        if self.payment_methods_id.sequence != '02':
+            return
+        product = self._iva_devuelto_product()
+        self.invoice_line_ids.filtered(lambda line: line.product_id == product).unlink()
+        # account.move.line has no price_tax in Odoo 19: the tax is total - subtotal.
+        iva_devuelto = sum(
+            line.price_total - line.price_subtotal
+            for line in self.invoice_line_ids.filtered(lambda line: line.product_id.iva_devuelto_tarjeta))
+        if iva_devuelto:
+            vals = {
+                'move_id': self.id,
+                'name': 'IVA Devuelto',
+                'product_id': product.id,
+                'price_unit': -iva_devuelto,
+                'quantity': 1,
+            }
+            if product.property_account_income_id:
+                vals['account_id'] = product.property_account_income_id.id
+            self.env['account.move.line'].create(vals)
 
     def _check_reference_other(self):
         """Code 99 "Otros" must be described in 5 to 100 characters, or Hacienda rejects it."""
