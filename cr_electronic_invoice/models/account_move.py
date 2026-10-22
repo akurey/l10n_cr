@@ -123,6 +123,7 @@ class AccountInvoiceElectronic(models.Model):
     reference_document_other = fields.Char(string="Other reference document type", copy=False)
     reference_code_code = fields.Char(related="reference_code_id.code")
     reference_document_code = fields.Char(related="reference_document_id.code")
+    issues_reference_info = fields.Boolean(compute="_compute_issues_reference_info")
 
     payment_methods_id = fields.Many2one("payment.methods", string="Payment methods",)
 
@@ -1656,9 +1657,29 @@ class AccountInvoiceElectronic(models.Model):
                 vals['account_id'] = product.property_account_income_id.id
             self.env['account.move.line'].create(vals)
 
+    @api.depends('move_type', 'tipo_documento', 'xml_supplier_approval')
+    def _compute_issues_reference_info(self):
+        """Whether we issue this document with <InformacionReferencia>.
+
+        A vendor bill with the vendor's XML is only accepted or rejected (CCE, CPCE, RCE:
+        just the receiver's message goes to Hacienda), and users often leave "Otros" as its
+        reference code. Without that XML we issue a Factura Electrónica de Compra. Note that
+        tipo_documento alone cannot tell: the partner onchange sets FE/TE on vendor bills
+        too, and CCE is only assigned once the receiver's message is sent."""
+        for move in self:
+            if move.tipo_documento in ('CCE', 'CPCE', 'RCE', 'CONT', 'disabled'):
+                move.issues_reference_info = False
+            elif move.move_type in ('in_invoice', 'in_refund'):
+                move.issues_reference_info = not move.xml_supplier_approval
+            else:
+                move.issues_reference_info = move.move_type in ('out_invoice', 'out_refund')
+
     def _check_reference_other(self):
-        """Code 99 "Otros" must be described in 5 to 100 characters, or Hacienda rejects it."""
+        """Code 99 "Otros" must be described in 5 to 100 characters, or Hacienda rejects it.
+        Only on the documents we issue with <InformacionReferencia>."""
         self.ensure_one()
+        if not self.issues_reference_info:
+            return
         for code, text, label in (
             (self.reference_code_code, self.reference_code_other, _("Other reference code")),
             (self.reference_document_code, self.reference_document_other, _("Other reference document type")),
