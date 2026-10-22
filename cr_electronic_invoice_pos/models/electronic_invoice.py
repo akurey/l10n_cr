@@ -437,7 +437,7 @@ class PosOrder(models.Model):
             _logger.info('E-INV CR - Valida Hacienda - POS Order: "%s"  -  %s / %s',
                          doc.number_electronic, current_order, total_orders)
             doc_name = doc.number_electronic
-            if not doc_name or not doc_name.isdigit() or doc.company_id.frm_ws_ambiente == 'disabled':
+            if not doc_name or not doc_name.isalnum() or doc.company_id.frm_ws_ambiente == 'disabled':
                 _logger.error(
                     'E-INV CR - Valida Hacienda - skipped Invoice %s', doc_name)
                 doc.state_tributacion = 'no_aplica'

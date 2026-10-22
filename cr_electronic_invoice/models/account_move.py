@@ -14,6 +14,7 @@ from markupsafe import Markup
 from num2words import num2words
 
 from . import api_facturae
+from .identification import LEGAL_ID_CODE, clean_identification, is_legal_id
 from .reference_code import MANUAL_REFERENCE_CODE_DOMAIN
 from .. import extensions
 
@@ -1557,8 +1558,8 @@ class AccountInvoiceElectronic(models.Model):
                 raise UserError(_('Select the type of issuer identification in the company profile'))
 
             if inv.partner_id and inv.partner_id.vat:
-                identificacion = re.sub('[^0-9]', '', inv.partner_id.vat)
                 id_code = inv.partner_id.identification_id and inv.partner_id.identification_id.code
+                identificacion = clean_identification(inv.partner_id.vat, id_code)
                 if not id_code:
                     if len(identificacion) == 9:
                         id_code = '01'
@@ -1571,8 +1572,9 @@ class AccountInvoiceElectronic(models.Model):
 
                 if id_code == '01' and len(identificacion) != 9:
                     raise UserError(_("The recipient's Physical ID must have 9 digits"))
-                elif id_code == '02' and len(identificacion) != 10:
-                    raise UserError(_('The Legal ID of the recipient must have 10 digits'))
+                elif id_code == LEGAL_ID_CODE and not is_legal_id(identificacion):
+                    raise UserError(_('The Legal ID of the recipient must have 10 characters: 4 digits '
+                                      'and a consecutive of 6 digits or letters'))
                 elif id_code == '03' and len(identificacion) not in (11, 12):
                     raise UserError(_("The recipient's DIMEX identification must have 11 or 12 digits"))
                 elif id_code == '04' and len(identificacion) != 10:

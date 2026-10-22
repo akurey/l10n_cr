@@ -2,6 +2,7 @@ import requests
 import datetime
 import json
 from . import fe_enums
+from .identification import LEGAL_ID_CODE, clean_clave, clean_identification, is_legal_id
 from .reference_code import REP_PAYMENT_CODE
 import io
 import re
@@ -133,13 +134,14 @@ def get_clave_hacienda(doc, tipo_documento, consecutivo, sucursal_id, terminal_i
             raise UserError(_('Seleccione el tipo de identificación del emisor en el pérfil de la compañía'))
 
         # '''Obtenemos el número de identificación del Emisor y lo validamos númericamente'''
-        inv_cedula = re.sub('[^0-9]', '', doc.company_id.vat)
+        inv_cedula = clean_identification(doc.company_id.vat, doc.company_id.identification_id.code)
 
         # '''Validamos el largo de la cadena númerica de la cédula del emisor'''
         if doc.company_id.identification_id.code == '01' and len(inv_cedula) != 9:
             raise UserError(_('La Cédula Física del emisor debe de tener 9 dígitos'))
-        elif doc.company_id.identification_id.code == '02' and len(inv_cedula) != 10:
-            raise UserError(_('La Cédula Jurídica del emisor debe de tener 10 dígitos'))
+        elif doc.company_id.identification_id.code == LEGAL_ID_CODE and not is_legal_id(inv_cedula):
+            raise UserError(_('La Cédula Jurídica del emisor debe de tener 10 caracteres: 4 dígitos '
+                              'y un consecutivo de 6 dígitos o letras'))
         elif doc.company_id.identification_id.code == '03' and len(inv_cedula) not in (11, 12):
             raise UserError(_('La identificación DIMEX del emisor debe de tener 11 o 12 dígitos'))
         elif doc.company_id.identification_id.code == '04' and len(inv_cedula) != 10:
@@ -259,16 +261,16 @@ def gen_xml_mr_4_4(clave, cedula_emisor, fecha_emision, id_mensaje,
                   condicion_impuesto=False,
                   monto_total_impuesto_acreditar=False,
                   monto_total_gasto_aplicable=False):
-    # '''Verificamos si la clave indicada corresponde a un numeros'''
+    # La clave es alfanumérica: incluye la cédula del emisor, que puede llevar letras.
     if clave:
-        mr_clave = re.sub('[^0-9]', '', clave)
+        mr_clave = clean_clave(clave)
     else:
         mr_clave = False
     if len(mr_clave) != 50:
         raise UserError(_('La clave a utilizar es inválida. Debe contener al menos 50 digitos'))
 
     # '''Obtenemos el número de identificación del Emisor y lo validamos númericamente'''
-    mr_cedula_emisor = re.sub('[^0-9]', '', cedula_emisor)
+    mr_cedula_emisor = clean_identification(cedula_emisor)
     # if len(mr_cedula_emisor) != 12:
     #     mr_cedula_emisor = str(mr_cedula_emisor).zfill(12)
     if mr_cedula_emisor is None:
@@ -285,7 +287,7 @@ def gen_xml_mr_4_4(clave, cedula_emisor, fecha_emision, id_mensaje,
     elif mr_mensaje_id is None:
         raise UserError(_('No se ha proporcionado un ID válido para el MR.'))
 
-    mr_cedula_receptor = re.sub('[^0-9]', '', cedula_receptor)
+    mr_cedula_receptor = clean_identification(cedula_receptor)
     # if len(mr_cedula_receptor) != 12:
     #     mr_cedula_receptor = str(mr_cedula_receptor).zfill(12)
     if mr_cedula_receptor is None:
@@ -449,7 +451,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     if inv.tipo_documento == 'TE' or (inv.tipo_documento == 'NC' and not receiver_company.vat):
         pass
     else:
-        vat = re.sub('[^0-9]', '', receiver_company.vat)
+        vat = clean_identification(receiver_company.vat, receiver_company.identification_id.code)
         if not receiver_company.identification_id:
             if len(vat) == 9:  # cedula fisica
                 id_code = '01'
@@ -746,7 +748,7 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
     plazo_credito = str(credit_term_days(inv))
     cod_moneda = str(inv.currency_id.name)
     id_code = '02'
-    vat = re.sub('[^0-9]', '', inv.company_id.vat)
+    vat = clean_identification(inv.company_id.vat, inv.company_id.identification_id.code)
     numero_linea = 0
          
     sb = StringBuilder()
@@ -1202,7 +1204,7 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
 def send_message(inv, date_cr, xml, token, env):
     endpoint = fe_enums.UrlHaciendaRecepcion[env]
 
-    vat = re.sub('[^0-9]', '', inv.partner_id.vat)
+    vat = clean_identification(inv.partner_id.vat, inv.partner_id.identification_id.code)
     xml_base64 = string_to_base64(xml)
 
     comprobante = {'clave': inv.number_electronic,

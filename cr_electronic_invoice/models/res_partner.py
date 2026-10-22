@@ -7,6 +7,7 @@ import phonenumbers
 import logging
 from datetime import datetime, timedelta, date
 from . import api_facturae
+from .identification import LEGAL_ID_CODE, clean_identification, is_legal_id
 
 _logger = logging.getLogger(__name__)
 
@@ -90,16 +91,18 @@ class PartnerElectronic(models.Model):
                 if len(self.vat) == 0 or len(self.vat) > 20:
                     raise UserError(_('La identificación debe tener menos de 20 carateres.'))
             else:
-                # Remove leters, dashes, dots or any other special character.
-                self.vat = re.sub(r"[^0-9]+", "", self.vat)
+                # Remove dashes, dots or any other special character; only a cédula
+                # jurídica keeps letters (Registro Nacional's alphanumeric consecutive).
+                self.vat = clean_identification(self.vat, self.identification_id.code)
                 if self.identification_id.code == '01':
                     if self.vat.isdigit() and len(self.vat) != 9:
                         raise UserError(_('La identificación tipo Cédula física debe ' +
                                         'de contener 9 dígitos, sin cero al inicio y sin guiones.'))
-                elif self.identification_id.code == '02':
-                    if self.vat.isdigit() and len(self.vat) != 10:
+                elif self.identification_id.code == LEGAL_ID_CODE:
+                    if not is_legal_id(self.vat):
                         raise UserError(_('La identificación tipo Cédula jurídica debe contener 10 ' +
-                                          'dígitos, sin cero al inicio y sin guiones.'))
+                                          'caracteres sin guiones: 4 dígitos y un consecutivo de 6 ' +
+                                          'dígitos o letras (por ejemplo 3101123456 o 3101A00001).'))
                 elif self.identification_id.code == '03' and self.vat.isdigit():
                     if self.vat.isdigit() and len(self.vat) < 11 or len(self.vat) > 12:
                         raise UserError(_('La identificación tipo DIMEX debe contener 11 o 12 ' +
