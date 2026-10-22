@@ -66,6 +66,28 @@ class TestReferenceOther(TransactionCase):
                    )._check_reference_other()
         self._move(reference_code_id=self.code_01.id, reference_document_id=self.document_01.id)._check_reference_other()
 
+    def test_received_vendor_bill_needs_no_description(self):
+        """A vendor bill with the vendor's XML is only accepted or rejected (receiver's
+        message, no InformacionReferencia): users often leave "Otros" on it, and that must
+        not block posting. Its tipo_documento is still FE/TE (partner onchange) until the
+        receiver's message assigns CCE, so the vendor XML is what tells."""
+        for tipo in ('FE', 'TE', 'CCE', 'CPCE', 'RCE'):
+            bill = self.env['account.move'].new({
+                'move_type': 'in_invoice', 'tipo_documento': tipo, 'xml_supplier_approval': b'PEZFLz4=',
+                'reference_code_id': self.code_99.id, 'reference_document_id': self.document_99.id,
+            })
+            self.assertFalse(bill.issues_reference_info, tipo)
+            bill._check_reference_other()
+
+    def test_purchase_invoice_still_needs_description(self):
+        """Without the vendor's XML we issue a Factura Electrónica de Compra, with reference."""
+        bill = self.env['account.move'].new({
+            'move_type': 'in_invoice', 'tipo_documento': 'FE', 'reference_code_id': self.code_99.id,
+        })
+        self.assertTrue(bill.issues_reference_info)
+        with self.assertRaises(UserError):
+            bill._check_reference_other()
+
     def test_reversal_wizard_carries_other_descriptions(self):
         partner = self.env['res.partner'].create({'name': 'Cliente'})
         invoice = self.env['account.move'].create({
