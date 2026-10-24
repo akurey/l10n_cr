@@ -752,6 +752,14 @@ def append_reference_info(sb, inv, tipo_documento_referencia, numero_documento_r
     sb.append('</InformacionReferencia>')
 
 
+# Nota 5: an invoice on one of these sale conditions is paid through a Recibo Electrónico de
+# Pago, which carries the matching "payment" condition. 09 and 11 are only valid on the REP.
+REP_SALE_CONDITIONS = {
+    '10': '11',  # Venta a crédito en IVA hasta 90 días (Art. 27 LIVA) -> Pago de esa venta
+    '08': '09',  # Servicios prestados al Estado -> Pago de servicios prestados al Estado
+}
+
+
 def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
                     total_servicio_gravado, total_mercaderia_gravado, 
                     total_servicio_exento, total_mercaderia_exento,
@@ -766,6 +774,9 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
     id_code = '02'
     vat = re.sub('[^0-9]', '', inv.company_id.vat)
     numero_linea = 0
+    # Hacienda rejects a REP whose summary lacks the tax total and breakdown (-54, -487)
+    # or whose TotalComprobante then does not add up (-55): same summary as the FE.
+    tax_summary = {}
          
     sb = StringBuilder()
     sb.append('<' + fe_enums.tagName[tipo_documento] + ' xmlns="' + fe_enums.XmlnsHacienda[tipo_documento] + '" ')
@@ -815,6 +826,11 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
                     sb.append('<Tarifa>' + str(b['tarifa']) + '</Tarifa>')
                     sb.append('<Monto>' + str(b['monto']) + '</Monto>')
                     sb.append('</Impuesto>')
+                    if tax_code in tax_summary:
+                        tax_summary[tax_code]['TotalMontoImpuesto'] += float(b['monto'])
+                    else:
+                        tax_summary[tax_code] = {'Codigo': str(b['codigo']), 'CodigoTarifaIVA': tax_code,
+                                                 'TotalMontoImpuesto': float(b['monto'])}
 
                 impuesto_neto = str(v['impuestoNeto'])
             else:
@@ -839,6 +855,8 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
                             totalMercExonerada, 5)) +
                 '</TotalVenta>')
         sb.append('<TotalVentaNeta>' + str(round(base_total, 5)) + '</TotalVentaNeta>')
+        append_tax_breakdown(sb, tax_summary)
+        sb.append('<TotalImpuesto>' + str(round(total_impuestos, 5)) + '</TotalImpuesto>')
         payment_method_length = len(payment_methods_id)
         for payment_method_counter in range(payment_method_length):
             sb.append('<MedioPago>')

@@ -1379,10 +1379,10 @@ class AccountInvoiceElectronic(models.Model):
                         inv.company_id.frm_pin,
                         xml_to_sign)
                     
-                    if inv.invoice_payment_term_id and inv.invoice_payment_term_id.sale_conditions_id and \
-                            inv.invoice_payment_term_id.sale_conditions_id.code == '11':
+                    rep_sale_condition = api_facturae.REP_SALE_CONDITIONS.get(sale_conditions)
+                    if rep_sale_condition:
                         try:
-                            rep_xml_builder = api_facturae.generate_rep_xml(inv, 'REP', sale_conditions, lines, currency_rate,
+                            rep_xml_builder = api_facturae.generate_rep_xml(inv, 'REP', rep_sale_condition, lines, currency_rate,
                                                                             total_servicio_gravado, total_mercaderia_gravado, 
                                                                             total_servicio_exento, total_mercaderia_exento,
                                                                             total_servicio_exonerado, total_mercaderia_exonerado, base_subtotal,
