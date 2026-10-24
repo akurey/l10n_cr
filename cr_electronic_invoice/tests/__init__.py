@@ -1,4 +1,5 @@
 from . import test_additional_contact
+from . import test_payment_term_migration
 from . import test_credit_term_days
 from . import test_reference_codes
 from . import test_reference_other
