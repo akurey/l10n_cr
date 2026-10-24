@@ -3,5 +3,7 @@ from . import test_credit_term_days
 from . import test_reference_codes
 from . import test_reference_other
 from . import test_reference_xsd
-from . import test_iva_devuelto
 from . import test_identification
+from . import test_iva_devuelto
+from . import test_tax_breakdown
+from . import test_discount_code

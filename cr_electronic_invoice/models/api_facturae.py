@@ -680,12 +680,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('<TotalVentaNeta>' + str(round(base_total, 5)) + '</TotalVentaNeta>')
     
     if tax_summary and ((inv.tipo_documento != 'FEC' and not inv.partner_id.has_exoneration) or (inv.tipo_documento == 'FEC' and not receiver_company.has_exoneration)):
-        sb.append('<TotalDesgloseImpuesto>')
-        for tax_code, tax in tax_summary.items():
-            sb.append('<Codigo>' + tax['Codigo'] + '</Codigo>')
-            sb.append('<CodigoTarifaIVA>' + tax['CodigoTarifaIVA'] + '</CodigoTarifaIVA>')
-            sb.append('<TotalMontoImpuesto>' + str(tax['TotalMontoImpuesto']) + '</TotalMontoImpuesto>')
-        sb.append('</TotalDesgloseImpuesto>')
+        append_tax_breakdown(sb, tax_summary)
         
     sb.append('<TotalImpuesto>' + str(round(total_impuestos, 5)) + '</TotalImpuesto>')
 
@@ -719,6 +714,18 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     return sb
 
 # Function to generate "Recibo Electronico de Pago" document
+def append_tax_breakdown(sb, tax_summary):
+    """<TotalDesgloseImpuesto>: one element per tax and rate (the XSD allows up to 1000, each
+    holding a single Codigo / CodigoTarifaIVA / TotalMontoImpuesto). All rates used to go in a
+    single element, which Hacienda rejects as soon as a document has two VAT rates."""
+    for tax in tax_summary.values():
+        sb.append('<TotalDesgloseImpuesto>')
+        sb.append('<Codigo>' + tax['Codigo'] + '</Codigo>')
+        sb.append('<CodigoTarifaIVA>' + tax['CodigoTarifaIVA'] + '</CodigoTarifaIVA>')
+        sb.append('<TotalMontoImpuesto>' + str(round(tax['TotalMontoImpuesto'], 5)) + '</TotalMontoImpuesto>')
+        sb.append('</TotalDesgloseImpuesto>')
+
+
 def append_reference_info(sb, inv, tipo_documento_referencia, numero_documento_referencia,
                           fecha_emision_referencia, codigo_referencia, razon_referencia):
     """<InformacionReferencia>, in the XSD order. Code 99 "Otros" (notas 9 and 10) carries
