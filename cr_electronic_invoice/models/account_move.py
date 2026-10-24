@@ -19,6 +19,9 @@ from .. import extensions
 
 _logger = logging.getLogger(__name__)
 
+# Discount code (CodigoDescuento) sent when the line has none: "Descuento Comercial".
+DEFAULT_DISCOUNT_CODE = '07'
+
 EXONERATION_FISCAL_POSITION = "Exonerado 13%"
 
 
@@ -1200,11 +1203,15 @@ class AccountInvoiceElectronic(models.Model):
                             if inv_line.discount and price_unit > 0:
                                 total_descuento += descuento
                                 line["montoDescuento"] = descuento
-                                line["codigoDescuento"] = inv_line.discount_code_id.code or "01"
+                                # Without a code, a discount is a commercial one (07). It used to be
+                                # 01 "Descuento por regalía", which Hacienda only accepts as a 100%
+                                # discount (-518), so every partial discount without a code failed.
+                                line["codigoDescuento"] = inv_line.discount_code_id.code or DEFAULT_DISCOUNT_CODE
                                 if inv_line.discount_code_id.code == "99":
                                     line["codigoDescuentoOTRO"] = inv_line.other_discount_code
                                     line["naturalezaDescuento"] = inv_line.other_discount_code
-                                line["naturalezaDescuento"] = inv_line.discount_code_id.name or "Descuento Comercial"
+                                else:
+                                    line["naturalezaDescuento"] = inv_line.discount_code_id.name or "Descuento Comercial"
                                 line["porcentajeDescuento"] = inv_line.discount or 0.0
 
                             # Se generan los impuestos
