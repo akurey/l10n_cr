@@ -39,10 +39,7 @@ def sign_xml(cert, password, xml, policy_id='https://www.hacienda.go.cr/ATV/Comp
 
     root.append(signature)
     ctx = XAdESContext2(policy)
-    _password = password.encode() if isinstance(password, str) else password
-    private_key, certificate, _ = crypto_pkcs12.load_key_and_certificates(
-        base64.b64decode(cert), _password
-    )
+    private_key, certificate = load_p12(cert, password)
     ctx.x509 = certificate
     ctx.public_key = certificate.public_key()
     ctx.private_key = private_key
@@ -210,7 +207,10 @@ def get_token_hacienda(inv, tipo_ambiente):
             # enviando solicitud post y guardando la respuesta como un objeto json
             response = requests.request(
                 "POST", endpoint, data=data, headers=headers)
-            response_json = response.json()
+            try:
+                response_json = response.json()
+            except ValueError:
+                response_json = {}
 
             # F841 local variable 'respuesta' is assigned to but never used
             # respuesta = extensions.response_validator.assert_valid_schema(response_json, 'token.json')
@@ -223,9 +223,20 @@ def get_token_hacienda(inv, tipo_ambiente):
                 last_tokens_refresh[inv.company_id.id] = response_json.get('refresh_expires_in')
             else:
                 _logger.error('FECR - token_hacienda failed.  error: %s' % (response.status_code))
+                # This used to fall through to "return token_hacienda" unassigned
+                # (UnboundLocalError): every caller already stopped there, so it still
+                # raises, but saying why.
+                raise UserError(_(
+                    'Hacienda rechazó la solicitud del token (HTTP %(status)s: %(detail)s). Revise '
+                    'que el usuario, la contraseña y el ambiente de la compañía correspondan: un '
+                    'usuario de pruebas (...@stag.comprobanteselectronicos.go.cr) solo funciona con '
+                    'el ambiente Pruebas, y uno de producción (...@prod.comprobanteselectronicos.go.cr) '
+                    'con Producción.',
+                    status=response.status_code,
+                    detail=response_json.get('error_description') or response_json.get('error') or '-'))
 
         except requests.exceptions.RequestException as e:
-            raise Warning(_('Error Obteniendo el Token desde MH. Excepcion %s'), (e))
+            raise UserError(_('Error Obteniendo el Token desde MH. Excepcion %s', e)) from None
 
     return token_hacienda
 
@@ -1536,9 +1547,26 @@ def load_xml_data(invoice, load_lines, account_id, product_id=False, analytic_ac
     invoice._compute_amount()
 
 
-def p12_expiration_date(p12file, password):
+def load_p12(p12file, password):
+    """Private key and certificate of the company's cryptographic key (.p12).
+
+    A PIN that does not open the file (typically the production PIN left with a test key,
+    or the reverse) used to surface as a bare "Invalid password or PKCS12 data" traceback.
+    """
     _password = password.encode() if isinstance(password, str) else password
-    _, cert, _ = crypto_pkcs12.load_key_and_certificates(
-        base64.b64decode(p12file), _password
-    )
+    try:
+        private_key, certificate, _chain = crypto_pkcs12.load_key_and_certificates(
+            base64.b64decode(p12file), _password
+        )
+    except ValueError:
+        raise UserError(_(
+            'No se pudo abrir la llave criptográfica de la compañía: el PIN no corresponde al '
+            'archivo .p12, o el archivo no es una llave válida. Revise el PIN y la llave en la '
+            'configuración de factura electrónica de la compañía; ambos deben ser del mismo '
+            'ambiente (pruebas o producción).')) from None
+    return private_key, certificate
+
+
+def p12_expiration_date(p12file, password):
+    _key, cert = load_p12(p12file, password)
     return cert.not_valid_after

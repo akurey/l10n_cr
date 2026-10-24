@@ -6,6 +6,7 @@ import phonenumbers
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from odoo.tools import format_date
 
 from . import api_facturae
 
@@ -236,9 +237,12 @@ class CompanyElectronic(models.Model):
         token_m_h = api_facturae.get_token_hacienda(
             self.env.user, self.frm_ws_ambiente)
         if token_m_h:
+            environment = dict(self._fields['frm_ws_ambiente']._description_selection(self.env))
             self.message_post(
                 subject=_('Info'),
-                body=_("Token Correcto"))
+                body=_('Conexión correcta con Hacienda (%(environment)s). La llave criptográfica vence el %(date)s.',
+                       environment=environment.get(self.frm_ws_ambiente, self.frm_ws_ambiente),
+                       date=format_date(self.env, self.date_expiration_sign)))
         else:
             self.message_post(
                 subject=_('Error'),
