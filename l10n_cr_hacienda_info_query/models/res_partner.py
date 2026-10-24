@@ -1,3 +1,5 @@
+import re
+
 from odoo import models, api
 from datetime import datetime
 import json
@@ -9,6 +11,11 @@ class ResPartner(models.Model):
 
     def limpiar_cedula(self, vat):
         if vat:
+            # New cédulas jurídicas have an alphanumeric consecutive (3-101-A00001): only
+            # that shape keeps its letters; anything else keeps its digits, as before.
+            alphanumeric = ''.join(i for i in vat if i.isalnum()).upper()
+            if re.fullmatch(r'\d{4}[A-Z0-9]{6}', alphanumeric):
+                return alphanumeric
             return ''.join(i for i in vat if i.isdigit())
 
     def definir_informacion(self, cedula):

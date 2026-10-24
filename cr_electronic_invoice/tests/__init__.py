@@ -6,6 +6,7 @@ from . import test_p12_key
 from . import test_token_hacienda
 from . import test_reference_other
 from . import test_reference_xsd
+from . import test_identification
 from . import test_iva_devuelto
 from . import test_tax_breakdown
 from . import test_rep
