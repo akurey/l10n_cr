@@ -1,6 +1,6 @@
 {
     "name": "Consultar Información de Clientes en Hacienda Costa Rica",
-    "version": '19.0.1.0.0',
+    "version": '19.0.1.1.0',
     "author": "Odoo Community Association (OCA), Odoo CR, Factura Sempai, FSS Solutions",
     "license": 'LGPL-3',
     "website": "https://github.com/odoocr/l10n_cr",
@@ -11,11 +11,11 @@
         'contacts',
         'point_of_sale',
         'base_setup',
-        'web_notify'
     ],
     "data": [
         'data/res_config_settings.xml',
         'views/res_config_settings_views.xml',
+        'views/res_partner_views.xml',
     ],
     "assets": {
         'point_of_sale._assets_pos': [

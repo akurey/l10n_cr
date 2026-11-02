@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_hacienda_query_warning" model="ir.ui.view">
+        <field name="name">res.partner.form.hacienda.query.warning</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='warning_tax']" position="after">
+                <div class="alert alert-warning oe_edit_only" role="alert" name="warning_hacienda_query"
+                     invisible="not hacienda_query_warning">
+                    <field name="hacienda_query_warning" readonly="1" nolabel="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
