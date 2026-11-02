@@ -239,8 +239,8 @@ msgstr "Advertencia de consulta a Hacienda"
 #. module: l10n_cr_hacienda_info_query
 #. odoo-python
 #: code:addons/l10n_cr_hacienda_info_query/models/res_partner.py:0
-msgid "Could not get the emails from Hacienda (Yo Contribuyo): the service is unavailable at this moment."
-msgstr "No se pudieron obtener los correos desde Hacienda (Yo Contribuyo): el servicio no está disponible en este momento."
+msgid "Could not get the email from Hacienda (Yo Contribuyo): the service is unavailable at this moment."
+msgstr "No se pudo obtener el correo desde Hacienda (Yo Contribuyo): el servicio no está disponible en este momento."
 
 #. module: l10n_cr_hacienda_info_query
 #. odoo-python

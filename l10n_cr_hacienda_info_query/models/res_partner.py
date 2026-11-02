@@ -53,7 +53,7 @@ class ResPartner(models.Model):
                     self.email = all_emails_yo_contribuyo
             except Exception:
                 errors.append(self.env._(
-                    'Could not get the emails from Hacienda (Yo Contribuyo): '
+                    'Could not get the email from Hacienda (Yo Contribuyo): '
                     'the service is unavailable at this moment.'))
 
         if url_base:
