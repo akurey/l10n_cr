@@ -2,7 +2,7 @@
 
 {
     'name': 'Códigos País para Facturación electrónica Costa Rica',
-    'version': '20.0.1.0.0',
+    'version': '20.0.1.1.0',
     'author': 'Odoo CR',
     'license': 'AGPL-3',
     'website': 'https://github.com/odoocr',
