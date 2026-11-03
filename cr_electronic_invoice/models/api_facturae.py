@@ -443,10 +443,10 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         sb.append('<Canton>' + issuing_company.county_id.code + '</Canton>')
         sb.append('<Distrito>' + issuing_company.district_id.code + '</Distrito>')
         append_barrio(sb, issuing_company.neighborhood_id)
-        sb.append('<OtrasSenas>' + escape(str(issuing_company.street or 'No Aplica')) + '</OtrasSenas>')
+        sb.append('<OtrasSenas>' + otras_senas(issuing_company.street, 250) + '</OtrasSenas>')
         sb.append('</Ubicacion>')
     else:
-         sb.append('<OtrasSenasExtranjero>' + escape(str(issuing_company.street or 'No Aplica')) + '</OtrasSenasExtranjero>')
+         sb.append('<OtrasSenasExtranjero>' + otras_senas(issuing_company.street, 300) + '</OtrasSenasExtranjero>')
 
     if issuing_company.phone:
         phone = phonenumbers.parse(issuing_company.phone, (issuing_company.country_id.code or 'CR'))
@@ -490,7 +490,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                     sb.append('<Distrito>' + str(receiver_company.district_id.code or '') + '</Distrito>')
                     append_barrio(sb, receiver_company.neighborhood_id)
 
-                    sb.append('<OtrasSenas>' + escape(str(receiver_company.street or 'No Aplica')) + '</OtrasSenas>')
+                    sb.append('<OtrasSenas>' + otras_senas(receiver_company.street, 250) + '</OtrasSenas>')
                     sb.append('</Ubicacion>')
 
                 if receiver_company.phone:
@@ -725,6 +725,12 @@ def append_barrio(sb, neighborhood):
     name = (neighborhood.name or '').strip()
     if 5 <= len(name) <= 50:
         sb.append('<Barrio>' + escape(name) + '</Barrio>')
+
+
+def otras_senas(street, max_length):
+    # Hacienda requires 5 characters at least: a shorter address is sent as "No Aplica".
+    text = (street or '').strip()
+    return escape(text[:max_length] if len(text) >= 5 else 'No Aplica')
 
 
 # Function to generate "Recibo Electronico de Pago" document
