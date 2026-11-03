@@ -1,6 +1,6 @@
 import re
 
-from odoo import models, api
+from odoo import api, fields, models
 from datetime import datetime
 import json
 import requests
@@ -8,6 +8,8 @@ import requests
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
+
+    hacienda_query_warning = fields.Text(string="Hacienda Query Warning", store=False)
 
     def limpiar_cedula(self, vat):
         if vat:
@@ -19,6 +21,7 @@ class ResPartner(models.Model):
             return ''.join(i for i in vat if i.isdigit())
 
     def definir_informacion(self, cedula):
+        errors = []
         set_param = self.env['ir.config_parameter'].sudo().set_param
         get_param = self.env['ir.config_parameter'].sudo().get_param
 
@@ -48,8 +51,10 @@ class ResPartner(models.Model):
                         all_emails_yo_contribuyo = all_emails_yo_contribuyo + email_yo_contribuyo['Correo'] + ','
                     all_emails_yo_contribuyo = all_emails_yo_contribuyo[:-1]
                     self.email = all_emails_yo_contribuyo
-            except:
-                self.env.user.notify_default(message='The email query service is unavailable at this moment', title='Query service')
+            except Exception:
+                errors.append(self.env._(
+                    'Could not get the email from Hacienda (Yo Contribuyo): '
+                    'the service is unavailable at this moment.'))
 
         if url_base:
             url_base = url_base.strip()
@@ -87,10 +92,12 @@ class ResPartner(models.Model):
                                                                                       '=',
                                                                                       str(act.get('codigo')))],
                                                                                     limit=1).id
-            except:
-                self.env.user.notify_default(message='The name query service is unavailable at this moment', title='Query service')
+            except Exception:
+                errors.append(self.env._(
+                    'Could not get the name from Hacienda: the service is unavailable at this moment.'))
+        return errors
 
     @api.onchange('vat')
     def onchange_vat(self):
-        if self.vat:
-            self.definir_informacion(self.vat)
+        errors = self.definir_informacion(self.vat) if self.vat else []
+        self.hacienda_query_warning = '\n'.join(errors) or False
