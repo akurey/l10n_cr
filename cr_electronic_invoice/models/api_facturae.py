@@ -442,8 +442,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
         sb.append('<Provincia>' + issuing_company.state_id.code + '</Provincia>')
         sb.append('<Canton>' + issuing_company.county_id.code + '</Canton>')
         sb.append('<Distrito>' + issuing_company.district_id.code + '</Distrito>')
-        if issuing_company.neighborhood_id:
-            sb.append('<Barrio>' + str(issuing_company.neighborhood_id.name) + '</Barrio>')
+        append_barrio(sb, issuing_company.neighborhood_id)
         sb.append('<OtrasSenas>' + escape(str(issuing_company.street or 'No Aplica')) + '</OtrasSenas>')
         sb.append('</Ubicacion>')
     else:
@@ -484,16 +483,12 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
             sb.append('</Identificacion>')
 
             if inv.tipo_documento != 'FEE':
-                if receiver_company.state_id and \
-                    receiver_company.county_id and \
-                        receiver_company.district_id and receiver_company.neighborhood_id:
+                if receiver_company.state_id and receiver_company.county_id and receiver_company.district_id:
                     sb.append('<Ubicacion>')
                     sb.append('<Provincia>' + str(receiver_company.state_id.code or '') + '</Provincia>')
                     sb.append('<Canton>' + str(receiver_company.county_id.code or '') + '</Canton>')
                     sb.append('<Distrito>' + str(receiver_company.district_id.code or '') + '</Distrito>')
-
-                    if receiver_company.neighborhood_id:
-                        sb.append('<Barrio>' + str(receiver_company.neighborhood_id.name) + '</Barrio>')
+                    append_barrio(sb, receiver_company.neighborhood_id)
 
                     sb.append('<OtrasSenas>' + escape(str(receiver_company.street or 'No Aplica')) + '</OtrasSenas>')
                     sb.append('</Ubicacion>')
@@ -723,6 +718,14 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('</' + fe_enums.tagName[inv.tipo_documento] + '>')
 
     return sb
+
+
+def append_barrio(sb, neighborhood):
+    # <Barrio> is optional and Hacienda only accepts 5 to 50 characters; shorter names are left out.
+    name = (neighborhood.name or '').strip()
+    if 5 <= len(name) <= 50:
+        sb.append('<Barrio>' + escape(name) + '</Barrio>')
+
 
 # Function to generate "Recibo Electronico de Pago" document
 def append_tax_breakdown(sb, tax_summary):
