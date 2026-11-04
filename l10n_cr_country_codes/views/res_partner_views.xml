@@ -42,6 +42,41 @@
                     options="{'no_open': True}"
                     invisible="country_code != 'CR'"/>
             </xpath>
+
+            <!-- The address of a company's invoice, delivery and other addresses, in the "Add contact" dialog -->
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='city']" position="attributes">
+                <attribute name="invisible">country_code == 'CR'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='street2']" position="attributes">
+                <attribute name="invisible">country_code == 'CR'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='street']" position="attributes">
+                <attribute name="options">{'placeholder_field': 'l10n_cr_street_placeholder'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='street']" position="before">
+                <field name="l10n_cr_street_placeholder" invisible="1"/>
+                <field name="l10n_cr_state_placeholder" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='state_id']" position="attributes">
+                <attribute name="options">{'no_open': True, 'no_quick_create': True, 'placeholder_field': 'l10n_cr_state_placeholder'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='state_id']" position="after">
+                <field name="county_id"
+                    class="o_address_state"
+                    placeholder="Canton"
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
+                <field name="district_id"
+                    class="o_address_state"
+                    placeholder="District"
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
+                <field name="neighborhood_id"
+                    class="o_address_state"
+                    placeholder="Neighborhood"
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
+            </xpath>
         </field>
     </record>
 

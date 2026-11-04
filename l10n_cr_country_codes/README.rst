@@ -64,7 +64,6 @@ Known issues
 * The order of the address fields on the form follows the company's country, as in standard Odoo, so
   Costa Rican addresses may look different under companies of some other countries. It only affects how
   the form looks: the address data, the printed address and electronic invoices are not affected.
-* Contacts of a company don't inherit its canton, district and barrio yet.
 * Odoo 20 dropped the fallback of the ``placeholder_field`` option to the static placeholder
   (`odoo/odoo#300493 <https://github.com/odoo/odoo/issues/300493>`_), so the module provides Odoo's
   "Street..." and "State" for other countries until it is fixed.
