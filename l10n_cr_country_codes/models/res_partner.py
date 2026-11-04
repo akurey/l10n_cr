@@ -1,48 +1,74 @@
 # copyright  2018 Carlos Wong, Akurey SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)..
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import models, fields, api
+import re
+
+from odoo import api, fields, models
 
 
-class PartnerElectronic(models.Model):
+class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    # Province
     state_id = fields.Many2one("res.country.state", string="Province")
+    county_id = fields.Many2one(
+        "res.country.county", string="Canton", domain="[('state_id', '=?', state_id)]")
+    district_id = fields.Many2one(
+        "res.country.district", string="District",
+        domain="[('county_id', '=?', county_id), ('county_id.state_id', '=?', state_id)]")
+    neighborhood_id = fields.Many2one(
+        "res.country.neighborhood", string="Neighborhood",
+        domain=(
+            "[('district_id', '=?', district_id), ('district_id.county_id', '=?', county_id),"
+            " ('district_id.county_id.state_id', '=?', state_id)]"))
 
-    # Canton
-    county_id = fields.Many2one("res.country.county", string="Canton")
+    # Keys for Costa Rica's address_format
+    county_name = fields.Char(string="Canton Name", related="county_id.name")
+    district_name = fields.Char(string="District Name", related="district_id.name")
 
-    # District
-    district_id = fields.Many2one("res.country.district", string="District")
+    @api.model
+    def _address_fields(self):
+        # Child contacts of type contact share their company's canton, district and barrio, like the rest of the address
+        return super()._address_fields() + ['county_id', 'district_id', 'neighborhood_id']
 
-    # Neighborhood
-    neighborhood_id = fields.Many2one("res.country.neighborhood", string="Neighborhood")
+    @api.model
+    def _formatting_address_fields(self):
+        return super()._formatting_address_fields() + ['county_name', 'district_name']
 
-    # When you change the province you must clean the other fields to avoid inconveniences
+    def _display_address(self, without_name=False, separator='\n'):
+        address = super()._display_address(without_name=without_name, separator=separator)
+        if self.country_id.code != 'CR':
+            return address
+        # Drop the commas left by an empty canton, district or barrio
+        address = re.sub(r',(\s*,)+', ',', address)
+        return re.sub(r'^\s*,\s*|\s*,\s*$', '', address, flags=re.MULTILINE)
+
+    # Any level can be picked first: it fills the levels above it, and a change clears the levels below that no
+    # longer belong to it. The ZIP comes from the district (province, canton and district codes), the city from
+    # the barrio's name (the city is hidden for Costa Rica).
     @api.onchange('state_id')
     def _change_state_id(self):
-        self.county_id = False
-        self.district_id = False
-        self.neighborhood_id = False
+        if self.county_id.state_id != self.state_id:
+            self.county_id = False
 
-    # When you change the canton you must clean the other fields to avoid inconveniences
     @api.onchange('county_id')
     def _change_county_id(self):
-        self.district_id = False
-        self.neighborhood_id = False
+        if self.county_id:
+            self.state_id = self.county_id.state_id
+        if self.district_id.county_id != self.county_id:
+            self.district_id = False
 
-    # When you change the district you must clean the other fields to avoid inconveniences
     @api.onchange('district_id')
-    def _calculate_postal_code(self):
-        if self.state_id.code and self.county_id.code and self.district_id.code:
-            postal = str(self.state_id.code) + str(self.county_id.code) + str(self.district_id.code)
-            self.zip = postal
-        else:
-            self.zip = False
-        self.neighborhood_id = False
+    def _change_district_id(self):
+        district = self.district_id
+        if district:
+            self.county_id = district.county_id
+        if self.neighborhood_id.district_id != district:
+            self.neighborhood_id = False
+        codes = (district.county_id.state_id.code, district.county_id.code, district.code)
+        self.zip = ''.join(codes) if all(codes) else False
 
-    # When the neighborhood changes, the city field of odoo is autocomplete
     @api.onchange('neighborhood_id')
     def _change_neighborhood_id(self):
+        if self.neighborhood_id:
+            self.district_id = self.neighborhood_id.district_id
         self.city = self.neighborhood_id.name
