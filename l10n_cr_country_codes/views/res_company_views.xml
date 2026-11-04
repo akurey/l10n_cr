@@ -10,6 +10,10 @@
                 <attribute name="invisible">country_id == %(base.cr)d</attribute>
             </xpath>
 
+            <xpath expr="//field[@name='street2']" position="attributes">
+                <attribute name="invisible">country_id == %(base.cr)d</attribute>
+            </xpath>
+
             <xpath expr="//field[@name='zip']" position="replace">
                 <field name="zip" placeholder="ZIP" class="o_address_zip"/>
             </xpath>
