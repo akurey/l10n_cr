@@ -52,7 +52,7 @@ Costa Rican addresses are printed in the order Correos de Costa Rica gives the U
 with the barrio after the district, as in Hacienda's ``<Ubicacion>``::
 
     200 metros al este de la Iglesia de Fátima, 50 metros al norte   (otras señas)
-    San José, Montes de Oca, San Pedro, Los Yoses                    (province, canton, district, barrio)
+    San José, Montes de Oca, San Pedro, Yoses                        (province, canton, district, barrio)
     11501
     Costa Rica
 
