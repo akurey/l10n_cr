@@ -23,6 +23,11 @@
         'views/res_company_views.xml',
         'views/res_partner_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'l10n_cr_country_codes/static/src/scss/address.scss',
+        ],
+    },
     # "pre_init_hook": "pre_init_hook",
     'installable': True,
 }
