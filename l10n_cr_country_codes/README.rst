@@ -27,8 +27,8 @@ Location catalogues
   the location table of Hacienda's *Anexos y Estructuras v4.4*. The 7 provinces are Odoo's own, with the
   codes 1 to 7.
 * The catalogues are read-only for every user: their data comes from the module.
-* Under *Invoicing > Configuration > Cantons / Districts / Neighborhoods*, with search by name, code and
-  parent, and grouping by parent.
+* Under *Contacts > Configuration > Localization > Cantons / Districts / Neighborhoods*, next to Odoo's
+  countries and provinces, with search by name, code and parent, and grouping by parent.
 
 Addresses
 ~~~~~~~~~

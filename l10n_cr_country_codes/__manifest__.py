@@ -6,7 +6,7 @@
     'website': 'https://github.com/odoocr',
     'category': 'Accounting/Localizations',
     'depends': [
-        'account',
+        'contacts',
     ],
     'data': [
         'data/res_country_data.xml',

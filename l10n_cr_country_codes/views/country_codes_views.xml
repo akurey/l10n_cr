@@ -144,18 +144,18 @@
 
     <menuitem id="menu_res_country_county"
               name="Cantons"
-              parent="account.menu_finance_configuration"
+              parent="contacts.menu_localisation"
               sequence="2"
               action="action_res_country_county"/>
     <menuitem id="menu_res_country_district"
               name="Districts"
-              parent="account.menu_finance_configuration"
-              sequence="3"
+              parent="contacts.menu_localisation"
+              sequence="2"
               action="action_res_country_district"/>
     <menuitem id="menu_res_country_neighborhood"
               name="Neighborhoods"
-              parent="account.menu_finance_configuration"
-              sequence="4"
+              parent="contacts.menu_localisation"
+              sequence="2"
               action="action_res_country_neighborhood"/>
 
 </odoo>
