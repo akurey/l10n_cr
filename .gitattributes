@@ -1,7 +1,12 @@
-# Esteblece el comportamiento predeterminado, en caso de que las personas no tengan configurado core.autocrlf.
+# Line endings: store text files with LF, whatever the contributor's OS or core.autocrlf.
+# Binary files (detected automatically, or listed below) are left untouched.
+* text=auto eol=lf
 
-* text  eol=lf
-
-*.py    eol=lf
-*.js    eol=lf
-*.xml   eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.p12 binary
+*.xlsx binary
