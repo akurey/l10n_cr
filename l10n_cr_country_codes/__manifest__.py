@@ -14,7 +14,7 @@
         'product'
     ],
     'data': [
-        'data/res_country_state.xml',
+        'data/res_country_data.xml',
         'data/res.country.county.csv',
         'data/res.country.district.csv',
         'data/res.country.neighborhood.csv',

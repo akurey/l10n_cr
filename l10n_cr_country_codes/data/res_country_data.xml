@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- base.cr is noupdate: a <function> applies these values on every install and update. -->
+    <function model="res.country" name="write">
+        <value eval="[ref('base.cr')]"/>
+        <value eval="{
+            'vat_label': 'Identificación',
+            'address_format': '%(street)s\n%(street2)s\n%(city)s - %(state_name)s / %(zip)s\n%(country_name)s',
+        }"/>
+    </function>
+</odoo>
