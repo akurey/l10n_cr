@@ -217,3 +217,18 @@ msgstr "Provincia"
 #: code:addons/l10n_cr_country_codes/models/format_address.py:0
 msgid "Street..."
 msgstr "Calle..."
+
+#. module: l10n_cr_country_codes
+#: model:ir.model.constraint,message:l10n_cr_country_codes.constraint_res_country_neighborhood_code_uniq
+msgid "The barrio code must be unique within its district."
+msgstr "El código del barrio debe ser único dentro de su distrito."
+
+#. module: l10n_cr_country_codes
+#: model:ir.model.constraint,message:l10n_cr_country_codes.constraint_res_country_county_code_uniq
+msgid "The canton code must be unique within its province."
+msgstr "El código del cantón debe ser único dentro de su provincia."
+
+#. module: l10n_cr_country_codes
+#: model:ir.model.constraint,message:l10n_cr_country_codes.constraint_res_country_district_code_uniq
+msgid "The district code must be unique within its canton."
+msgstr "El código del distrito debe ser único dentro de su cantón."

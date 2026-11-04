@@ -13,6 +13,11 @@ class ResCountryCounty(models.Model):
     state_id = fields.Many2one("res.country.state", string="Province", required=True)
     name = fields.Char(required=True)
 
+    _code_uniq = models.Constraint(
+        'unique (state_id, code)',
+        "The canton code must be unique within its province.",
+    )
+
     @api.depends('name', 'state_id.name')
     @api.depends_context('formatted_display_name')
     def _compute_display_name(self):
@@ -31,6 +36,11 @@ class ResCountryDistrict(models.Model):
     code = fields.Char(required=True)
     county_id = fields.Many2one("res.country.county", string="Canton", required=True)
     name = fields.Char(required=True)
+
+    _code_uniq = models.Constraint(
+        'unique (county_id, code)',
+        "The district code must be unique within its canton.",
+    )
 
     @api.depends('name', 'county_id.name', 'county_id.state_id.name')
     @api.depends_context('formatted_display_name')
@@ -51,6 +61,11 @@ class ResCountryNeighborhood(models.Model):
     code = fields.Char(required=True)
     district_id = fields.Many2one("res.country.district", string="District", required=True)
     name = fields.Char(required=True)
+
+    _code_uniq = models.Constraint(
+        'unique (district_id, code)',
+        "The barrio code must be unique within its district.",
+    )
 
     @api.depends('name', 'code', 'district_id.name', 'district_id.county_id.name')
     @api.depends_context('formatted_display_name')
