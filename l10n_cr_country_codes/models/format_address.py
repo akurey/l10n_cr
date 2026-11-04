@@ -1,8 +1,24 @@
-from odoo import models
+from odoo import api, fields, models
 
 
 class FormatAddressMixin(models.AbstractModel):
     _inherit = 'format.address.mixin'
+
+    # Placeholders of the address form: Costa Rican wording (otras señas, province) for Costa Rica, Odoo's for
+    # other countries.
+    # TODO: return False for other countries once https://github.com/odoo/odoo/issues/300493 is fixed:
+    # placeholder_field lost its fallback to the static placeholder in 20.0. Then drop "Street..." and
+    # "State" from the .po files too.
+    l10n_cr_street_placeholder = fields.Char(compute='_compute_l10n_cr_address_placeholders')
+    l10n_cr_state_placeholder = fields.Char(compute='_compute_l10n_cr_address_placeholders')
+
+    @api.depends('country_id')
+    @api.depends_context('lang')
+    def _compute_l10n_cr_address_placeholders(self):
+        for record in self:
+            is_cr = record.country_id.code == 'CR'
+            record.l10n_cr_street_placeholder = self.env._("Directions...") if is_cr else self.env._("Street...")
+            record.l10n_cr_state_placeholder = self.env._("Province") if is_cr else self.env._("State")
 
     def _view_get_address(self, arch):
         arch = super()._view_get_address(arch)
