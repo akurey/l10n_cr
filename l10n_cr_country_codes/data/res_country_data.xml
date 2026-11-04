@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- base.cr is noupdate: a <function> applies these values on every install and update. -->
+    <!-- base.cr is noupdate: a <function> applies these values on every install and update.
+         Address layout of Correos de Costa Rica: otras señas / province, canton, district (+ barrio, kept in city) / postcode / country. -->
     <function model="res.country" name="write">
         <value eval="[ref('base.cr')]"/>
         <value eval="{
             'vat_label': 'Identificación',
-            'address_format': '%(street)s\n%(street2)s\n%(city)s - %(state_name)s / %(zip)s\n%(country_name)s',
+            'address_format': '%(street)s\n%(state_name)s, %(county_name)s, %(district_name)s, %(city)s\n%(zip)s\n%(country_name)s',
         }"/>
     </function>
 </odoo>

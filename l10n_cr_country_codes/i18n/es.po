@@ -35,6 +35,12 @@ msgid "Canton"
 msgstr "Cantón"
 
 #. module: l10n_cr_country_codes
+#: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_partner__county_name
+#: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_users__county_name
+msgid "Canton Name"
+msgstr "Nombre del cantón"
+
+#. module: l10n_cr_country_codes
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_county__code
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_district__code
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_neighborhood__code
@@ -112,6 +118,12 @@ msgstr "Mostrar nombre"
 #: model_terms:ir.ui.view,arch_db:l10n_cr_country_codes.view_res_partner_inherit
 msgid "District"
 msgstr "Distrito"
+
+#. module: l10n_cr_country_codes
+#: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_partner__district_name
+#: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_users__district_name
+msgid "District Name"
+msgstr "Nombre del distrito"
 
 #. module: l10n_cr_country_codes
 #: model:ir.actions.act_window,name:l10n_cr_country_codes.action_res_country_district
