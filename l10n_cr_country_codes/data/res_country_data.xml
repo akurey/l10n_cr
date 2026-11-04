@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!-- base.cr is noupdate: a <function> applies these values on every install and update.
-         Address layout of Correos de Costa Rica: otras señas / province, canton, district (+ barrio, kept in city) / postcode / country. -->
+         TODO: vat_label belongs with the identification types of cr_electronic_invoice. Decide during its 20.0 port,
+         where Odoo 20's partner identifiers could replace it. It is also written as the English value, so every
+         language shows the Spanish "Identificación".
+         address_format: otras señas, then province, canton, district and barrio (kept in city), a more natural order
+         for Costa Rican directions. -->
     <function model="res.country" name="write">
         <value eval="[ref('base.cr')]"/>
         <value eval="{
