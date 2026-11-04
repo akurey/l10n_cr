@@ -9,38 +9,48 @@ class ResCompany(models.Model):
 
     state_id = fields.Many2one(string="Province")
     county_id = fields.Many2one(
-        "res.country.county", string="Canton", domain="[('state_id', '=', state_id)]",
+        "res.country.county", string="Canton", domain="[('state_id', '=?', state_id)]",
         compute='_compute_address', inverse='_inverse_county')
     district_id = fields.Many2one(
-        "res.country.district", string="District", domain="[('county_id', '=', county_id)]",
+        "res.country.district", string="District",
+        domain="[('county_id', '=?', county_id), ('county_id.state_id', '=?', state_id)]",
         compute='_compute_address', inverse='_inverse_district')
     neighborhood_id = fields.Many2one(
-        "res.country.neighborhood", string="Neighborhood", domain="[('district_id', '=', district_id)]",
+        "res.country.neighborhood", string="Neighborhood",
+        domain=(
+            "[('district_id', '=?', district_id), ('district_id.county_id', '=?', county_id),"
+            " ('district_id.county_id.state_id', '=?', state_id)]"),
         compute='_compute_address', inverse='_inverse_neighborhood')
 
-    # Changing the province clears canton, district and barrio
+    # Any level can be picked first: it fills the levels above it, and a change clears the levels below that no
+    # longer belong to it. The ZIP comes from the district (province, canton and district codes), the city from
+    # the barrio's name (the city is hidden for Costa Rica).
     @api.onchange('state_id')
     def _change_state_id(self):
-        self.county_id = False
-        self.district_id = False
-        self.neighborhood_id = False
+        if self.county_id.state_id != self.state_id:
+            self.county_id = False
 
-    # Changing the canton clears district and barrio
     @api.onchange('county_id')
     def _change_county_id(self):
-        self.district_id = False
-        self.neighborhood_id = False
+        if self.county_id:
+            self.state_id = self.county_id.state_id
+        if self.district_id.county_id != self.county_id:
+            self.district_id = False
 
-    # The district sets the ZIP (province, canton and district codes) and clears the barrio
     @api.onchange('district_id')
     def _change_district_id(self):
-        codes = (self.state_id.code, self.county_id.code, self.district_id.code)
+        district = self.district_id
+        if district:
+            self.county_id = district.county_id
+        if self.neighborhood_id.district_id != district:
+            self.neighborhood_id = False
+        codes = (district.county_id.state_id.code, district.county_id.code, district.code)
         self.zip = ''.join(codes) if all(codes) else False
-        self.neighborhood_id = False
 
-    # The barrio's name goes to the city, which is hidden for Costa Rica
     @api.onchange('neighborhood_id')
     def _change_neighborhood_id(self):
+        if self.neighborhood_id:
+            self.district_id = self.neighborhood_id.district_id
         self.city = self.neighborhood_id.name
 
     def _get_company_address_field_names(self):
