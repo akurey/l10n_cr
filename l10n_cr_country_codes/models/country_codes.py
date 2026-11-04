@@ -1,13 +1,9 @@
-
-
-from odoo import models, fields
-import logging
-_logger = logging.getLogger(__name__)
+from odoo import fields, models
 
 
 class ResCountryCounty(models.Model):
     _name = "res.country.county"
-    _description = "Country State County Subdivision"
+    _description = "Costa Rica Canton"
     _order = 'name'
 
     code = fields.Char(required=True)
@@ -17,7 +13,7 @@ class ResCountryCounty(models.Model):
 
 class ResCountryDistrict(models.Model):
     _name = "res.country.district"
-    _description = "Country State County District Subdivision"
+    _description = "Costa Rica District"
     _order = 'name'
 
     code = fields.Char(required=True)
@@ -27,7 +23,7 @@ class ResCountryDistrict(models.Model):
 
 class ResCountryNeighborhood(models.Model):
     _name = "res.country.neighborhood"
-    _description = "Country State County District Neighborhood Subdivision"
+    _description = "Costa Rica Barrio"
     _order = 'name'
 
     code = fields.Char(required=True)

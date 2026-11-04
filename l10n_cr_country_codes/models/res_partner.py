@@ -1,25 +1,21 @@
 # copyright  2018 Carlos Wong, Akurey SA
-# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl)..
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import re
 
-from odoo import models, fields, api
+from odoo import api, fields, models
 
 
-class PartnerElectronic(models.Model):
+class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    # Province
     state_id = fields.Many2one("res.country.state", string="Province")
-
-    # Canton
-    county_id = fields.Many2one("res.country.county", string="Canton")
-
-    # District
-    district_id = fields.Many2one("res.country.district", string="District")
-
-    # Neighborhood
-    neighborhood_id = fields.Many2one("res.country.neighborhood", string="Neighborhood")
+    county_id = fields.Many2one(
+        "res.country.county", string="Canton", domain="[('state_id', '=', state_id)]")
+    district_id = fields.Many2one(
+        "res.country.district", string="District", domain="[('county_id', '=', county_id)]")
+    neighborhood_id = fields.Many2one(
+        "res.country.neighborhood", string="Neighborhood", domain="[('district_id', '=', district_id)]")
 
     # Keys for Costa Rica's address_format
     county_name = fields.Char(string="Canton Name", related="county_id.name")
@@ -37,30 +33,27 @@ class PartnerElectronic(models.Model):
         address = re.sub(r',(\s*,)+', ',', address)
         return re.sub(r'^\s*,\s*|\s*,\s*$', '', address, flags=re.MULTILINE)
 
-    # When you change the province you must clean the other fields to avoid inconveniences
+    # Changing the province clears canton, district and barrio
     @api.onchange('state_id')
     def _change_state_id(self):
         self.county_id = False
         self.district_id = False
         self.neighborhood_id = False
 
-    # When you change the canton you must clean the other fields to avoid inconveniences
+    # Changing the canton clears district and barrio
     @api.onchange('county_id')
     def _change_county_id(self):
         self.district_id = False
         self.neighborhood_id = False
 
-    # When you change the district you must clean the other fields to avoid inconveniences
+    # The district sets the ZIP (province, canton and district codes) and clears the barrio
     @api.onchange('district_id')
-    def _calculate_postal_code(self):
-        if self.state_id.code and self.county_id.code and self.district_id.code:
-            postal = str(self.state_id.code) + str(self.county_id.code) + str(self.district_id.code)
-            self.zip = postal
-        else:
-            self.zip = False
+    def _change_district_id(self):
+        codes = (self.state_id.code, self.county_id.code, self.district_id.code)
+        self.zip = ''.join(codes) if all(codes) else False
         self.neighborhood_id = False
 
-    # When the neighborhood changes, the city field of odoo is autocomplete
+    # The barrio's name goes to the city, which is hidden for Costa Rica
     @api.onchange('neighborhood_id')
     def _change_neighborhood_id(self):
         self.city = self.neighborhood_id.name
