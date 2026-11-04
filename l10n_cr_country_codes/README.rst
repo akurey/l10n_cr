@@ -2,99 +2,98 @@
    :target: https://www.gnu.org/licenses/agpl
    :alt: License: AGPL-3
 
-==================================
-Facturación electrónica Costa Rica
-==================================
+===========================
+Costa Rica location codes
+===========================
 
-.. |badge1| image:: https://img.shields.io/badge/maturity-Beta-yellow.png
-    :target: https://odoo-community.org/page/development-status
-    :alt: Beta
-.. |badge2| image:: https://img.shields.io/badge/licence-AGPL--3-blue.png
-    :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
-    :alt: License: AGPL-3
-.. |badge3| image:: https://img.shields.io/badge/github-OCA%2Faccount--financial--reporting-lightgray.png?logo=github
-    :target: https://github.com/OCA/account-financial-reporting/tree/11.0/account_financial_report
-    :alt: OCA/account-financial-reporting
-.. |badge4| image:: https://img.shields.io/badge/weblate-Translate%20me-F47D42.png
-    :target: https://translation.odoo-community.org/projects/account-financial-reporting-11-0/account-financial-reporting-11-0-account_financial_report
-    :alt: Translate me on Weblate
-.. |badge5| image:: https://img.shields.io/badge/runbot-Try%20me-875A7B.png
-    :target: https://runbot.odoo-community.org/runbot/91/11.0
-    :alt: Try me on Runbot
+Costa Rica's territorial division (provinces, cantons, districts and barrios) with the codes of the
+Ministerio de Hacienda, and Costa Rican addresses on contacts and companies.
 
-|badge1| |badge2| |badge3| |badge4| |badge5| 
-
-
-Módulo para Odoo que implementa la Facturacion Electronica para Costa Rica actualmente en versión 4.2
-
-- Agrega la generación de los archivos requeridos por el Ministerio de Hacienda al momento de generar una factura
-- Importación de facturas de proveedores y el envío del "Mensage Respuesta" (aceptación, aceptación parcial o rechazo).
-
-Más información en: https://www.hacienda.go.cr/ATV/ComprobanteElectronico/frmAnexosyEstructuras.aspx#
+The codes are the ones ``cr_electronic_invoice`` sends in the ``<Ubicacion>`` of electronic invoices.
 
 **Table of contents**
 
 .. contents::
    :local:
 
-Changelog
-=========
+Features
+========
 
-11.0.1.0.0 (2018-11-01)
-~~~~~~~~~~~~~~~~~~~~~~~
+Location catalogues
+~~~~~~~~~~~~~~~~~~~
 
-* Creation and first draft of the module
+* 84 cantons, 492 districts and 7,087 barrios with their Hacienda codes, from
+  `Codificacionubicacion_V4.4.xlsx <https://www.hacienda.go.cr/docs/Codificacionubicacion_V4.4.xlsx>`_,
+  the location table of Hacienda's *Anexos y Estructuras v4.4*. The 7 provinces are Odoo's own, with the
+  codes 1 to 7.
+* The catalogues are read-only for every user: their data comes from the module.
+* Under *Invoicing > Configuration > Cantons / Districts / Neighborhoods*, with search by name, code and
+  parent, and grouping by parent.
 
+Addresses
+~~~~~~~~~
 
-Bug Tracker
-===========
+On contacts and companies whose country is Costa Rica:
 
-Bugs are tracked on `GitHub Issues <https://github.com/OdooCR/l10n_cr/issues>`_.
-In case of trouble, please check there if your issue has already been reported.
-If you spotted it first, help us smashing it by providing a detailed and welcomed
-`feedback <https://github.com/OdooCR/l10n_cr/issues/new?body=module:%20l10n_cr%0Aversion:%2011.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
+* Canton, district and barrio, each filtered by the one above. Changing a level clears the levels below it.
+* The ZIP is set from the district (province, canton and district codes, e.g. ``10101``) and the city
+  from the barrio's name.
+* Province, canton and district share a line, then the barrio and the ZIP.
+* *Street* is shown as "Directions..." ("Otras señas..."), *State* as "Province" ("Provincia"), and
+  *Street 2* and *City* are hidden.
 
-Do not contact contributors directly about support or help with technical issues.
+Other countries keep Odoo's address form.
+
+Address format
+~~~~~~~~~~~~~~
+
+Costa Rican addresses are printed in the order Correos de Costa Rica gives the Universal Postal Union
+(`UPU addressing sheet for Costa Rica <https://www.upu.int/UPU/media/upu/PostalEntitiesFiles/addressingUnit/criEn.pdf>`_),
+with the barrio after the district, as in Hacienda's ``<Ubicacion>``::
+
+    200 metros al este de la Iglesia de Fátima, 50 metros al norte   (otras señas)
+    San José, Montes de Oca, San Pedro, Los Yoses                    (province, canton, district, barrio)
+    11501
+    Costa Rica
+
+The tax ID label of Costa Rica is "Identificación".
+
+Known issues
+============
+
+* The order of the address fields on the form follows the company's country, as in standard Odoo, so
+  Costa Rican addresses may look different under companies of some other countries. It only affects how
+  the form looks: the address data, the printed address and electronic invoices are not affected.
+* Contacts of a company don't inherit its canton, district and barrio yet.
+* Odoo 20 dropped the fallback of the ``placeholder_field`` option to the static placeholder
+  (`odoo/odoo#300493 <https://github.com/odoo/odoo/issues/300493>`_), so the module provides Odoo's
+  "Street..." and "State" for other countries until it is fixed.
 
 Credits
 =======
 
 Authors
 ~~~~~~~
-Delfix S.A.
-    * Mario Arias <the.clone.master@gmail.com>
+
+* Delfix S.A.
+
+  * Mario Arias <the.clone.master@gmail.com>
 
 * Charlie Monge <charlit02390@gmail.com>
 
 * `TechMicro Inc S.A. <https://www.techmicrocr.com>`_
-    * Jason Ulloa <jason.ulloa@techmicrocr.com>
+
+  * Jason Ulloa <jason.ulloa@techmicrocr.com>
 
 * `AKUREY S.A. <https://www.akurey.com>`_
-    * Carlos Wong <cwong@akurey.com>
-    * Sergio Hidalgo <shidalgo@akurey.com>
-    * Joaquin Mena <jmena@akurey.com>
-    * Julio Barboza <jbarboza@akurey.com>
 
+  * Carlos Wong <cwong@akurey.com>
+  * Sergio Hidalgo <shidalgo@akurey.com>
+  * Joaquin Mena <jmena@akurey.com>
+  * Julio Barboza <jbarboza@akurey.com>
 
 Contributors
 ~~~~~~~~~~~~
+
 * Nehemias Herrera
 * Esteban Monge <estebanmonge@riseup.net>
-
-
-Maintainers
-~~~~~~~~~~~
-
-This module is maintained by the OCA.
-
-.. image:: https://odoo-community.org/logo.png
-   :alt: Odoo Community Association
-   :target: https://odoo-community.org
-
-OCA, or the Odoo Community Association, is a nonprofit organization whose
-mission is to support the collaborative development of Odoo features and
-promote its widespread use.
-
-This module is part of the `OCA/l10n_cr <https://github.com/OCA/l10n_cr>`_ project on GitHub.
-
-You are welcome to contribute. To learn how please visit https://odoo-community.org/page/Contribute.
