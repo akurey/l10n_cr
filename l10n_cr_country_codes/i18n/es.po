@@ -27,9 +27,11 @@ msgstr "Recuento de archivos adjuntos"
 
 #. module: l10n_cr_country_codes
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_company__county_id
+#: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_district__county_id
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_partner__county_id
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_users__county_id
 #: model_terms:ir.ui.view,arch_db:l10n_cr_country_codes.view_company_form_inherit
+#: model_terms:ir.ui.view,arch_db:l10n_cr_country_codes.view_res_country_county_form
 #: model_terms:ir.ui.view,arch_db:l10n_cr_country_codes.view_res_partner_inherit
 msgid "Canton"
 msgstr "Cantón"
@@ -61,7 +63,7 @@ msgstr "Contacto"
 #: model:ir.actions.act_window,name:l10n_cr_country_codes.action_res_country_county
 #: model:ir.ui.menu,name:l10n_cr_country_codes.menu_res_country_county
 #: model_terms:ir.ui.view,arch_db:l10n_cr_country_codes.view_res_country_county_tree
-msgid "Counties"
+msgid "Cantons"
 msgstr "Cantones"
 
 #. module: l10n_cr_country_codes
@@ -78,12 +80,6 @@ msgstr "Subdivisión País Provincia Cantón Distrito"
 #: model:ir.model,name:l10n_cr_country_codes.model_res_country_county
 msgid "Country State County Subdivision"
 msgstr "Subdivisión País Provincia Cantón"
-
-#. module: l10n_cr_country_codes
-#: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_district__county_id
-#: model_terms:ir.ui.view,arch_db:l10n_cr_country_codes.view_res_country_county_form
-msgid "County"
-msgstr "Cantón"
 
 #. module: l10n_cr_country_codes
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_county__create_uid
