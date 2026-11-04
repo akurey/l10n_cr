@@ -148,16 +148,16 @@ msgstr "Identificación"
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_company__l10n_cr_state_placeholder
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_partner__l10n_cr_state_placeholder
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_users__l10n_cr_state_placeholder
-msgid "L10N Cr State Placeholder"
-msgstr ""
+msgid "State Placeholder"
+msgstr "Marcador de posición de la provincia"
 
 #. module: l10n_cr_country_codes
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_format_address_mixin__l10n_cr_street_placeholder
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_company__l10n_cr_street_placeholder
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_partner__l10n_cr_street_placeholder
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_users__l10n_cr_street_placeholder
-msgid "L10N Cr Street Placeholder"
-msgstr ""
+msgid "Street Placeholder"
+msgstr "Marcador de posición de la calle"
 
 #. module: l10n_cr_country_codes
 #: model:ir.model.fields,field_description:l10n_cr_country_codes.field_res_country_county__write_uid
