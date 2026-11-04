@@ -1,0 +1,11 @@
+// Costa Rican addresses (the canton is only shown for Costa Rica): province, canton and district share
+// the first line, then the barrio with the same width and the zip.
+.o_form_editable .o_address_format:has(.o_field_widget[name='county_id']) {
+    .o_field_widget:is([name='state_id'], [name='county_id'], [name='district_id'], [name='neighborhood_id']) {
+        width: 32%;
+        margin-right: 2%;
+    }
+    .o_field_widget[name='district_id'] {
+        margin-right: 0;
+    }
+}
