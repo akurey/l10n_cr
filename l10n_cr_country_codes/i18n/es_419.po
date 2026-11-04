@@ -1,0 +1,24 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* l10n_cr_country_codes
+#
+# Latin American Spanish (es_CR, es_MX...): only what differs from es.po, which Odoo loads first.
+# TODO: delete this file once https://github.com/odoo/odoo/issues/300493 is fixed, when "State" no longer
+# needs a translation here (see models/format_address.py). es.po then remains the only Spanish file.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 20.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: l10n_cr_country_codes
+#. odoo-python
+#: code:addons/l10n_cr_country_codes/models/format_address.py:0
+msgid "State"
+msgstr "Estado"
