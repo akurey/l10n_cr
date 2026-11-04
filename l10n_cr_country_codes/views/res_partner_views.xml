@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <odoo>
 
-    <record id="view_res_partner_inherit"
-        model="ir.ui.view">
+    <record id="view_res_partner_inherit" model="ir.ui.view">
         <field name="name">res.partner.form.inherit</field>
         <field name="model">res.partner</field>
-        <field name="type">form</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='city']" position="attributes">
-                <attribute name="invisible">country_id == %(base.cr)d</attribute>
+                <attribute name="invisible">country_code == 'CR'</attribute>
             </xpath>
 
             <xpath expr="//field[@name='street2']" position="attributes">
-                <attribute name="invisible">country_id == %(base.cr)d</attribute>
+                <attribute name="invisible">country_code == 'CR'</attribute>
             </xpath>
 
             <xpath expr="//field[@name='street']" position="attributes">
@@ -25,42 +22,60 @@
                 <field name="l10n_cr_state_placeholder" invisible="1"/>
             </xpath>
 
-            <xpath expr="//field[@name='zip']" position="replace">
-                <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="type == 'contact' and parent_id != False"/>
+            <xpath expr="//field[@name='state_id']" position="attributes">
+                <attribute name="options">{'no_open': True, 'no_quick_create': True, 'placeholder_field': 'l10n_cr_state_placeholder'}</attribute>
             </xpath>
-
-            <xpath expr="//form/sheet/group/group/div[hasclass('o_address_format')]/field[@name='state_id']"
-                position="after">
+            <xpath expr="//field[@name='state_id']" position="after">
                 <field name="county_id"
                     class="o_address_state"
                     placeholder="Canton"
-                    options='{"no_open": True, "no_create": True}'
-                    readonly="type == 'contact' and parent_id != False"
-                    invisible="country_id != %(base.cr)d"
-                    domain="[('state_id', '=', state_id)]"
-                    context="{'country_id': country_id, 'state_id': state_id, 'zip': zip}"/>
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
                 <field name="district_id"
                     class="o_address_state"
                     placeholder="District"
-                    options='{"no_open": True, "no_create": True}'
-                    readonly="type == 'contact' and parent_id != False"
-                    invisible="country_id != %(base.cr)d"
-                    domain="[('county_id', '=', county_id)]"
-                    context="{'country_id': country_id, 'state_id': state_id, 'county_id': county_id, 'zip': zip}"/>
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
                 <field name="neighborhood_id"
                     class="o_address_state"
                     placeholder="Neighborhood"
-                    options='{"no_open": True, "no_create": True}'
-                    readonly="type == 'contact' and parent_id != False"
-                    invisible="country_id != %(base.cr)d"
-                    domain="[('district_id', '=', district_id)]"
-                    context="{'country_id': country_id, 'state_id': state_id, 'county_id': county_id, 'district_id': district_id, 'zip': zip}"/>
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
             </xpath>
 
-            <xpath expr="//form/sheet/group/group/div[hasclass('o_address_format')]/field[@name='state_id']"
-                position="attributes">
-                <attribute name="context">{'country_id': country_id, 'zip': zip}</attribute>
+            <!-- The address of a company's invoice, delivery and other addresses, in the "Add contact" dialog -->
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='city']" position="attributes">
+                <attribute name="invisible">country_code == 'CR'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='street2']" position="attributes">
+                <attribute name="invisible">country_code == 'CR'</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='street']" position="attributes">
+                <attribute name="options">{'placeholder_field': 'l10n_cr_street_placeholder'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='street']" position="before">
+                <field name="l10n_cr_street_placeholder" invisible="1"/>
+                <field name="l10n_cr_state_placeholder" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='state_id']" position="attributes">
                 <attribute name="options">{'no_open': True, 'no_quick_create': True, 'placeholder_field': 'l10n_cr_state_placeholder'}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='child_ids']//div[@name='div_address']/field[@name='state_id']" position="after">
+                <field name="county_id"
+                    class="o_address_state"
+                    placeholder="Canton"
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
+                <field name="district_id"
+                    class="o_address_state"
+                    placeholder="District"
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
+                <field name="neighborhood_id"
+                    class="o_address_state"
+                    placeholder="Neighborhood"
+                    options="{'no_open': True}"
+                    invisible="country_code != 'CR'"/>
             </xpath>
         </field>
     </record>

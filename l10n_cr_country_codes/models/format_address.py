@@ -8,9 +8,11 @@ class FormatAddressMixin(models.AbstractModel):
     # other countries.
     # TODO: return False for other countries once https://github.com/odoo/odoo/issues/300493 is fixed:
     # placeholder_field lost its fallback to the static placeholder in 20.0. Then drop "Street..." and
-    # "State" from the .po files too.
-    l10n_cr_street_placeholder = fields.Char(compute='_compute_l10n_cr_address_placeholders')
-    l10n_cr_state_placeholder = fields.Char(compute='_compute_l10n_cr_address_placeholders')
+    # "State" from es.po and delete i18n/es_419.po.
+    l10n_cr_street_placeholder = fields.Char(
+        string="Street Placeholder", compute='_compute_l10n_cr_address_placeholders')
+    l10n_cr_state_placeholder = fields.Char(
+        string="State Placeholder", compute='_compute_l10n_cr_address_placeholders')
 
     @api.depends('country_id')
     @api.depends_context('lang')
