@@ -26,6 +26,11 @@ class ResPartner(models.Model):
     district_name = fields.Char(string="District Name", related="district_id.name")
 
     @api.model
+    def _address_fields(self):
+        # Child contacts of type contact share their company's canton, district and barrio, like the rest of the address
+        return super()._address_fields() + ['county_id', 'district_id', 'neighborhood_id']
+
+    @api.model
     def _formatting_address_fields(self):
         return super()._formatting_address_fields() + ['county_name', 'district_name']
 
