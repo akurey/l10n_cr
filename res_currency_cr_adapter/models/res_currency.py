@@ -31,6 +31,11 @@ BCCR_HTTP_ERRORS = {
     500: "BCCR internal error, or the token was rejected",
 }
 
+# Since 20.0 Odoo converts a document with the last rate dated before the
+# document's own date, never with one from that same day (odoo/odoo@cba671d),
+# so a rate is stored the day before the date the BCCR and Hacienda publish it for
+RATE_DATE_OFFSET = timedelta(days=1)
+
 
 class ResCurrency(models.Model):
     _inherit = 'res.currency'
@@ -54,16 +59,19 @@ class ResCurrency(models.Model):
             ('currency_id', '=', self.id)
         ], limit=1, order='name asc')
 
+        # Today's rate is stored on the day before (see RATE_DATE_OFFSET)
+        last_date = today - RATE_DATE_OFFSET
+
         # If there is no record, you must fill the table with the current day
-        first_date = first_day.name if first_day else today
+        first_date = first_day.name if first_day else last_date
 
         # Both sources accept a date range, so a single request covers every
         # missing day instead of one request per day
-        currency_rate_obj._cron_update(first_date, today)
+        currency_rate_obj._cron_update(first_date + RATE_DATE_OFFSET, today)
 
         # Any day the source did not publish is loaded on the last available day
         date = first_date
-        while date <= today:
+        while date <= last_date:
             if not currency_rate_obj.search([
                 ('name', '=', date),
                 ('currency_id', '=', self.id),
@@ -169,10 +177,10 @@ class ResCurrencyRate(models.Model):
         elif isinstance(last_date, datetime):
             last_date = last_date.date()
 
-        exchange_source = self.env['ir.config_parameter'].sudo().get_param('exchange_source')
+        exchange_source = self.env['ir.config_parameter'].sudo().get_str('exchange_source')
         if exchange_source == 'bccr':
             _logger.info("Getting exchange rates from BCCR")
-            bccr_token = self.env['ir.config_parameter'].sudo().get_param('bccr_token')
+            bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
             if not bccr_token:
                 _logger.error("No BCCR token configured, generate one from the Indicadores "
@@ -204,6 +212,7 @@ class ResCurrencyRate(models.Model):
             for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
                 selling_original_rate = selling_rates[current_date_str]
                 buying_original_rate = buying_rates[current_date_str]
+                rate_date = fields.Date.to_date(current_date_str) - RATE_DATE_OFFSET
 
                 # Odoo uses the value of 1 unit of the base currency divided between the exchage rate
                 selling_rate = 1 / selling_original_rate
@@ -211,7 +220,7 @@ class ResCurrencyRate(models.Model):
 
                 # Get the rate for this date to know it is already registered
                 rates_ids = self.env['res.currency.rate'].search([
-                    ('name', '=', current_date_str),
+                    ('name', '=', rate_date),
                     ('currency_id', '=', currency_id.id),
                 ], limit=1)
 
@@ -225,14 +234,14 @@ class ResCurrencyRate(models.Model):
                         )
                 else:
                     self.create(
-                        {'name': current_date_str,
+                        {'name': rate_date,
                          'rate': selling_rate,
                          'original_rate': selling_original_rate,
                          'rate_2': buying_rate,
                          'original_rate_2': buying_original_rate,
                          'currency_id': currency_id.id})
 
-                _logger.info({'name': current_date_str,
+                _logger.info({'name': rate_date,
                               'rate': selling_rate,
                               'original_rate': selling_original_rate,
                               'rate_2': buying_rate,
@@ -283,6 +292,7 @@ class ResCurrencyRate(models.Model):
                                 rate_date = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S').date()
                             except ValueError:
                                 rate_date = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+                            rate_date -= RATE_DATE_OFFSET
 
                             vals = {
                                 'original_rate': rate_line['venta'],
@@ -315,7 +325,7 @@ class ResCurrencyRate(models.Model):
 
                 if response.status_code in (200,):
                     # Save the exchange rate in database
-                    today = datetime.now().strftime('%Y-%m-%d')
+                    rate_date = (datetime.now().date() - RATE_DATE_OFFSET).strftime('%Y-%m-%d')
                     data = response.json()
                     companies = self.env['res.company'].search([])
                     for company in companies:
@@ -331,12 +341,12 @@ class ResCurrencyRate(models.Model):
                         vals['rate_2'] = 1 / vals['original_rate_2']
                         vals['currency_id'] = self.env.ref('base.USD').id
 
-                        rate_id = self.env['res.currency.rate'].search([('name', '=', today)], limit=1)
+                        rate_id = self.env['res.currency.rate'].search([('name', '=', rate_date)], limit=1)
 
                         if rate_id:
                             rate_id.write(vals)
                         else:
-                            vals['name'] = today
+                            vals['name'] = rate_date
                             self.create(vals)
 
                 _logger.info(vals)
@@ -383,10 +393,10 @@ class ResCurrencyRate(models.Model):
         elif isinstance(last_date, datetime):
             last_date = last_date.date()
 
-        exchange_source = self.env['ir.config_parameter'].sudo().get_param('exchange_source')
+        exchange_source = self.env['ir.config_parameter'].sudo().get_str('exchange_source')
         if exchange_source == 'bccr':
             _logger.info("Getting exchange rates from BCCR")
-            bccr_token = self.env['ir.config_parameter'].sudo().get_param('bccr_token')
+            bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
             if not bccr_token:
                 _logger.error("No BCCR token configured, generate one from the Indicadores "

@@ -3,7 +3,7 @@
 
 {
     'name': 'Costa Rica Currency Adapter',
-    'version': '19.0.2.0.0',
+    'version': '20.0.1.0.0',
     'category': 'Account',
     'author': "Odoo CR, Akurey S.A.",
     'website': 'https://github.com/akurey/ak-odoo',
