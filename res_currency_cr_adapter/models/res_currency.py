@@ -169,10 +169,10 @@ class ResCurrencyRate(models.Model):
         elif isinstance(last_date, datetime):
             last_date = last_date.date()
 
-        exchange_source = self.env['ir.config_parameter'].sudo().get_param('exchange_source')
+        exchange_source = self.env['ir.config_parameter'].sudo().get_str('exchange_source')
         if exchange_source == 'bccr':
             _logger.info("Getting exchange rates from BCCR")
-            bccr_token = self.env['ir.config_parameter'].sudo().get_param('bccr_token')
+            bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
             if not bccr_token:
                 _logger.error("No BCCR token configured, generate one from the Indicadores "
@@ -383,10 +383,10 @@ class ResCurrencyRate(models.Model):
         elif isinstance(last_date, datetime):
             last_date = last_date.date()
 
-        exchange_source = self.env['ir.config_parameter'].sudo().get_param('exchange_source')
+        exchange_source = self.env['ir.config_parameter'].sudo().get_str('exchange_source')
         if exchange_source == 'bccr':
             _logger.info("Getting exchange rates from BCCR")
-            bccr_token = self.env['ir.config_parameter'].sudo().get_param('bccr_token')
+            bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
             if not bccr_token:
                 _logger.error("No BCCR token configured, generate one from the Indicadores "

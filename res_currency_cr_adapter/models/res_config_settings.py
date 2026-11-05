@@ -26,20 +26,20 @@ class ResConfigSettings(models.TransientModel):
     @api.model
     def get_values(self):
         res = super().get_values()
-        get_param = self.env['ir.config_parameter'].sudo().get_param
+        get_str = self.env['ir.config_parameter'].sudo().get_str
         res.update(
-            bccr_username=get_param('bccr_username'),
-            bccr_email=get_param('bccr_email'),
-            bccr_token=get_param('bccr_token'),
-            exchange_source=get_param('exchange_source') or 'disabled',
+            bccr_username=get_str('bccr_username'),
+            bccr_email=get_str('bccr_email'),
+            bccr_token=get_str('bccr_token'),
+            exchange_source=get_str('exchange_source') or 'disabled',
         )
         return res
 
     @api.model
     def set_values(self):
         super().set_values()
-        set_param = self.env['ir.config_parameter'].sudo().set_param
-        set_param('bccr_username', self.bccr_username)
-        set_param('bccr_email', self.bccr_email)
-        set_param('bccr_token', self.bccr_token)
-        set_param('exchange_source', self.exchange_source)
+        set_str = self.env['ir.config_parameter'].sudo().set_str
+        set_str('bccr_username', self.bccr_username)
+        set_str('bccr_email', self.bccr_email)
+        set_str('bccr_token', self.bccr_token)
+        set_str('exchange_source', self.exchange_source)
