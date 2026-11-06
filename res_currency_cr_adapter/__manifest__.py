@@ -13,7 +13,7 @@
         'account'
     ],
     'data': [
-        'data/currency_data.xml',
+        'data/ir_cron_data.xml',
         'views/res_currency_rate_view.xml',
         'views/res_config_settings_views.xml',
     ],
