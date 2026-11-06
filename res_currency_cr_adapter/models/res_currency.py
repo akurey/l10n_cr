@@ -40,8 +40,6 @@ RATE_DATE_OFFSET = timedelta(days=1)
 class ResCurrency(models.Model):
     _inherit = 'res.currency'
 
-    rate = fields.Float(digits='Currency Rate Precision')
-
     def _cron_create_missing_exchange_rates(self):
         for currency in self.env['res.currency'].search([('id', '!=', self.env.user.company_id.currency_id.id)]):
             currency.action_create_missing_exchange_rates()
@@ -83,14 +81,12 @@ class ResCurrency(models.Model):
 class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
-    # Change decimal presicion to work with CRC where 1 USD is more de 555 CRC
-    rate = fields.Float(string='Selling Rate',
-                        digits='Currency Rate Precision')
+    rate = fields.Float(string='Selling Rate')
 
     # Costa Rica uses two exchange rates:
     #   - Buying exchange rate - used when a financial institutions buy USD from you (rate)
     #   - Selling exchange rate - used when financial institutions sell USD to you (rate_2)
-    rate_2 = fields.Float(string='Buying Rate', digits='Currency Rate Precision',
+    rate_2 = fields.Float(string='Buying Rate', digits=0,
                           help='The buying rate of the currency to the currency of rate 1.')
 
     # Rate as it is get
