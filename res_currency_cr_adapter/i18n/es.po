@@ -21,11 +21,6 @@ msgid "BCCR Token"
 msgstr "Token para BCCR"
 
 #. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_username
-msgid "BCCR username"
-msgstr "Nombre de Usuario para BCCR"
-
-#. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__rate_2
 msgid "Buying Rate"
 msgstr "Tipo de cambio Compra"
@@ -75,11 +70,6 @@ msgstr "Tasa"
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__display_name
 msgid "Display Name"
 msgstr "Mostrar nombre"
-
-#. module: res_currency_cr_adapter
-#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
-msgid "Email registered in the BCCR"
-msgstr "Correo electrónico registrado en el BCCR"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__id
@@ -144,23 +134,3 @@ msgstr "Token para usar en el BCCR"
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
 msgid "Update"
 msgstr "Actualizar"
-
-#. module: res_currency_cr_adapter
-#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
-msgid "User name registered in the BCCR"
-msgstr "Nombre de usuario registrado en el BCCR"
-
-#. module: res_currency_cr_adapter
-#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
-msgid "Username registered in the BCCR"
-msgstr "Nombre de usuario registrado en el BCCR"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_email
-msgid "e-mail registered in the BCCR"
-msgstr "Correo electrónico registrado en el BCCR"
-
-#. module: res_currency_cr_adapter
-#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
-msgid "email registered in the BCCR"
-msgstr "Correo electrónico registrado en el BCCR"
