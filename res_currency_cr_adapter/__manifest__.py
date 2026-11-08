@@ -4,19 +4,16 @@
 {
     'name': 'Costa Rica Currency Adapter',
     'version': '20.0.1.0.0',
-    'category': 'Account',
+    'category': 'Accounting/Localizations',
     'author': "Odoo CR, Akurey S.A.",
-    'website': 'https://github.com/akurey/ak-odoo',
+    'website': 'https://github.com/akurey/l10n_cr',
     'license': 'AGPL-3',
     'depends': [
-        'base',
-        'account'
+        'account',
     ],
     'data': [
         'data/ir_cron_data.xml',
         'views/res_currency_views.xml',
         'views/res_config_settings_views.xml',
     ],
-    'installable': True,
-    'auto_install': False,
 }
