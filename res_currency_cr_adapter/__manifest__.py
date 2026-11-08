@@ -14,7 +14,7 @@
     ],
     'data': [
         'data/ir_cron_data.xml',
-        'views/res_currency_rate_view.xml',
+        'views/res_currency_views.xml',
         'views/res_config_settings_views.xml',
     ],
     'installable': True,
