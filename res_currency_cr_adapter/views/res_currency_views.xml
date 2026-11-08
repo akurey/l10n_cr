@@ -7,13 +7,11 @@
         <field name="model">res.currency.rate</field>
         <field name="inherit_id" ref="base.view_currency_rate_tree"/>
         <field name="arch" type="xml">
-            <list>
-                <field name='original_rate'/>
-                <field name='rate_2' digits="[12,12]"/>
-                <field name='original_rate_2'/>
-                <field name='write_date'/>
-                <field name="company_id" groups="base.group_multi_company"/>
-            </list>
+            <field name="rate" position="after">
+                <field name="original_rate"/>
+                <field name="rate_2" digits="[12,12]"/>
+                <field name="original_rate_2"/>
+            </field>
         </field>
     </record>
     <!-- A preview of the last 25 exchange rates is added -->
