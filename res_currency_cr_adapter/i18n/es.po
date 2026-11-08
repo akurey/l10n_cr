@@ -129,3 +129,69 @@ msgstr "El tipo de cambio de venta de CRC a USD tal como lo publica el BCCR"
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_token
 msgid "Token to use in the BCCR"
 msgstr "Token para usar en el BCCR"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "invalid parameters, check the indicator code and that dates use yyyy/mm/dd"
+msgstr "parámetros inválidos, revise el código del indicador y que las fechas usen aaaa/mm/dd"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "the token is missing, invalid or expired"
+msgstr "el token falta, es inválido o expiró"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "the user has no valid subscription, or the gateway rejected the user agent"
+msgstr "el usuario no tiene una suscripción válida, o el gateway rechazó el agente de usuario"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "wrong endpoint, or the 'idioma' parameter is missing"
+msgstr "endpoint incorrecto, o falta el parámetro 'idioma'"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "too many requests, lower the frequency of the update"
+msgstr "demasiadas solicitudes, reduzca la frecuencia de la actualización"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "BCCR internal error, or the token was rejected"
+msgstr "error interno del BCCR, o el token fue rechazado"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "unexpected status"
+msgstr "estado inesperado"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "Could not connect to the BCCR: %(error)s"
+msgstr "No se pudo conectar con el BCCR: %(error)s"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "The BCCR rejected the request for indicator %(indicator)s (HTTP %(status)s): %(cause)s"
+msgstr "El BCCR rechazó la solicitud del indicador %(indicator)s (HTTP %(status)s): %(cause)s"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "The BCCR answered the request for indicator %(indicator)s with an invalid response"
+msgstr "El BCCR respondió a la solicitud del indicador %(indicator)s con una respuesta inválida"
+
+#. module: res_currency_cr_adapter
+#. odoo-python
+#: code:addons/res_currency_cr_adapter/models/res_currency_rate.py:0
+msgid "The BCCR has no data for indicator %(indicator)s between %(start)s and %(end)s"
+msgstr "El BCCR no tiene datos del indicador %(indicator)s entre %(start)s y %(end)s"

@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import requests
 
 from odoo import api, fields, models, release
+from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -19,16 +20,6 @@ BCCR_TIMEOUT = 60
 # The API gateway answers 403 to the default user agent of the requests
 # library, which is why the BCCR sets one explicitly on its own example
 BCCR_USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
-
-# Causes documented on Anexo C of the SDDE standard
-BCCR_HTTP_ERRORS = {
-    400: "invalid parameters, check the indicator code and that dates use yyyy/mm/dd",
-    401: "the token is missing, invalid or expired",
-    403: "the user has no valid subscription, or the gateway rejected the user agent",
-    404: "wrong endpoint, or the 'idioma' parameter is missing",
-    429: "too many requests, lower the frequency of the cron",
-    500: "BCCR internal error, or the token was rejected",
-}
 
 # Since 20.0 Odoo converts a document with the last rate dated before the
 # document's own date, never with one from that same day (odoo/odoo@cba671d),
@@ -54,15 +45,31 @@ class ResCurrencyRate(models.Model):
     original_rate_2 = fields.Float(string='Buying Rate in Costa Rica', digits=(6, 2),
                                    help='The buying exchange rate from CRC to USD as sent by the BCCR')
 
+    def _bccr_http_error_cause(self, status):
+        """Cause of a BCCR HTTP error, as documented on Anexo C of the SDDE standard.
+
+        The BCCR's own error bodies are too generic to show: a 500 only says
+        "Internal server error", even for an invalid token.
+        """
+        return {
+            400: self.env._("invalid parameters, check the indicator code and that dates use yyyy/mm/dd"),
+            401: self.env._("the token is missing, invalid or expired"),
+            403: self.env._("the user has no valid subscription, or the gateway rejected the user agent"),
+            404: self.env._("wrong endpoint, or the 'idioma' parameter is missing"),
+            429: self.env._("too many requests, lower the frequency of the update"),
+            500: self.env._("BCCR internal error, or the token was rejected"),
+        }.get(status, self.env._("unexpected status"))
+
     def _bccr_get_series(self, indicator, first_date, last_date, token):
         """Read one BCCR economic indicator from the SDDE REST API.
 
         Returns {'YYYY-MM-DD': value} for the requested range. The BCCR
         publishes a value for every calendar day, carrying the last published
         one over weekends and holidays, so a single call fills a whole range
-        with no gaps. Returns an empty dict on any failure: this runs from a
-        cron and must not raise, but every failure is logged as an error so it
-        never goes unnoticed.
+        with no gaps.
+
+        :raise UserError: if the BCCR cannot be reached, rejects the request
+            or has no data for the range, with the cause in the message.
         """
         url = '%s/indicadoresEconomicos/%s/series' % (BCCR_API_BASE, indicator)
         params = {
@@ -81,22 +88,23 @@ class ResCurrencyRate(models.Model):
         try:
             response = requests.get(url, params=params, headers=headers, timeout=BCCR_TIMEOUT)
         except requests.exceptions.RequestException as e:
-            _logger.error("BCCR indicator %s: request failed: %s", indicator, e)
-            return {}
+            raise UserError(self.env._("Could not connect to the BCCR: %(error)s", error=e)) from None
 
         if response.status_code != 200:
-            _logger.error("BCCR indicator %s: HTTP %s - %s. Response: %s",
-                          indicator, response.status_code,
-                          BCCR_HTTP_ERRORS.get(response.status_code, "unexpected status"),
-                          response.text[:200])
-            return {}
+            _logger.warning("BCCR indicator %s: HTTP %s, response: %s",
+                            indicator, response.status_code, response.text[:200])
+            raise UserError(self.env._(
+                "The BCCR rejected the request for indicator %(indicator)s (HTTP %(status)s): %(cause)s",
+                indicator=indicator, status=response.status_code,
+                cause=self._bccr_http_error_cause(response.status_code)))
 
         try:
             payload = response.json()
         except ValueError:
-            _logger.error("BCCR indicator %s: response is not valid JSON: %s",
-                          indicator, response.text[:200])
-            return {}
+            _logger.warning("BCCR indicator %s: response: %s", indicator, response.text[:200])
+            raise UserError(self.env._(
+                "The BCCR answered the request for indicator %(indicator)s with an invalid response",
+                indicator=indicator)) from None
 
         series = {}
         for indicator_data in payload.get('datos') or []:
@@ -110,8 +118,9 @@ class ResCurrencyRate(models.Model):
         # 'estado' comes back True even for an empty range, so the series are
         # the only reliable sign that the query actually returned data
         if not series:
-            _logger.error("BCCR indicator %s: no data between %s and %s (%s)", indicator,
-                          params['fechaInicio'], params['fechaFin'], payload.get('mensaje'))
+            raise UserError(self.env._(
+                "The BCCR has no data for indicator %(indicator)s between %(start)s and %(end)s",
+                indicator=indicator, start=first_date, end=last_date))
 
         return series
 
@@ -129,10 +138,16 @@ class ResCurrencyRate(models.Model):
         first_date = first_date or datetime.now().date()
         last_date = last_date or first_date
 
-        selling_rates = self._bccr_get_series(
-            BCCR_SELLING_INDICATOR, first_date, last_date, bccr_token)
-        buying_rates = self._bccr_get_series(
-            BCCR_BUYING_INDICATOR, first_date, last_date, bccr_token)
+        # The cron must not fail on a BCCR outage: Odoo would deactivate it
+        # after a few days of failures, so the error is only logged
+        try:
+            selling_rates = self._bccr_get_series(
+                BCCR_SELLING_INDICATOR, first_date, last_date, bccr_token)
+            buying_rates = self._bccr_get_series(
+                BCCR_BUYING_INDICATOR, first_date, last_date, bccr_token)
+        except UserError as e:
+            _logger.error("Exchange rate update failed: %s", e)
+            return
 
         currency = self.env.ref('base.USD')
 
