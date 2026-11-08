@@ -1,10 +1,12 @@
 # copyright  2018 Carlos Wong, Akurey S.A.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models, release
-from datetime import timedelta, datetime
 import logging
+from datetime import datetime, timedelta
+
 import requests
+
+from odoo import api, fields, models, release
 
 _logger = logging.getLogger(__name__)
 
