@@ -10,10 +10,7 @@ from odoo import api, fields, models, release
 
 _logger = logging.getLogger(__name__)
 
-# The old SOAP service (wsindicadoreseconomicos.asmx) was retired and answers
-# 503; the SDDE REST API is mandatory since 2025-04-07. The token is no longer
-# a subscription parameter, it is a bearer token generated from the
-# Indicadores Economicos site under Mi Perfil -> Generar token.
+# BCCR's SDDE REST API (https://sdd.bccr.fi.cr/), authenticated with a bearer token
 BCCR_API_BASE = 'https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API'
 BCCR_SELLING_INDICATOR = '318'  # Tipo cambio venta
 BCCR_BUYING_INDICATOR = '317'  # Tipo cambio compra

@@ -8,7 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//block[@name='main_currency_setting_container']" position="inside">
                 <setting string="Token BCCR"
-                         help="Token generado en el sitio de Indicadores Económicos, en Mi Perfil → Generar token. No es el token de suscripción del antiguo servicio SOAP.">
+                         help="Token generado en el sitio de Indicadores Económicos, en Mi Perfil → Generar token.">
                     <field name="bccr_token" string="Token BCCR" password="True"/>
                 </setting>
             </xpath>

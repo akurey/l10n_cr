@@ -10,5 +10,4 @@ class ResConfigSettings(models.TransientModel):
         string="BCCR access token",
         config_parameter='bccr_token',
         help="Bearer token generated on the Indicadores Economicos site "
-             "under Mi Perfil -> Generar token. It is not the subscription "
-             "token of the old SOAP web service.")
+             "under Mi Perfil -> Generar token.")
