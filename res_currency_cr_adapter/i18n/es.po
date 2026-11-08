@@ -48,11 +48,11 @@ msgid "Currency"
 msgstr "Moneda"
 
 #. module: res_currency_cr_adapter
-#: model:ir.actions.server,name:res_currency_cr_adapter.currency_crc_rate_cron_ir_actions_server
-#: model:ir.cron,cron_name:res_currency_cr_adapter.currency_crc_rate_cron
-#: model:ir.cron,name:res_currency_cr_adapter.currency_crc_rate_cron
-msgid "Currency CRC Rate Update"
-msgstr "Actualización de tipo de cambio de moneda CRC"
+#: model:ir.actions.server,name:res_currency_cr_adapter.ir_cron_currency_rate_update_ir_actions_server
+#: model:ir.cron,cron_name:res_currency_cr_adapter.ir_cron_currency_rate_update
+#: model:ir.cron,name:res_currency_cr_adapter.ir_cron_currency_rate_update
+msgid "Costa Rica: Update currency rates"
+msgstr "Costa Rica: Actualizar el tipo de cambio"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model,name:res_currency_cr_adapter.model_res_currency_rate
