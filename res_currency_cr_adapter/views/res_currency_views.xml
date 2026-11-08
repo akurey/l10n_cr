@@ -7,10 +7,12 @@
         <field name="model">res.currency.rate</field>
         <field name="inherit_id" ref="base.view_currency_rate_tree"/>
         <field name="arch" type="xml">
+            <field name="inverse_company_rate" position="after">
+                <field name="buying_company_rate" width="140" digits="[12,12]" invisible="not buying_rate"/>
+                <field name="buying_inverse_company_rate" width="140" digits="[12,12]" invisible="not buying_rate"/>
+            </field>
             <field name="rate" position="after">
-                <field name="original_rate"/>
-                <field name="rate_2" digits="[12,12]"/>
-                <field name="original_rate_2"/>
+                <field name="buying_rate" digits="[12,12]" optional="hide"/>
             </field>
         </field>
     </record>
@@ -19,10 +21,29 @@
         <field name="model">res.currency</field>
         <field name="inherit_id" ref="base.view_currency_form"/>
         <field name="arch" type="xml">
+            <field name="rate_ids" position="before">
+                <field name="show_buying_rate" invisible="1"/>
+            </field>
+            <!-- Where a buying rate is shown, Odoo's rate columns are replaced
+                 by the same values labelled as the selling rate -->
+            <xpath expr="//field[@name='rate_ids']//field[@name='company_rate']" position="attributes">
+                <attribute name="column_invisible">parent.show_buying_rate</attribute>
+            </xpath>
+            <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="attributes">
+                <attribute name="column_invisible">parent.show_buying_rate</attribute>
+            </xpath>
+            <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="after">
+                <field name="selling_company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
+                       column_invisible="not parent.show_buying_rate"/>
+                <field name="buying_company_rate" width="140" digits="[12,12]" string="Buying Unit/Base"
+                       column_invisible="not parent.show_buying_rate"/>
+                <field name="selling_inverse_company_rate" width="140" digits="[12,12]" string="Selling Base/Unit"
+                       column_invisible="not parent.show_buying_rate"/>
+                <field name="buying_inverse_company_rate" width="140" digits="[12,12]" string="Buying Base/Unit"
+                       column_invisible="not parent.show_buying_rate"/>
+            </xpath>
             <xpath expr="//field[@name='rate_ids']//field[@name='write_date']" position="before">
-                <field name="original_rate" optional="show"/>
-                <field name="rate_2" digits="[12,12]" optional="hide"/>
-                <field name="original_rate_2" optional="show"/>
+                <field name="buying_rate" digits="[12,12]" optional="hide"/>
             </xpath>
         </field>
     </record>

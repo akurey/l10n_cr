@@ -21,14 +21,64 @@ msgid "BCCR Token"
 msgstr "Token para BCCR"
 
 #. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__rate_2
-msgid "Buying Rate"
-msgstr "Tipo de cambio Compra"
+#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
+msgid "Buying Base/Unit"
+msgstr "Compra Base/Unidad"
 
 #. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__original_rate_2
-msgid "Buying Rate in Costa Rica"
-msgstr "Tipo de Cambio Compra en Costa Rica"
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__buying_company_rate
+msgid "Buying Company Rate"
+msgstr "Tasa de compra de la empresa"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__buying_inverse_company_rate
+msgid "Buying Inverse Company Rate"
+msgstr "Tasa inversa de compra de la empresa"
+
+#. module: res_currency_cr_adapter
+#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
+msgid "Buying Unit/Base"
+msgstr "Compra Unidad/base"
+
+#. module: res_currency_cr_adapter
+#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
+msgid "Selling Base/Unit"
+msgstr "Venta Base/Unidad"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__selling_company_rate
+msgid "Selling Company Rate"
+msgstr "Tasa de venta de la empresa"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__selling_inverse_company_rate
+msgid "Selling Inverse Company Rate"
+msgstr "Tasa inversa de venta de la empresa"
+
+#. module: res_currency_cr_adapter
+#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
+msgid "Selling Unit/Base"
+msgstr "Venta Unidad/base"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__buying_inverse_company_rate
+msgid "Buying rate, expressed like Base/Unit."
+msgstr "Tipo de cambio de compra, expresado como Base/Unidad."
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__buying_rate
+msgid "Buying rate, expressed like the Technical Rate."
+msgstr "Tipo de cambio de compra, expresado como la Tasa técnica."
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__buying_company_rate
+msgid "Buying rate, expressed like Unit/Base."
+msgstr "Tipo de cambio de compra, expresado como Unidad/base."
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__buying_rate
+msgid "Technical Buying Rate"
+msgstr "Tasa técnica de compra"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model,name:res_currency_cr_adapter.model_res_config_settings
@@ -91,26 +141,6 @@ msgid "Rates"
 msgstr "Tarifas"
 
 #. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__rate
-msgid "Selling Rate"
-msgstr "Tipo de cambio Venta"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__original_rate
-msgid "Selling Rate in Costa Rica"
-msgstr "Tipo de cambio Venta en Costa Rica"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__original_rate_2
-msgid "The buying exchange rate from CRC to USD as sent by the BCCR"
-msgstr "El tipo de cambio de compra de CRC a USD tal como lo publica el BCCR"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__rate_2
-msgid "The buying rate of the currency to the currency of rate 1."
-msgstr "El tipo de cambio de compra de la moneda a la moneda de tipo 1."
-
-#. module: res_currency_cr_adapter
 #: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__rate
 msgid "The rate of the currency to the currency of rate 1"
 msgstr "La tasa de cambio de la moneda respecto a la moneda de tasa 1"
@@ -119,11 +149,6 @@ msgstr "La tasa de cambio de la moneda respecto a la moneda de tasa 1"
 #: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency__rate
 msgid "The rate of the currency to the currency of rate 1."
 msgstr "La tasa de cambio de la moneda respecto a la moneda de tasa 1"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__original_rate
-msgid "The selling exchange rate from CRC to USD as sent by the BCCR"
-msgstr "El tipo de cambio de venta de CRC a USD tal como lo publica el BCCR"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_token
@@ -195,3 +220,8 @@ msgstr "El BCCR respondió a la solicitud del indicador %(indicator)s con una re
 #: code:addons/res_currency_cr_adapter/tools/bccr_api.py:0
 msgid "The BCCR has no data for indicator %(indicator)s between %(start)s and %(end)s"
 msgstr "El BCCR no tiene datos del indicador %(indicator)s entre %(start)s y %(end)s"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__show_buying_rate
+msgid "Show Buying Rate"
+msgstr "Mostrar tipo de cambio de compra"
