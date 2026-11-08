@@ -37,47 +37,6 @@ BCCR_HTTP_ERRORS = {
 RATE_DATE_OFFSET = timedelta(days=1)
 
 
-class ResCurrency(models.Model):
-    _inherit = 'res.currency'
-
-    def _cron_create_missing_exchange_rates(self):
-        for currency in self.env['res.currency'].search([('id', '!=', self.env.user.company_id.currency_id.id)]):
-            currency.action_create_missing_exchange_rates()
-
-    def action_create_missing_exchange_rates(self):
-        # It is validated that the currency is dollars
-        if self.id != self.env.ref('base.USD').id:
-            return
-
-        currency_rate_obj = self.env['res.currency.rate']
-        today = fields.Date.context_today(self)
-
-        first_day = currency_rate_obj.search([
-            ('company_id', '=', self.env.user.company_id.id),
-            ('currency_id', '=', self.id)
-        ], limit=1, order='name asc')
-
-        # Today's rate is stored on the day before (see RATE_DATE_OFFSET)
-        last_date = today - RATE_DATE_OFFSET
-
-        # If there is no record, you must fill the table with the current day
-        first_date = first_day.name if first_day else last_date
-
-        # The BCCR accepts a date range, so a single request covers every
-        # missing day instead of one request per day
-        currency_rate_obj._cron_update(first_date + RATE_DATE_OFFSET, today)
-
-        # Any day the source did not publish is loaded on the last available day
-        date = first_date
-        while date <= last_date:
-            if not currency_rate_obj.search([
-                ('name', '=', date),
-                ('currency_id', '=', self.id),
-            ], limit=1):
-                currency_rate_obj._create_the_latest_exchange_rate_to_date(self, date)
-            date += timedelta(days=1)
-
-
 class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
@@ -244,25 +203,3 @@ class ResCurrencyRate(models.Model):
                           'currency_id': currency_id.id})
 
         _logger.info("=========================================================")
-
-    def _create_the_latest_exchange_rate_to_date(self, currency, date=None):
-        name = date or datetime.now()
-        currency_rate_obj = self.env['res.currency.rate'].search([
-            ('company_id', '=', self.env.user.company_id.id),
-            ('currency_id', '=', currency.id),
-            ('name', '<=', name),
-        ], limit=1, order='name desc')
-
-        # With no earlier rate there is nothing to carry over
-        if not currency_rate_obj or currency_rate_obj.name == name:
-            return
-
-        self.create({
-            'name': name,
-            'rate': currency_rate_obj.rate,
-            'original_rate': currency_rate_obj.original_rate,
-            'rate_2': currency_rate_obj.rate_2,
-            'original_rate_2': currency_rate_obj.original_rate_2,
-            'currency_id': currency_rate_obj.currency_id.id,
-            'company_id': currency_rate_obj.company_id.id,
-        })

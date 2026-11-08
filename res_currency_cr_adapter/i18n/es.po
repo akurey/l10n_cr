@@ -129,8 +129,3 @@ msgstr "El tipo de cambio de venta de CRC a USD tal como se envía desde BCCR"
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_token
 msgid "Token to use in the BCCR"
 msgstr "Token para usar en el BCCR"
-
-#. module: res_currency_cr_adapter
-#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
-msgid "Update"
-msgstr "Actualizar"
