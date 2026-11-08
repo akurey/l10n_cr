@@ -2,7 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models
-from datetime import timedelta, datetime, date as date_type
+from datetime import timedelta, datetime
 import logging
 import requests
 
@@ -33,7 +33,7 @@ BCCR_HTTP_ERRORS = {
 
 # Since 20.0 Odoo converts a document with the last rate dated before the
 # document's own date, never with one from that same day (odoo/odoo@cba671d),
-# so a rate is stored the day before the date the BCCR and Hacienda publish it for
+# so a rate is stored the day before the date the BCCR publishes it for
 RATE_DATE_OFFSET = timedelta(days=1)
 
 
@@ -63,7 +63,7 @@ class ResCurrency(models.Model):
         # If there is no record, you must fill the table with the current day
         first_date = first_day.name if first_day else last_date
 
-        # Both sources accept a date range, so a single request covers every
+        # The BCCR accepts a date range, so a single request covers every
         # missing day instead of one request per day
         currency_rate_obj._cron_update(first_date + RATE_DATE_OFFSET, today)
 
@@ -173,179 +173,75 @@ class ResCurrencyRate(models.Model):
         elif isinstance(last_date, datetime):
             last_date = last_date.date()
 
-        exchange_source = self.env['ir.config_parameter'].sudo().get_str('exchange_source')
-        if exchange_source == 'bccr':
-            _logger.info("Getting exchange rates from BCCR")
-            bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
+        _logger.info("Getting exchange rates from BCCR")
+        bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
-            if not bccr_token:
-                _logger.error("No BCCR token configured, generate one from the Indicadores "
-                              "Economicos site under Mi Perfil -> Generar token")
-                return False
+        # The token is what turns the update on, so without one there is
+        # nothing to do yet and it is no error
+        if not bccr_token:
+            _logger.info("No BCCR token configured, the exchange rate is not updated")
+            return False
 
-            # Get current date to get exchange rate for today
-            if first_date:
-                initial_date = first_date
-                end_date = last_date or first_date
+        # Get current date to get exchange rate for today
+        if first_date:
+            initial_date = first_date
+            end_date = last_date or first_date
+        else:
+            initial_date = datetime.now().date()
+            end_date = initial_date
+
+        selling_rates = self._bccr_get_series(
+            BCCR_SELLING_INDICATOR, initial_date, end_date, bccr_token)
+        buying_rates = self._bccr_get_series(
+            BCCR_BUYING_INDICATOR, initial_date, end_date, bccr_token)
+
+        currency_id = self.env.ref('base.USD')
+
+        # A rate is only complete when both indicators published that date,
+        # so pair them by date instead of walking both lists by position
+        incomplete_dates = set(selling_rates) ^ set(buying_rates)
+        if incomplete_dates:
+            _logger.error("Error loading currency rates, buying and selling rates don't "
+                          "match for %s", ', '.join(sorted(incomplete_dates)))
+
+        for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
+            selling_original_rate = selling_rates[current_date_str]
+            buying_original_rate = buying_rates[current_date_str]
+            rate_date = fields.Date.to_date(current_date_str) - RATE_DATE_OFFSET
+
+            # Odoo uses the value of 1 unit of the base currency divided between the exchage rate
+            selling_rate = 1 / selling_original_rate
+            buying_rate = 1 / buying_original_rate
+
+            # Get the rate for this date to know it is already registered
+            rates_ids = self.env['res.currency.rate'].search([
+                ('name', '=', rate_date),
+                ('currency_id', '=', currency_id.id),
+            ], limit=1)
+
+            if len(rates_ids) > 0:
+                rates_ids.write(
+                    {'rate': selling_rate,
+                     'original_rate': selling_original_rate,
+                     'rate_2': buying_rate,
+                     'original_rate_2': buying_original_rate,
+                     'currency_id': currency_id.id}
+                    )
             else:
-                initial_date = datetime.now().date()
-                end_date = initial_date
+                self.create(
+                    {'name': rate_date,
+                     'rate': selling_rate,
+                     'original_rate': selling_original_rate,
+                     'rate_2': buying_rate,
+                     'original_rate_2': buying_original_rate,
+                     'currency_id': currency_id.id})
 
-            selling_rates = self._bccr_get_series(
-                BCCR_SELLING_INDICATOR, initial_date, end_date, bccr_token)
-            buying_rates = self._bccr_get_series(
-                BCCR_BUYING_INDICATOR, initial_date, end_date, bccr_token)
-
-            currency_id = self.env.ref('base.USD')
-
-            # A rate is only complete when both indicators published that date,
-            # so pair them by date instead of walking both lists by position
-            incomplete_dates = set(selling_rates) ^ set(buying_rates)
-            if incomplete_dates:
-                _logger.error("Error loading currency rates, buying and selling rates don't "
-                              "match for %s", ', '.join(sorted(incomplete_dates)))
-
-            for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
-                selling_original_rate = selling_rates[current_date_str]
-                buying_original_rate = buying_rates[current_date_str]
-                rate_date = fields.Date.to_date(current_date_str) - RATE_DATE_OFFSET
-
-                # Odoo uses the value of 1 unit of the base currency divided between the exchage rate
-                selling_rate = 1 / selling_original_rate
-                buying_rate = 1 / buying_original_rate
-
-                # Get the rate for this date to know it is already registered
-                rates_ids = self.env['res.currency.rate'].search([
-                    ('name', '=', rate_date),
-                    ('currency_id', '=', currency_id.id),
-                ], limit=1)
-
-                if len(rates_ids) > 0:
-                    rates_ids.write(
-                        {'rate': selling_rate,
-                         'original_rate': selling_original_rate,
-                         'rate_2': buying_rate,
-                         'original_rate_2': buying_original_rate,
-                         'currency_id': currency_id.id}
-                        )
-                else:
-                    self.create(
-                        {'name': rate_date,
-                         'rate': selling_rate,
-                         'original_rate': selling_original_rate,
-                         'rate_2': buying_rate,
-                         'original_rate_2': buying_original_rate,
-                         'currency_id': currency_id.id})
-
-                _logger.info({'name': rate_date,
-                              'rate': selling_rate,
-                              'original_rate': selling_original_rate,
-                              'rate_2': buying_rate,
-                              'original_rate_2': buying_original_rate,
-                              'currency_id': currency_id.id})
-
-        if exchange_source == 'hacienda':
-            _logger.info("Getting exchange rates from HACIENDA")
-
-            # Get current date to get exchange rate for today
-            if first_date:
-                currency_rate_obj = self.env['res.currency.rate']
-                currency_usd = self.env['res.currency'].search([('name', '=', 'USD')], limit=1)
-                companies = self.env['res.company'].search([])
-
-                # Hacienda API returns ~60 days max per request; chunk into 60-day batches
-                chunk_size = timedelta(days=60)
-                all_data = []
-                if not isinstance(first_date, date_type) or not isinstance(last_date, date_type):
-                    return False
-                chunk_start = first_date
-                end = last_date
-
-                while chunk_start <= end:
-                    chunk_end = min(chunk_start + chunk_size - timedelta(days=1), end)
-                    try:
-                        url = ('https://api.hacienda.go.cr/indicadores/tc/dolar/historico/?d='
-                               + chunk_start.strftime('%Y-%m-%d') + '&h=' + chunk_end.strftime('%Y-%m-%d'))
-                        _logger.info('Hacienda request chunk %s → %s', chunk_start, chunk_end)
-                        response = requests.get(url, timeout=10)
-                        if response.status_code == 200:
-                            chunk_data = response.json()
-                            _logger.info('Hacienda chunk returned %d records', len(chunk_data))
-                            all_data.extend(chunk_data)
-                        else:
-                            _logger.error('Hacienda API returned %s for chunk %s-%s',
-                                          response.status_code, chunk_start, chunk_end)
-                    except requests.exceptions.RequestException as e:
-                        _logger.error('RequestException %s', e)
-                    chunk_start = chunk_end + timedelta(days=1)
-
-                _logger.info('Hacienda total records collected: %d', len(all_data))
-
-                for company in companies:
-                    for rate_line in all_data:
-                            fecha_str = rate_line['fecha']
-                            try:
-                                rate_date = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S').date()
-                            except ValueError:
-                                rate_date = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-                            rate_date -= RATE_DATE_OFFSET
-
-                            vals = {
-                                'original_rate': rate_line['venta'],
-                                'rate': 1 / rate_line['venta'],
-                                'original_rate_2': rate_line['compra'],
-                                'rate_2': 1 / rate_line['compra'],
-                                'currency_id': currency_usd.id,
-                                'company_id': company.id,
-                            }
-
-                            rate_id = currency_rate_obj.search([
-                                ('name', '=', rate_date),
-                                ('currency_id', '=', currency_usd.id),
-                                ('company_id', '=', company.id),
-                            ], limit=1)
-
-                            if rate_id:
-                                rate_id.write(vals)
-                            else:
-                                vals['name'] = rate_date
-                                currency_rate_obj.create(vals)
-            else:
-                try:
-                    url = 'https://api.hacienda.go.cr/indicadores/tc'
-                    response = requests.get(url, timeout=5)
-
-                except requests.exceptions.RequestException as e:
-                    _logger.error('RequestException %s', e)
-                    return False
-
-                if response.status_code in (200,):
-                    # Save the exchange rate in database
-                    rate_date = (datetime.now().date() - RATE_DATE_OFFSET).strftime('%Y-%m-%d')
-                    data = response.json()
-                    companies = self.env['res.company'].search([])
-                    for company in companies:
-                        _logger.error(company.id)
-                        vals = {}
-                        vals['original_rate'] = data['dolar']['venta']['valor']
-
-                        # Odoo utiliza un valor inverso,
-                        # a cuantos dólares equivale 1 colón, por eso se divide 1 / tipo de cambio.
-
-                        vals['rate'] = 1 / vals['original_rate']
-                        vals['original_rate_2'] = data['dolar']['compra']['valor']
-                        vals['rate_2'] = 1 / vals['original_rate_2']
-                        vals['currency_id'] = self.env.ref('base.USD').id
-
-                        rate_id = self.env['res.currency.rate'].search([('name', '=', rate_date)], limit=1)
-
-                        if rate_id:
-                            rate_id.write(vals)
-                        else:
-                            vals['name'] = rate_date
-                            self.create(vals)
-
-                _logger.info(vals)
+            _logger.info({'name': rate_date,
+                          'rate': selling_rate,
+                          'original_rate': selling_original_rate,
+                          'rate_2': buying_rate,
+                          'original_rate_2': buying_original_rate,
+                          'currency_id': currency_id.id})
 
         _logger.info("=========================================================")
 

@@ -16,11 +16,6 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: res_currency_cr_adapter
-#: model:ir.model.fields.selection,name:res_currency_cr_adapter.selection__res_config_settings__exchange_source__bccr
-msgid "BCCR (recommended)"
-msgstr "BCCR (recomendado)"
-
-#. module: res_currency_cr_adapter
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
 msgid "BCCR Token"
 msgstr "Token para BCCR"
@@ -75,11 +70,6 @@ msgid "Current Rate"
 msgstr "Tasa"
 
 #. module: res_currency_cr_adapter
-#: model:ir.model.fields.selection,name:res_currency_cr_adapter.selection__res_config_settings__exchange_source__disabled
-msgid "Disabled"
-msgstr "Desactivado"
-
-#. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__display_name
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__display_name
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__display_name
@@ -90,16 +80,6 @@ msgstr "Mostrar nombre"
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
 msgid "Email registered in the BCCR"
 msgstr "Correo electrónico registrado en el BCCR"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__exchange_source
-msgid "Exchange Source"
-msgstr "Origen del tipo de Cambio"
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields.selection,name:res_currency_cr_adapter.selection__res_config_settings__exchange_source__hacienda
-msgid "Hacienda"
-msgstr ""
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__id
@@ -114,11 +94,6 @@ msgstr "Identificación"
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate____last_update
 msgid "Last Modified on"
 msgstr "Última modificación el"
-
-#. module: res_currency_cr_adapter
-#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
-msgid "Origen del tipo de cambio"
-msgstr ""
 
 #. module: res_currency_cr_adapter
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form

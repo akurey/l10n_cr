@@ -7,12 +7,6 @@ from odoo import api, fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    exchange_source = fields.Selection([
-        ('disabled', 'Disabled'),
-        ('bccr', 'BCCR (recommended)'),
-        ('hacienda', 'Hacienda')
-        ], default='disabled')
-
     # Kept for backwards compatibility: the retired SOAP service took the user
     # name as a request parameter, the SDDE REST API does not use it
     bccr_username = fields.Char(string="BCCR username")
@@ -31,7 +25,6 @@ class ResConfigSettings(models.TransientModel):
             bccr_username=get_str('bccr_username'),
             bccr_email=get_str('bccr_email'),
             bccr_token=get_str('bccr_token'),
-            exchange_source=get_str('exchange_source') or 'disabled',
         )
         return res
 
@@ -42,4 +35,3 @@ class ResConfigSettings(models.TransientModel):
         set_str('bccr_username', self.bccr_username)
         set_str('bccr_email', self.bccr_email)
         set_str('bccr_token', self.bccr_token)
-        set_str('exchange_source', self.exchange_source)
