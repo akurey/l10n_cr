@@ -1,7 +1,7 @@
 # copyright  2018 Carlos Wong, Akurey S.A.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import api, fields, models, release
 from datetime import timedelta, datetime
 import logging
 import requests
@@ -19,7 +19,7 @@ BCCR_TIMEOUT = 60
 
 # The API gateway answers 403 to the default user agent of the requests
 # library, which is why the BCCR sets one explicitly on its own example
-BCCR_USER_AGENT = 'Odoo/19.0 (res_currency_cr_adapter)'
+BCCR_USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
 
 # Causes documented on Anexo C of the SDDE standard
 BCCR_HTTP_ERRORS = {
@@ -43,18 +43,17 @@ class ResCurrencyRate(models.Model):
     rate = fields.Float(string='Selling Rate')
 
     # Costa Rica uses two exchange rates:
-    #   - Buying exchange rate - used when a financial institutions buy USD from you (rate)
-    #   - Selling exchange rate - used when financial institutions sell USD to you (rate_2)
+    #   - Selling exchange rate - used when financial institutions sell USD to you (rate)
+    #   - Buying exchange rate - used when financial institutions buy USD from you (rate_2)
     rate_2 = fields.Float(string='Buying Rate', digits=0,
                           help='The buying rate of the currency to the currency of rate 1.')
 
-    # Rate as it is get
+    # The rates as the BCCR publishes them, in colones per dollar
     original_rate = fields.Float(string='Selling Rate in Costa Rica', digits=(6, 2),
-                                 help='The selling exchange rate from CRC to USD as it is send from BCCR')
+                                 help='The selling exchange rate from CRC to USD as sent by the BCCR')
 
-    # Rate as it is get
     original_rate_2 = fields.Float(string='Buying Rate in Costa Rica', digits=(6, 2),
-                                   help='The buying exchange rate from CRC to USD as it is send from BCCR')
+                                   help='The buying exchange rate from CRC to USD as sent by the BCCR')
 
     def _bccr_get_series(self, indicator, first_date, last_date, token):
         """Read one BCCR economic indicator from the SDDE REST API.
@@ -119,42 +118,24 @@ class ResCurrencyRate(models.Model):
 
     @api.model
     def _cron_update(self, first_date=False, last_date=False):
-
-        _logger.info("=========================================================")
-        _logger.info("Executing exchange rate update from 1 CRC = X USD")
-
-        if isinstance(first_date, str):
-            first_date = datetime.strptime(first_date, '%Y-%m-%d').date()
-        elif isinstance(first_date, datetime):
-            first_date = first_date.date()
-        if isinstance(last_date, str):
-            last_date = datetime.strptime(last_date, '%Y-%m-%d').date()
-        elif isinstance(last_date, datetime):
-            last_date = last_date.date()
-
-        _logger.info("Getting exchange rates from BCCR")
+        """Load the BCCR rates from first_date to last_date, by default today's."""
         bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
         # The token is what turns the update on, so without one there is
         # nothing to do yet and it is no error
         if not bccr_token:
             _logger.info("No BCCR token configured, the exchange rate is not updated")
-            return False
+            return
 
-        # Get current date to get exchange rate for today
-        if first_date:
-            initial_date = first_date
-            end_date = last_date or first_date
-        else:
-            initial_date = datetime.now().date()
-            end_date = initial_date
+        first_date = first_date or datetime.now().date()
+        last_date = last_date or first_date
 
         selling_rates = self._bccr_get_series(
-            BCCR_SELLING_INDICATOR, initial_date, end_date, bccr_token)
+            BCCR_SELLING_INDICATOR, first_date, last_date, bccr_token)
         buying_rates = self._bccr_get_series(
-            BCCR_BUYING_INDICATOR, initial_date, end_date, bccr_token)
+            BCCR_BUYING_INDICATOR, first_date, last_date, bccr_token)
 
-        currency_id = self.env.ref('base.USD')
+        currency = self.env.ref('base.USD')
 
         # A rate is only complete when both indicators published that date,
         # so pair them by date instead of walking both lists by position
@@ -163,43 +144,28 @@ class ResCurrencyRate(models.Model):
             _logger.error("Error loading currency rates, buying and selling rates don't "
                           "match for %s", ', '.join(sorted(incomplete_dates)))
 
-        for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
-            selling_original_rate = selling_rates[current_date_str]
-            buying_original_rate = buying_rates[current_date_str]
-            rate_date = fields.Date.to_date(current_date_str) - RATE_DATE_OFFSET
+        loaded_dates = sorted(set(selling_rates) & set(buying_rates))
+        for date_str in loaded_dates:
+            selling_original_rate = selling_rates[date_str]
+            buying_original_rate = buying_rates[date_str]
+            rate_date = fields.Date.to_date(date_str) - RATE_DATE_OFFSET
 
-            # Odoo uses the value of 1 unit of the base currency divided between the exchage rate
-            selling_rate = 1 / selling_original_rate
-            buying_rate = 1 / buying_original_rate
-
-            # Get the rate for this date to know it is already registered
-            rates_ids = self.env['res.currency.rate'].search([
+            # Odoo stores how many dollars one colón is worth, the inverse of
+            # the colones per dollar the BCCR publishes
+            vals = {
+                'rate': 1 / selling_original_rate,
+                'original_rate': selling_original_rate,
+                'rate_2': 1 / buying_original_rate,
+                'original_rate_2': buying_original_rate,
+            }
+            existing_rate = self.search([
                 ('name', '=', rate_date),
-                ('currency_id', '=', currency_id.id),
+                ('currency_id', '=', currency.id),
             ], limit=1)
-
-            if len(rates_ids) > 0:
-                rates_ids.write(
-                    {'rate': selling_rate,
-                     'original_rate': selling_original_rate,
-                     'rate_2': buying_rate,
-                     'original_rate_2': buying_original_rate,
-                     'currency_id': currency_id.id}
-                    )
+            if existing_rate:
+                existing_rate.write(vals)
             else:
-                self.create(
-                    {'name': rate_date,
-                     'rate': selling_rate,
-                     'original_rate': selling_original_rate,
-                     'rate_2': buying_rate,
-                     'original_rate_2': buying_original_rate,
-                     'currency_id': currency_id.id})
+                self.create({**vals, 'name': rate_date, 'currency_id': currency.id})
 
-            _logger.info({'name': rate_date,
-                          'rate': selling_rate,
-                          'original_rate': selling_original_rate,
-                          'rate_2': buying_rate,
-                          'original_rate_2': buying_original_rate,
-                          'currency_id': currency_id.id})
-
-        _logger.info("=========================================================")
+        if loaded_dates:
+            _logger.info("BCCR exchange rates loaded for %s to %s", loaded_dates[0], loaded_dates[-1])

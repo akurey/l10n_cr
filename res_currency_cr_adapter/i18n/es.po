@@ -102,8 +102,8 @@ msgstr "Tipo de cambio Venta en Costa Rica"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__original_rate_2
-msgid "The buying exchange rate from CRC to USD as it is send from BCCR"
-msgstr "El tipo de cambio de compra de CRC a USD tal como se envía desde BCCR"
+msgid "The buying exchange rate from CRC to USD as sent by the BCCR"
+msgstr "El tipo de cambio de compra de CRC a USD tal como lo publica el BCCR"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__rate_2
@@ -122,8 +122,8 @@ msgstr "La tasa de cambio de la moneda respecto a la moneda de tasa 1"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,help:res_currency_cr_adapter.field_res_currency_rate__original_rate
-msgid "The selling exchange rate from CRC to USD as it is send from BCCR"
-msgstr "El tipo de cambio de venta de CRC a USD tal como se envía desde BCCR"
+msgid "The selling exchange rate from CRC to USD as sent by the BCCR"
+msgstr "El tipo de cambio de venta de CRC a USD tal como lo publica el BCCR"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_token
