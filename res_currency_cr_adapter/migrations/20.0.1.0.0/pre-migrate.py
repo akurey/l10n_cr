@@ -1,5 +1,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
+from odoo.tools.sql import column_exists, rename_column
+
 
 def migrate(cr, version):
     _rename_cron(cr)
@@ -48,15 +50,9 @@ def _rename_buying_rate(cr):
     too, or the upgrade would delete the field as one the module no longer
     has.
     """
-    cr.execute("""
-        SELECT 1
-          FROM information_schema.columns
-         WHERE table_name = 'res_currency_rate'
-           AND column_name = 'rate_2'
-    """)
-    if not cr.fetchone():
+    if not column_exists(cr, 'res_currency_rate', 'rate_2'):
         return
-    cr.execute("ALTER TABLE res_currency_rate RENAME COLUMN rate_2 TO buying_rate")
+    rename_column(cr, 'res_currency_rate', 'rate_2', 'buying_rate')
     cr.execute("""
         UPDATE ir_model_fields
            SET name = 'buying_rate'
