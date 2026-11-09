@@ -6,8 +6,10 @@ import requests
 
 from odoo import fields, release
 from odoo.exceptions import UserError
+from odoo.tools.translate import LazyTranslate
 
 _logger = logging.getLogger(__name__)
+_lt = LazyTranslate(__name__)
 
 # BCCR's SDDE REST API (https://sdd.bccr.fi.cr/), authenticated with a bearer token
 API_BASE = 'https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API'
@@ -18,6 +20,18 @@ TIMEOUT = 60
 # The API gateway answers 403 to the default user agent of the requests
 # library, which is why the BCCR sets one explicitly on its own example
 USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
+
+# Causes of the BCCR's HTTP errors, as documented on Anexo C of the SDDE
+# standard: its own error bodies are too generic to show, a 500 only says
+# "Internal server error", even for an invalid token
+ERROR_CAUSES = {
+    400: _lt("invalid parameters, check the indicator code and that dates use yyyy/mm/dd"),
+    401: _lt("the token is missing, invalid or expired"),
+    403: _lt("the user has no valid subscription, or the gateway rejected the user agent"),
+    404: _lt("wrong endpoint, or the 'idioma' parameter is missing"),
+    429: _lt("too many requests, lower the frequency of the update"),
+    500: _lt("BCCR internal error, or the token was rejected"),
+}
 
 
 class BccrApi:
@@ -56,21 +70,6 @@ class BccrApi:
             for date_str in sorted(set(selling_rates) & set(buying_rates))
         }
 
-    def _error_cause(self, status):
-        """Cause of a BCCR HTTP error, as documented on Anexo C of the SDDE standard.
-
-        The BCCR's own error bodies are too generic to show: a 500 only says
-        "Internal server error", even for an invalid token.
-        """
-        return {
-            400: self.env._("invalid parameters, check the indicator code and that dates use yyyy/mm/dd"),
-            401: self.env._("the token is missing, invalid or expired"),
-            403: self.env._("the user has no valid subscription, or the gateway rejected the user agent"),
-            404: self.env._("wrong endpoint, or the 'idioma' parameter is missing"),
-            429: self.env._("too many requests, lower the frequency of the update"),
-            500: self.env._("BCCR internal error, or the token was rejected"),
-        }.get(status, self.env._("unexpected status"))
-
     def _get_series(self, indicator, first_date, last_date):
         """Read one BCCR economic indicator from the SDDE REST API.
 
@@ -107,7 +106,7 @@ class BccrApi:
             raise UserError(self.env._(
                 "The BCCR rejected the request for indicator %(indicator)s (HTTP %(status)s): %(cause)s",
                 indicator=indicator, status=response.status_code,
-                cause=self._error_cause(response.status_code)))
+                cause=ERROR_CAUSES.get(response.status_code, _lt("unexpected status"))))
 
         try:
             payload = response.json()
