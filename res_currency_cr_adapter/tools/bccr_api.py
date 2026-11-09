@@ -45,14 +45,12 @@ class BccrApi:
         :raise UserError: if the BCCR cannot be reached, rejects the request or has no data
         """
         series = self._get_series(first_date, last_date)
+        selling_rates = series[SELLING_INDICATOR]
         buying_rates = series[BUYING_INDICATOR]
-        return {
-            fields.Date.to_date(date_str): (selling, buying_rates[date_str])
-            for date_str, selling in series[SELLING_INDICATOR].items()
-        }
+        return {date: (selling_rates[date], buying_rates[date]) for date in selling_rates}
 
     def _get_series(self, first_date, last_date):
-        """Return the cuadro's {indicator: {'YYYY-MM-DD': value}} from first_date to last_date."""
+        """Return the cuadro's {indicator: {date: value}} from first_date to last_date."""
         url = '%s/cuadro/%s/series' % (API_BASE, CUADRO_CODE)
         params = {
             # The API rejects any other format with a 400
@@ -88,7 +86,7 @@ class BccrApi:
 
         series = {
             indicator['codigoIndicador']: {
-                point['fecha']: point['valorDatoPorPeriodo']
+                fields.Date.to_date(point['fecha']): point['valorDatoPorPeriodo']
                 for point in indicator['series']
                 # The API sends null for days with no published value
                 if point['valorDatoPorPeriodo']
