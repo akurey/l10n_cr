@@ -18,12 +18,12 @@ TIMEOUT = 60
 # The API gateway answers 403 to the requests library's default user agent
 USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
 
-# Causes of the HTTP errors, from Annex C of the SDDE standard: the BCCR's own are too generic
+# Causes of the HTTP errors, from Annex C of the SDDE standard: the BCCR's own are too generic or only in Spanish
 ERROR_CAUSES = {
     400: _lt("invalid parameters, check the dates"),
     401: _lt("the token is missing, invalid or expired"),
     403: _lt("the user has no valid subscription, or the gateway rejected the user agent"),
-    404: _lt("wrong endpoint, or the 'idioma' parameter is missing"),
+    404: _lt("wrong endpoint or missing parameters"),
     429: _lt("too many requests, lower the frequency of the update"),
     500: _lt("BCCR internal error, or the token was rejected"),
 }
