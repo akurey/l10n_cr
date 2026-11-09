@@ -51,39 +51,11 @@ class BccrApi:
 
     def _get_series(self, first_date, last_date):
         """Return the cuadro's {indicator: {date: value}} from first_date to last_date."""
-        url = '%s/cuadro/%s/series' % (API_BASE, CUADRO_CODE)
-        params = {
+        payload = self._request('cuadro/%s/series' % CUADRO_CODE, {
             # The API rejects any other format with a 400
             'fechaInicio': first_date.strftime('%Y/%m/%d'),
             'fechaFin': last_date.strftime('%Y/%m/%d'),
-            # Omitting the language answers 404, it is not optional
-            'idioma': 'ES',
-        }
-        headers = {
-            'Authorization': 'Bearer %s' % self.token,
-            'Accept': 'application/json',
-            'User-Agent': USER_AGENT,
-        }
-
-        try:
-            response = requests.get(url, params=params, headers=headers, timeout=TIMEOUT)
-        except requests.exceptions.RequestException as e:
-            raise UserError(self.env._("Could not connect to the BCCR: %(error)s", error=e)) from None
-
-        if response.status_code != 200:
-            _logger.warning("BCCR cuadro %s: HTTP %s, response: %s",
-                            CUADRO_CODE, response.status_code, response.text[:200])
-            raise UserError(self.env._(
-                "The BCCR rejected the request (HTTP %(status)s): %(cause)s",
-                status=response.status_code,
-                cause=ERROR_CAUSES.get(response.status_code, _lt("unexpected status"))))
-
-        try:
-            payload = response.json()
-        except ValueError:
-            _logger.warning("BCCR cuadro %s: response: %s", CUADRO_CODE, response.text[:200])
-            raise UserError(self.env._("The BCCR answered with an invalid response")) from None
-
+        })
         series = {
             indicator['codigoIndicador']: {
                 fields.Date.to_date(point['fecha']): point['valorDatoPorPeriodo']
@@ -101,3 +73,32 @@ class BccrApi:
                 "The BCCR has no data between %(start)s and %(end)s", start=first_date, end=last_date))
 
         return series
+
+    def _request(self, path, params):
+        """Return the decoded JSON of a GET on the SDDE API."""
+        headers = {
+            'Authorization': 'Bearer %s' % self.token,
+            'Accept': 'application/json',
+            'User-Agent': USER_AGENT,
+        }
+        try:
+            response = requests.get(
+                '%s/%s' % (API_BASE, path),
+                # Omitting the language answers 404, it is not optional
+                params={**params, 'idioma': 'ES'},
+                headers=headers, timeout=TIMEOUT)
+        except requests.exceptions.RequestException as e:
+            raise UserError(self.env._("Could not connect to the BCCR: %(error)s", error=e)) from None
+
+        if response.status_code != 200:
+            _logger.warning("BCCR %s: HTTP %s, response: %s", path, response.status_code, response.text[:200])
+            raise UserError(self.env._(
+                "The BCCR rejected the request (HTTP %(status)s): %(cause)s",
+                status=response.status_code,
+                cause=ERROR_CAUSES.get(response.status_code, _lt("unexpected status"))))
+
+        try:
+            return response.json()
+        except ValueError:
+            _logger.warning("BCCR %s: response: %s", path, response.text[:200])
+            raise UserError(self.env._("The BCCR answered with an invalid response")) from None
