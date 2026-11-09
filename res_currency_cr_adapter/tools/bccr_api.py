@@ -13,6 +13,9 @@ _lt = LazyTranslate(__name__)
 
 # BCCR's SDDE REST API (https://sdd.bccr.fi.cr/), authenticated with a bearer token
 API_BASE = 'https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API'
+# Cuadro 1 publishes the dollar's selling and buying rates together, so a
+# single call returns both
+CUADRO_CODE = 1
 SELLING_INDICATOR = '318'  # Tipo cambio venta
 BUYING_INDICATOR = '317'  # Tipo cambio compra
 TIMEOUT = 60
@@ -25,7 +28,7 @@ USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
 # standard: its own error bodies are too generic to show, a 500 only says
 # "Internal server error", even for an invalid token
 ERROR_CAUSES = {
-    400: _lt("invalid parameters, check the indicator code and that dates use yyyy/mm/dd"),
+    400: _lt("invalid parameters, check the cuadro code and that dates use yyyy/mm/dd"),
     401: _lt("the token is missing, invalid or expired"),
     403: _lt("the user has no valid subscription, or the gateway rejected the user agent"),
     404: _lt("wrong endpoint, or the 'idioma' parameter is missing"),
@@ -50,38 +53,29 @@ class BccrApi:
     def get_rates(self, first_date, last_date):
         """Return the BCCR's selling and buying rates from first_date to last_date.
 
-        :return: {date: (selling, buying)} in colones per dollar, for every
-            date both rates were published for
+        :return: {date: (selling, buying)} in colones per dollar
         :raise UserError: if the BCCR cannot be reached, rejects the request
             or has no data for the range, with the cause in the message.
         """
-        selling_rates = self._get_series(SELLING_INDICATOR, first_date, last_date)
-        buying_rates = self._get_series(BUYING_INDICATOR, first_date, last_date)
-
-        # A rate is only complete when both indicators published that date,
-        # so pair them by date instead of walking both lists by position
-        incomplete_dates = set(selling_rates) ^ set(buying_rates)
-        if incomplete_dates:
-            _logger.error("Error loading currency rates, buying and selling rates don't "
-                          "match for %s", ', '.join(sorted(incomplete_dates)))
-
+        series = self._get_series(first_date, last_date)
+        buying_rates = series[BUYING_INDICATOR]
         return {
-            fields.Date.to_date(date_str): (selling_rates[date_str], buying_rates[date_str])
-            for date_str in sorted(set(selling_rates) & set(buying_rates))
+            fields.Date.to_date(date_str): (selling, buying_rates[date_str])
+            for date_str, selling in series[SELLING_INDICATOR].items()
         }
 
-    def _get_series(self, indicator, first_date, last_date):
-        """Read one BCCR economic indicator from the SDDE REST API.
+    def _get_series(self, first_date, last_date):
+        """Read the indicators of the BCCR's cuadro from the SDDE REST API.
 
-        Returns {'YYYY-MM-DD': value} for the requested range. The BCCR
-        publishes a value for every calendar day, carrying the last published
-        one over weekends and holidays, so a single call fills a whole range
-        with no gaps.
+        Returns {indicator: {'YYYY-MM-DD': value}} for the requested range.
+        The BCCR publishes a value for every calendar day, carrying the last
+        published one over weekends and holidays, so a single call fills a
+        whole range with no gaps.
 
         :raise UserError: if the BCCR cannot be reached, rejects the request
             or has no data for the range, with the cause in the message.
         """
-        url = '%s/indicadoresEconomicos/%s/series' % (API_BASE, indicator)
+        url = '%s/cuadro/%s/series' % (API_BASE, CUADRO_CODE)
         params = {
             # The API rejects any other format with a 400
             'fechaInicio': first_date.strftime('%Y/%m/%d'),
@@ -101,35 +95,36 @@ class BccrApi:
             raise UserError(self.env._("Could not connect to the BCCR: %(error)s", error=e)) from None
 
         if response.status_code != 200:
-            _logger.warning("BCCR indicator %s: HTTP %s, response: %s",
-                            indicator, response.status_code, response.text[:200])
+            _logger.warning("BCCR cuadro %s: HTTP %s, response: %s",
+                            CUADRO_CODE, response.status_code, response.text[:200])
             raise UserError(self.env._(
-                "The BCCR rejected the request for indicator %(indicator)s (HTTP %(status)s): %(cause)s",
-                indicator=indicator, status=response.status_code,
+                "The BCCR rejected the request for cuadro %(cuadro)s (HTTP %(status)s): %(cause)s",
+                cuadro=CUADRO_CODE, status=response.status_code,
                 cause=ERROR_CAUSES.get(response.status_code, _lt("unexpected status"))))
 
         try:
             payload = response.json()
         except ValueError:
-            _logger.warning("BCCR indicator %s: response: %s", indicator, response.text[:200])
+            _logger.warning("BCCR cuadro %s: response: %s", CUADRO_CODE, response.text[:200])
             raise UserError(self.env._(
-                "The BCCR answered the request for indicator %(indicator)s with an invalid response",
-                indicator=indicator)) from None
+                "The BCCR answered the request for cuadro %(cuadro)s with an invalid response",
+                cuadro=CUADRO_CODE)) from None
 
         series = {}
-        for indicator_data in payload.get('datos') or []:
-            for point in indicator_data.get('series') or []:
-                value = point.get('valorDatoPorPeriodo')
-                # The API sends null for days with no published value
-                if not value:
-                    continue
-                series[point['fecha'][:10]] = float(value)
+        for cuadro in payload.get('datos') or []:
+            for indicator in cuadro.get('indicadores') or []:
+                series[indicator['codigoIndicador']] = {
+                    point['fecha']: float(point['valorDatoPorPeriodo'])
+                    for point in indicator.get('series') or []
+                    # The API sends null for days with no published value
+                    if point.get('valorDatoPorPeriodo')
+                }
 
         # 'estado' comes back True even for an empty range, so the series are
         # the only reliable sign that the query actually returned data
-        if not series:
+        if not any(series.values()):
             raise UserError(self.env._(
-                "The BCCR has no data for indicator %(indicator)s between %(start)s and %(end)s",
-                indicator=indicator, start=first_date, end=last_date))
+                "The BCCR has no data for cuadro %(cuadro)s between %(start)s and %(end)s",
+                cuadro=CUADRO_CODE, start=first_date, end=last_date))
 
         return series
