@@ -18,28 +18,32 @@ def _rename_cron(cr):
     """
     cr.execute("""
         UPDATE ir_model_data
-           SET name = 'ir_cron_currency_rate_update' || substr(name, length('currency_crc_rate_cron') + 1)
+           SET name = CASE name
+                        WHEN 'currency_crc_rate_cron' THEN 'ir_cron_currency_rate_update'
+                        ELSE 'ir_cron_currency_rate_update_ir_actions_server'
+                      END
          WHERE module = 'res_currency_cr_adapter'
            AND name IN ('currency_crc_rate_cron', 'currency_crc_rate_cron_ir_actions_server')
-     RETURNING res_id, model
     """)
-    cron_ids = [res_id for res_id, model in cr.fetchall() if model == 'ir.cron']
-    if not cron_ids:
-        return
     # Only the English name is set: the translations of the new name are
     # loaded from the module's .po files after the upgrade
     cr.execute("""
-        UPDATE ir_act_server
+        UPDATE ir_act_server action
            SET name = jsonb_build_object('en_US', 'Costa Rica: Update currency rates')
-          FROM ir_cron
-         WHERE ir_cron.ir_actions_server_id = ir_act_server.id
-           AND ir_cron.id IN %s
-    """, [tuple(cron_ids)])
+          FROM ir_model_data imd
+         WHERE imd.module = 'res_currency_cr_adapter'
+           AND imd.name = 'ir_cron_currency_rate_update_ir_actions_server'
+           AND imd.res_id = action.id
+    """)
     cr.execute("""
-        UPDATE ir_cron
-           SET cron_name = 'Costa Rica: Update currency rates'
-         WHERE id IN %s
-    """, [tuple(cron_ids)])
+        UPDATE ir_cron cron
+           SET cron_name = action.name->>'en_US'
+          FROM ir_act_server action
+         WHERE action.id = cron.ir_actions_server_id
+           AND cron.id IN (SELECT res_id FROM ir_model_data
+                            WHERE module = 'res_currency_cr_adapter'
+                              AND name = 'ir_cron_currency_rate_update')
+    """)
 
 
 def _rename_buying_rate(cr):
