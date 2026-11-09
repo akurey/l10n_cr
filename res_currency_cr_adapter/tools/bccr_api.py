@@ -76,32 +76,30 @@ class BccrApi:
             _logger.warning("BCCR cuadro %s: HTTP %s, response: %s",
                             CUADRO_CODE, response.status_code, response.text[:200])
             raise UserError(self.env._(
-                "The BCCR rejected the request for cuadro %(cuadro)s (HTTP %(status)s): %(cause)s",
-                cuadro=CUADRO_CODE, status=response.status_code,
+                "The BCCR rejected the request (HTTP %(status)s): %(cause)s",
+                status=response.status_code,
                 cause=ERROR_CAUSES.get(response.status_code, _lt("unexpected status"))))
 
         try:
             payload = response.json()
         except ValueError:
             _logger.warning("BCCR cuadro %s: response: %s", CUADRO_CODE, response.text[:200])
-            raise UserError(self.env._(
-                "The BCCR answered the request for cuadro %(cuadro)s with an invalid response",
-                cuadro=CUADRO_CODE)) from None
+            raise UserError(self.env._("The BCCR answered with an invalid response")) from None
 
-        series = {}
-        for cuadro in payload.get('datos') or []:
-            for indicator in cuadro.get('indicadores') or []:
-                series[indicator['codigoIndicador']] = {
-                    point['fecha']: float(point['valorDatoPorPeriodo'])
-                    for point in indicator.get('series') or []
-                    # The API sends null for days with no published value
-                    if point.get('valorDatoPorPeriodo')
-                }
+        series = {
+            indicator['codigoIndicador']: {
+                point['fecha']: point['valorDatoPorPeriodo']
+                for point in indicator['series']
+                # The API sends null for days with no published value
+                if point['valorDatoPorPeriodo']
+            }
+            for cuadro in payload['datos']
+            for indicator in cuadro['indicadores']
+        }
 
         # 'estado' is True even for an empty range, so only the series show there is data
         if not any(series.values()):
             raise UserError(self.env._(
-                "The BCCR has no data for cuadro %(cuadro)s between %(start)s and %(end)s",
-                cuadro=CUADRO_CODE, start=first_date, end=last_date))
+                "The BCCR has no data between %(start)s and %(end)s", start=first_date, end=last_date))
 
         return series
