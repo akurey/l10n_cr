@@ -2,8 +2,8 @@
 <!-- Copyright 2018 Carlos Wong, Akurey S.A.
      License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl). -->
 <odoo>
-    <record id="view_currency_rate_tree_inherit_extension" model="ir.ui.view">
-        <field name="name">res.currency.rate.tree.inherit.extension</field>
+    <record id="view_currency_rate_tree" model="ir.ui.view">
+        <field name="name">res.currency.rate.list.inherit.res_currency_cr_adapter</field>
         <field name="model">res.currency.rate</field>
         <field name="inherit_id" ref="base.view_currency_rate_tree"/>
         <field name="arch" type="xml">
@@ -25,15 +25,11 @@
         </field>
     </record>
     <record id="view_currency_form" model="ir.ui.view">
-        <field name="name">res.currency.form</field>
+        <field name="name">res.currency.form.inherit.res_currency_cr_adapter</field>
         <field name="model">res.currency</field>
         <field name="inherit_id" ref="base.view_currency_form"/>
         <field name="arch" type="xml">
-            <field name="rate_ids" position="before">
-                <field name="show_buying_rate" invisible="1"/>
-            </field>
-            <!-- Where a buying rate is shown, Odoo's rate columns are replaced
-                 by the same values labelled as the selling rate -->
+            <!-- Where a buying rate is shown, Odoo's rate columns are replaced by the same values labelled as selling -->
             <xpath expr="//field[@name='rate_ids']//field[@name='company_rate']" position="attributes">
                 <attribute name="column_invisible">parent.show_buying_rate</attribute>
             </xpath>
@@ -41,11 +37,11 @@
                 <attribute name="column_invisible">parent.show_buying_rate</attribute>
             </xpath>
             <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="after">
-                <field name="selling_company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
+                <field name="company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
                        column_invisible="not parent.show_buying_rate"/>
                 <field name="buying_company_rate" width="140" digits="[12,12]" string="Buying Unit/Base"
                        column_invisible="not parent.show_buying_rate"/>
-                <field name="selling_inverse_company_rate" width="140" digits="[12,12]" string="Selling Base/Unit"
+                <field name="inverse_company_rate" width="140" digits="[12,12]" string="Selling Base/Unit"
                        column_invisible="not parent.show_buying_rate"/>
                 <field name="buying_inverse_company_rate" width="140" digits="[12,12]" string="Buying Base/Unit"
                        column_invisible="not parent.show_buying_rate"/>

@@ -42,20 +42,6 @@ class ResCurrency(models.Model):
 class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
-    # Odoo's rate columns, labelled as the selling rate next to the buying rate
-    selling_company_rate = fields.Float(
-        string='Selling Company Rate',
-        related='company_rate',
-        readonly=False,
-        digits=0,
-    )
-    selling_inverse_company_rate = fields.Float(
-        string='Selling Inverse Company Rate',
-        related='inverse_company_rate',
-        readonly=False,
-        digits=0,
-    )
-
     # Costa Rica also publishes a buying rate, stored and shown like Odoo's rate
     buying_rate = fields.Float(
         string='Technical Buying Rate',
