@@ -20,7 +20,7 @@ USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
 
 # Causes of the HTTP errors, from Annex C of the SDDE standard: the BCCR's own are too generic
 ERROR_CAUSES = {
-    400: _lt("invalid parameters, check the cuadro code and that dates use yyyy/mm/dd"),
+    400: _lt("invalid parameters, check the dates"),
     401: _lt("the token is missing, invalid or expired"),
     403: _lt("the user has no valid subscription, or the gateway rejected the user agent"),
     404: _lt("wrong endpoint, or the 'idioma' parameter is missing"),
@@ -75,7 +75,6 @@ class BccrApi:
         """Return the decoded JSON of a GET on the SDDE API."""
         headers = {
             'Authorization': 'Bearer %s' % self.token,
-            'Accept': 'application/json',
             'User-Agent': USER_AGENT,
         }
         try:
