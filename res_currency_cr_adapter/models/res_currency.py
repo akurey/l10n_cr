@@ -36,7 +36,7 @@ class ResCurrency(models.Model):
         )
         currencies_with_buying_rate = {currency for currency, in groups}
         for currency in self:
-            currency.show_buying_rate = currency in currencies_with_buying_rate
+            currency.show_buying_rate = currency._origin in currencies_with_buying_rate
 
 
 class ResCurrencyRate(models.Model):
