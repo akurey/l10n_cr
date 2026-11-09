@@ -20,27 +20,30 @@ class ResCurrency(models.Model):
 
     show_buying_rate = fields.Boolean(compute='_compute_show_buying_rate')
 
-    @api.depends('rate_ids.buying_rate')
     @api.depends_context('company')
     def _compute_show_buying_rate(self):
-        # Any currency with buying rates shows their columns, whatever their source
-        groups = self.env['res.currency.rate']._read_group(
-            [
-                ('currency_id', 'in', self.ids),
-                ('buying_rate', '!=', 0),
-                '|',
-                ('company_id', '=', False),
-                ('company_id', 'parent_of', self.env.company.id),
-            ],
-            groupby=['currency_id'],
-        )
-        currencies_with_buying_rate = {currency for currency, in groups}
+        # The BCCR rates the dollar in colones: a Costa Rican company rates the other currency of that pair
+        company = self.env.company
+        rated_currency = company.account_fiscal_country_id.code == 'CR' and {
+            'CRC': 'USD',
+            'USD': 'CRC',
+        }.get(company.currency_id.name)
         for currency in self:
-            currency.show_buying_rate = currency._origin in currencies_with_buying_rate
+            currency.show_buying_rate = currency.name == rated_currency
+
+    def action_view_rates(self):
+        """Odoo's rate list, without the buying columns for a currency that doesn't use them."""
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id('base.act_view_currency_rates')
+        action['domain'] = [('currency_id', '=', self.id)]
+        action['context'] = {'default_currency_id': self.id, 'hide_buying_rate': not self.show_buying_rate}
+        return action
 
 
 class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
+
+    currency_show_buying_rate = fields.Boolean(related='currency_id.show_buying_rate')
 
     # Costa Rica also publishes a buying rate, stored and shown like Odoo's rate
     buying_rate = fields.Float(
