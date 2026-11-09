@@ -4,7 +4,6 @@
 def migrate(cr, version):
     _rename_cron(cr)
     _rename_buying_rate(cr)
-    _reset_rate_labels(cr)
 
 
 def _rename_cron(cr):
@@ -69,21 +68,4 @@ def _rename_buying_rate(cr):
            SET name = 'field_res_currency_rate__buying_rate'
          WHERE module = 'res_currency_cr_adapter'
            AND name = 'field_res_currency_rate__rate_2'
-    """)
-
-
-def _reset_rate_labels(cr):
-    """Drop the translations of the old rate labels.
-
-    The module relabelled the rate as a selling rate and gave the buying
-    rate a different label, and an upgrade keeps the translations a database
-    already has. Keeping only the English texts lets the current translations
-    load after the upgrade.
-    """
-    cr.execute("""
-        UPDATE ir_model_fields
-           SET field_description = jsonb_build_object('en_US', field_description->>'en_US'),
-               help = CASE WHEN help IS NOT NULL THEN jsonb_build_object('en_US', help->>'en_US') END
-         WHERE model = 'res.currency.rate'
-           AND name IN ('rate', 'buying_rate')
     """)
