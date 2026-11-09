@@ -7,9 +7,17 @@
         <field name="model">res.currency.rate</field>
         <field name="inherit_id" ref="base.view_currency_rate_tree"/>
         <field name="arch" type="xml">
+            <!-- New lines go first, as the rates are sorted newest first -->
+            <xpath expr="/list" position="attributes">
+                <attribute name="editable">top</attribute>
+            </xpath>
+            <!-- Without the currency in the view a new line gets no default currency, and no previous rate to copy -->
+            <field name="name" position="after">
+                <field name="currency_id" column_invisible="True"/>
+            </field>
             <field name="inverse_company_rate" position="after">
-                <field name="buying_company_rate" width="140" digits="[12,12]" invisible="not buying_rate"/>
-                <field name="buying_inverse_company_rate" width="140" digits="[12,12]" invisible="not buying_rate"/>
+                <field name="buying_company_rate" width="140" digits="[12,12]" invisible="not buying_company_rate"/>
+                <field name="buying_inverse_company_rate" width="140" digits="[12,12]" invisible="not buying_company_rate"/>
             </field>
             <field name="rate" position="after">
                 <field name="buying_rate" digits="[12,12]" optional="hide"/>

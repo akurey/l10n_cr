@@ -80,13 +80,14 @@ class ResCurrencyRate(models.Model):
         help="Buying rate, expressed like Base/Unit.",
     )
 
-    @api.depends('buying_rate', 'currency_id', 'company_id')
+    @api.depends('buying_rate', 'name', 'currency_id', 'company_id', 'currency_id.rate_ids.buying_rate')
     @api.depends_context('company')
     def _compute_buying_company_rate(self):
         last_rate = self._get_last_rates_for_companies(self.company_id | self.env.company.root_id)
         for currency_rate in self:
             company = currency_rate.company_id or self.env.company.root_id
-            currency_rate.buying_company_rate = currency_rate.buying_rate / last_rate[company]
+            buying_rate = currency_rate.buying_rate or currency_rate._get_latest_rate().buying_rate
+            currency_rate.buying_company_rate = buying_rate / last_rate[company]
 
     @api.onchange('buying_company_rate')
     def _inverse_buying_company_rate(self):
