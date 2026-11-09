@@ -2,10 +2,11 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
-    'name': 'Costa Rica Currency Adapter',
+    'name': 'Costa Rica - Exchange Rates',
+    'summary': 'Daily exchange rates from the Banco Central de Costa Rica',
     'version': '20.0.1.0.0',
     'category': 'Accounting/Localizations',
-    'author': "Odoo CR, Akurey S.A.",
+    'author': 'Odoo CR, Akurey S.A.',
     'website': 'https://github.com/akurey/l10n_cr',
     'license': 'AGPL-3',
     'depends': [
