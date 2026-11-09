@@ -1,14 +1,11 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-import logging
-
 import requests
 
 from odoo import fields, release
 from odoo.exceptions import UserError
 from odoo.tools.translate import LazyTranslate
 
-_logger = logging.getLogger(__name__)
 _lt = LazyTranslate(__name__)
 
 # BCCR's SDDE REST API (https://sdd.bccr.fi.cr/), authenticated with a bearer token
@@ -91,7 +88,6 @@ class BccrApi:
             raise UserError(self.env._("Could not connect to the BCCR: %(error)s", error=e)) from None
 
         if response.status_code != 200:
-            _logger.warning("BCCR %s: HTTP %s, response: %s", path, response.status_code, response.text[:200])
             raise UserError(self.env._(
                 "The BCCR rejected the request (HTTP %(status)s): %(cause)s",
                 status=response.status_code,
@@ -100,5 +96,4 @@ class BccrApi:
         try:
             return response.json()
         except ValueError:
-            _logger.warning("BCCR %s: response: %s", path, response.text[:200])
             raise UserError(self.env._("The BCCR answered with an invalid response")) from None
