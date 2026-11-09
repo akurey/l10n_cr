@@ -6,8 +6,4 @@ from odoo import fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    bccr_token = fields.Char(
-        string="BCCR access token",
-        config_parameter='bccr_token',
-        help="Bearer token generated on the Indicadores Economicos site "
-             "under Mi Perfil -> Generar token.")
+    bccr_token = fields.Char(string="BCCR Token", config_parameter='bccr_token')

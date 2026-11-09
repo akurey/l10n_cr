@@ -7,9 +7,8 @@
         <field name="inherit_id" ref="account.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='main_currency_setting_container']" position="inside">
-                <setting string="Token BCCR"
-                         help="Token generado en el sitio de Indicadores Económicos, en Mi Perfil → Generar token.">
-                    <field name="bccr_token" string="Token BCCR" password="True"/>
+                <setting help="Token generated on the BCCR SDDE site" documentation="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil">
+                    <field name="bccr_token" password="True"/>
                 </setting>
             </xpath>
         </field>

@@ -16,9 +16,10 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__bccr_token
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
 msgid "BCCR Token"
-msgstr "Token para BCCR"
+msgstr "Token del BCCR"
 
 #. module: res_currency_cr_adapter
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.view_currency_form
@@ -225,3 +226,8 @@ msgstr "El BCCR no tiene datos del indicador %(indicator)s entre %(start)s y %(e
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__show_buying_rate
 msgid "Show Buying Rate"
 msgstr "Mostrar tipo de cambio de compra"
+
+#. module: res_currency_cr_adapter
+#: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_crc_view_form
+msgid "Token generated on the BCCR SDDE site"
+msgstr "Token generado en el sitio SDDE del BCCR"
