@@ -2,7 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
@@ -11,9 +11,7 @@ from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
 
-# Since 20.0 Odoo converts a document with the last rate dated before the
-# document's own date, never with one from that same day (odoo/odoo@cba671d),
-# so a rate is stored the day before the date the BCCR publishes it for
+# Odoo 20 converts with the last rate dated before the document (odoo/odoo@cba671d), so rates are stored a day early
 RATE_DATE_OFFSET = timedelta(days=1)
 
 
@@ -25,8 +23,7 @@ class ResCurrency(models.Model):
     @api.depends('rate_ids.buying_rate')
     @api.depends_context('company')
     def _compute_show_buying_rate(self):
-        # A currency shows the buying rate columns when a source published
-        # buying rates for it, whatever the currency and the source are
+        # Any currency with buying rates shows their columns, whatever their source
         groups = self.env['res.currency.rate']._read_group(
             [
                 ('currency_id', 'in', self.ids),
@@ -45,8 +42,7 @@ class ResCurrency(models.Model):
 class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
-    # Odoo's rate columns, labelled as the selling rate where a buying rate
-    # is shown next to them
+    # Odoo's rate columns, labelled as the selling rate next to the buying rate
     selling_company_rate = fields.Float(
         string='Selling Company Rate',
         related='company_rate',
@@ -60,11 +56,11 @@ class ResCurrencyRate(models.Model):
         digits=0,
     )
 
-    # Besides the selling rate Odoo converts with, Costa Rica publishes a
-    # buying rate, stored and shown the same way as Odoo's rate
+    # Costa Rica also publishes a buying rate, stored and shown like Odoo's rate
     buying_rate = fields.Float(
         string='Technical Buying Rate',
         digits=0,
+        aggregator='avg',
         help="Buying rate, expressed like the Technical Rate.",
     )
     buying_company_rate = fields.Float(
@@ -72,6 +68,7 @@ class ResCurrencyRate(models.Model):
         digits=0,
         compute='_compute_buying_company_rate',
         inverse='_inverse_buying_company_rate',
+        aggregator='avg',
         help="Buying rate, expressed like Unit/Base.",
     )
     buying_inverse_company_rate = fields.Float(
@@ -79,6 +76,7 @@ class ResCurrencyRate(models.Model):
         digits=0,
         compute='_compute_buying_inverse_company_rate',
         inverse='_inverse_buying_inverse_company_rate',
+        aggregator='avg',
         help="Buying rate, expressed like Base/Unit.",
     )
 
@@ -114,17 +112,15 @@ class ResCurrencyRate(models.Model):
         """Load the BCCR rates from first_date to last_date, by default today's."""
         bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
-        # The token is what turns the update on, so without one there is
-        # nothing to do yet and it is no error
+        # The token turns the update on: without one there is nothing to do yet
         if not bccr_token:
             _logger.info("No BCCR token configured, the exchange rate is not updated")
             return
 
-        first_date = first_date or datetime.now().date()
+        first_date = first_date or fields.Date.today()
         last_date = last_date or first_date
 
-        # The cron must not fail on a BCCR outage: Odoo would deactivate it
-        # after a few days of failures, so the error is only logged
+        # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
         try:
             rates = BccrApi(self.env, bccr_token).get_rates(first_date, last_date)
         except UserError as e:
@@ -135,20 +131,12 @@ class ResCurrencyRate(models.Model):
         for date, (selling, buying) in rates.items():
             rate_date = date - RATE_DATE_OFFSET
 
-            # Odoo stores how many dollars one colón is worth, the inverse of
-            # the colones per dollar the BCCR publishes
-            vals = {
-                'rate': 1 / selling,
-                'buying_rate': 1 / buying,
-            }
-            existing_rate = self.search([
-                ('name', '=', rate_date),
-                ('currency_id', '=', currency.id),
-            ], limit=1)
+            # Odoo stores dollars per colón, the inverse of the colones per dollar the BCCR publishes
+            vals = {'rate': 1 / selling, 'buying_rate': 1 / buying}
+            existing_rate = self.search([('name', '=', rate_date), ('currency_id', '=', currency.id)], limit=1)
             if existing_rate:
                 existing_rate.write(vals)
             else:
                 self.create({**vals, 'name': rate_date, 'currency_id': currency.id})
 
-        if rates:
-            _logger.info("BCCR exchange rates loaded for %s to %s", min(rates), max(rates))
+        _logger.info("BCCR exchange rates loaded for %s to %s", min(rates), max(rates))
