@@ -17,4 +17,5 @@
         'views/res_currency_views.xml',
         'views/res_config_settings_views.xml',
     ],
+    'uninstall_hook': 'uninstall_hook',
 }
