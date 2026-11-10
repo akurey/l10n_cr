@@ -7,7 +7,13 @@
         <field name="arch" type="xml">
             <xpath expr="//block[@name='main_currency_setting_container']" position="inside">
                 <setting id="bccr_token" invisible="not group_multi_currency" help="Token generated on the BCCR SDDE site" documentation="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil">
-                    <field name="bccr_token" password="True"/>
+                    <field name="l10n_cr_update_rates"/>
+                    <div class="content-group" invisible="not l10n_cr_update_rates">
+                        <div class="row mt16">
+                            <label for="l10n_cr_bccr_token" class="col-lg-3 o_light_label"/>
+                            <field name="l10n_cr_bccr_token" password="True"/>
+                        </div>
+                    </div>
                 </setting>
             </xpath>
         </field>

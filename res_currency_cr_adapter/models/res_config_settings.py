@@ -6,4 +6,9 @@ from odoo import fields, models
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    bccr_token = fields.Char(string="BCCR Token", config_parameter='bccr_token')
+    l10n_cr_update_rates = fields.Boolean(related='company_id.l10n_cr_update_rates', readonly=False)
+    l10n_cr_bccr_token = fields.Char(
+        related='company_id.l10n_cr_bccr_token',
+        readonly=False,
+        groups='base.group_system',
+    )
