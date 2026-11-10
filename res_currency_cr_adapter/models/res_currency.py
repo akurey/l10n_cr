@@ -22,14 +22,10 @@ class ResCurrency(models.Model):
 
     @api.depends_context('company')
     def _compute_show_buying_rate(self):
-        # The BCCR rates the dollar in colones: a Costa Rican company rates the other currency of that pair
-        company = self.env.company
-        rated_currency = company.account_fiscal_country_id.code == 'CR' and {
-            'CRC': 'USD',
-            'USD': 'CRC',
-        }.get(company.currency_id.name)
+        # Rates are stored on the root company, which its branches share
+        rated_currency = self.env.company.root_id._l10n_cr_get_rated_currency()
         for currency in self:
-            currency.show_buying_rate = currency.name == rated_currency
+            currency.show_buying_rate = currency._origin == rated_currency
 
     def action_view_rates(self):
         """Odoo's rate list, without the buying columns for a currency that doesn't use them."""
