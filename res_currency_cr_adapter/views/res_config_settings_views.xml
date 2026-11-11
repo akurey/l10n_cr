@@ -33,13 +33,13 @@
                                 <i class="oi" data-icon="error"/> The last update failed. Check the token, or the server log
                             </div>
                             <div class="text-success" invisible="l10n_cr_rates_status != 'ready'">
-                                <i class="oi" data-icon="check"/> Ready until <field name="l10n_cr_rates_ready_until" class="oe_inline"/>
+                                <i class="oi" data-icon="check"/> Ready until <field name="l10n_cr_rates_ready_until" class="oe_inline"/><span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
                             </div>
                             <div class="text-warning" invisible="l10n_cr_rates_status != 'late'">
                                 <i class="oi" data-icon="warning"/> Tomorrow's rate is still missing after today's update
                             </div>
                             <div class="text-muted" invisible="l10n_cr_rates_status != 'today'">
-                                <i class="oi" data-icon="info"/> Ready until today
+                                <i class="oi" data-icon="info"/> Ready until today<span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
                             </div>
                             <div class="text-warning" invisible="l10n_cr_rates_status != 'missing'">
                                 <i class="oi" data-icon="warning"/> Today's rate isn't loaded
