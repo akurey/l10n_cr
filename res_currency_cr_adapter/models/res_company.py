@@ -17,6 +17,7 @@ class ResCompany(models.Model):
 
     l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
     l10n_cr_bccr_token = fields.Char(string='BCCR Token', groups='base.group_system')
+    l10n_cr_last_update = fields.Datetime(string='Last Exchange Rate Update', readonly=True)
     l10n_cr_last_update_failed = fields.Boolean(string='Last Exchange Rate Update Failed', readonly=True)
 
     def _l10n_cr_get_rated_currency(self):

@@ -128,5 +128,5 @@ class ResCurrencyRate(models.Model):
             else:
                 self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
 
-        company.l10n_cr_last_update_failed = False
+        company.write({'l10n_cr_last_update': fields.Datetime.now(), 'l10n_cr_last_update_failed': False})
         _logger.info("BCCR exchange rates loaded for %s from %s to %s", company.name, min(rates), max(rates))

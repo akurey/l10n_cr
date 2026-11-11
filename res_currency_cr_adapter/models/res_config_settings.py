@@ -4,11 +4,14 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
+from odoo.tools import format_date
 
 from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ
 
 # The BCCR publishes tomorrow's rate around 17:30, so the update runs in the evening
 UPDATE_HOURS = range(18, 24)
+# Seconds the BCCR has to answer while the user waits in Settings
+TIMEOUT = 5
 
 
 class ResConfigSettings(models.TransientModel):
@@ -30,7 +33,7 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         store=True,
     )
-    l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_next_update')
+    l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_last_update')
     l10n_cr_last_update_failed = fields.Boolean(related='company_id.root_id.l10n_cr_last_update_failed')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_status = fields.Selection(
@@ -49,20 +52,11 @@ class ResConfigSettings(models.TransientModel):
         for settings in self:
             settings.l10n_cr_rates_available = bool(settings.company_id.root_id._l10n_cr_get_rated_currency())
 
-    def _compute_l10n_cr_next_update(self):
-        cron = self._l10n_cr_get_cron()
-        next_update = cron and cron.nextcall.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
-        today = datetime.now(ZoneInfo(CR_TZ)).date()
-        if not next_update:
-            text = False
-        elif next_update.date() == today:
-            text = self.env._("today at %(time)s", time=next_update.strftime('%H:%M'))
-        elif next_update.date() == today + timedelta(days=1):
-            text = self.env._("tomorrow at %(time)s", time=next_update.strftime('%H:%M'))
-        else:
-            text = self.env._(
-                "on %(date)s at %(time)s", date=next_update.strftime('%d/%m'), time=next_update.strftime('%H:%M'))
-        self.l10n_cr_next_update = text
+    @api.depends('company_id')
+    def _compute_l10n_cr_last_update(self):
+        for settings in self:
+            last_update = settings.company_id.root_id.l10n_cr_last_update
+            settings.l10n_cr_last_update = last_update and settings._l10n_cr_format_last_update(last_update)
 
     @api.depends('company_id')
     def _compute_l10n_cr_update_time(self):
@@ -101,9 +95,38 @@ class ResConfigSettings(models.TransientModel):
                 next_update += timedelta(days=1)
             cron.nextcall = next_update.astimezone(timezone.utc).replace(tzinfo=None)
 
+    def action_l10n_cr_update_rates(self):
+        company = self.company_id.root_id
+        error = company._l10n_cr_update_rates(timeout=TIMEOUT).get(company)
+        if error:
+            notification = {'type': 'danger', 'message': error}
+        else:
+            notification = {
+                'type': 'success',
+                'message': self.env._(
+                    "Exchange rates loaded up to %(date)s",
+                    date=format_date(self.env, company._l10n_cr_get_rates_ready_until())),
+            }
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {**notification, 'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'}},
+        }
+
     def _l10n_cr_get_cron(self):
         cron = self.env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
         return cron and cron.sudo()
+
+    def _l10n_cr_format_last_update(self, last_update):
+        """Describe a past UTC datetime in Costa Rica time, relative to today when recent."""
+        last_update = last_update.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
+        time = last_update.strftime('%H:%M')
+        days = (datetime.now(ZoneInfo(CR_TZ)).date() - last_update.date()).days
+        if days == 0:
+            return self.env._("today at %(time)s", time=time)
+        if days == 1:
+            return self.env._("yesterday at %(time)s", time=time)
+        return self.env._("on %(date)s at %(time)s", date=last_update.strftime('%d/%m'), time=time)
 
     def _l10n_cr_get_update_hour(self, cron):
         """Hour of the day, in Costa Rica, at which the scheduled action runs."""
