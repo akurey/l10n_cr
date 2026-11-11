@@ -10,8 +10,6 @@ from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_
 
 # The BCCR publishes tomorrow's rate around 17:30, so the update runs in the evening
 UPDATE_HOURS = range(18, 24)
-# Seconds the BCCR has to answer while the user waits in Settings
-TIMEOUT = 5
 
 
 class ResConfigSettings(models.TransientModel):
@@ -117,7 +115,7 @@ class ResConfigSettings(models.TransientModel):
                 and settings.l10n_cr_bccr_token
                 and settings.l10n_cr_rates_available
             ):
-                settings.company_id.root_id._l10n_cr_update_rates(timeout=TIMEOUT)
+                settings.company_id.root_id._l10n_cr_update_rates()
         return settings_list
 
     def set_values(self):
@@ -133,7 +131,7 @@ class ResConfigSettings(models.TransientModel):
 
     def action_l10n_cr_update_rates(self):
         company = self.company_id.root_id
-        error = company._l10n_cr_update_rates(timeout=TIMEOUT).get(company)
+        error = company._l10n_cr_update_rates().get(company)
         if error:
             notification = {'type': 'danger', 'message': error}
         else:

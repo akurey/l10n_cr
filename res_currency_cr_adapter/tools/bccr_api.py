@@ -13,7 +13,7 @@ API_BASE = 'https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.AP
 CUADRO_CODE = 1  # The dollar's selling and buying rates
 SELLING_INDICATOR = '318'
 BUYING_INDICATOR = '317'
-TIMEOUT = 60
+TIMEOUT = 10
 
 # The API gateway answers 403 to the requests library's default user agent
 USER_AGENT = 'Odoo/%s (res_currency_cr_adapter)' % release.major_version
@@ -32,10 +32,9 @@ ERROR_CAUSES = {
 class BccrApi:
     """Client of the BCCR's exchange rate API."""
 
-    def __init__(self, env, token, timeout=TIMEOUT):
+    def __init__(self, env, token):
         self.env = env
         self.token = token
-        self.timeout = timeout
 
     def get_rates(self, first_date, last_date):
         """Return {date: (selling, buying)} in colones per dollar from first_date to last_date.
@@ -83,7 +82,7 @@ class BccrApi:
                 '%s/%s' % (API_BASE, path),
                 # Omitting the language answers 404, it is not optional
                 params={**params, 'idioma': 'ES'},
-                headers=headers, timeout=self.timeout)
+                headers=headers, timeout=TIMEOUT)
         except requests.exceptions.RequestException as e:
             raise UserError(self.env._("Could not connect to the BCCR: %(error)s", error=e)) from None
 

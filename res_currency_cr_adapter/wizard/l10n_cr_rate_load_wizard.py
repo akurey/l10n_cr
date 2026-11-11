@@ -6,7 +6,6 @@ from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.tools import format_date
 
-from odoo.addons.res_currency_cr_adapter.models.res_config_settings import TIMEOUT
 from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ
 
 
@@ -35,7 +34,7 @@ class L10nCrRateLoadWizard(models.TransientModel):
     def action_load(self):
         self.ensure_one()
         error = self.company_id._l10n_cr_update_rates(
-            self.date_from, self.date_to, timeout=TIMEOUT, replace=self.replace).get(self.company_id)
+            self.date_from, self.date_to, replace=self.replace).get(self.company_id)
         if error:
             notification = {'type': 'danger', 'message': error}
         else:

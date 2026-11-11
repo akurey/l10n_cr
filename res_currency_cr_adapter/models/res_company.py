@@ -7,7 +7,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET
-from odoo.addons.res_currency_cr_adapter.tools.bccr_api import TIMEOUT, BccrApi
+from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class ResCompany(models.Model):
         ready_until = self._l10n_cr_get_rates_ready_until()
         return min(ready_until + timedelta(days=1), today) if ready_until else today
 
-    def _l10n_cr_update_rates(self, first_date=False, last_date=False, timeout=TIMEOUT, replace=False):
+    def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
         """Load the BCCR rates from first_date to last_date for these root companies.
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow.
@@ -91,7 +91,7 @@ class ResCompany(models.Model):
         for token, token_companies in self.grouped('l10n_cr_bccr_token').items():
             # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
             try:
-                rates = BccrApi(self.env, token, timeout).get_rates(
+                rates = BccrApi(self.env, token).get_rates(
                     min(first_dates[company] for company in token_companies), last_date)
             except UserError as e:
                 _logger.error("Exchange rate update failed for %s: %s", ', '.join(token_companies.mapped('name')), e)
