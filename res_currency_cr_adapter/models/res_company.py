@@ -42,10 +42,11 @@ class ResCompany(models.Model):
         ready_until = self._l10n_cr_get_rates_ready_until()
         return min(ready_until + timedelta(days=1), today) if ready_until else today
 
-    def _l10n_cr_update_rates(self, first_date=False, last_date=False, timeout=TIMEOUT):
+    def _l10n_cr_update_rates(self, first_date=False, last_date=False, timeout=TIMEOUT, replace=True):
         """Load the BCCR rates from first_date to last_date for these root companies.
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow.
+        Without replace, rates the companies already have in the range are left as they are.
 
         :return: {company: error} of the companies whose update failed
         """
@@ -69,5 +70,5 @@ class ResCompany(models.Model):
             # Each company only gets its own missing days, so rates it already has are left alone
             for company in token_companies:
                 company_rates = {date: rate for date, rate in rates.items() if date >= first_dates[company]}
-                self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates)
+                self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
         return errors

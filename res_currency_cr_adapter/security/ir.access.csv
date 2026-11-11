@@ -1,0 +1,2 @@
+id,name,model_id,group_id/id,operation,domain
+access_l10n_cr_rate_load_wizard_system,l10n_cr.rate.load.wizard system,l10n_cr.rate.load.wizard,base.group_system,crud,
