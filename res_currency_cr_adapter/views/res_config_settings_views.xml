@@ -18,8 +18,20 @@
                             <label for="l10n_cr_bccr_token" string="Token" class="col-lg-3 o_light_label"/>
                             <field name="l10n_cr_bccr_token" password="True"/>
                         </div>
-                        <div class="mt8 text-muted" invisible="not l10n_cr_last_rate_date">
-                            Rates ready for documents until <field name="l10n_cr_last_rate_date" class="oe_inline"/>
+                        <div class="mt8 text-danger" invisible="l10n_cr_rates_status != 'error'">
+                            <i class="oi" data-icon="error"/> The last update failed. Check the token, or the server log for details.
+                        </div>
+                        <div class="mt8 text-success" invisible="l10n_cr_rates_status != 'ready'">
+                            <i class="oi" data-icon="check"/> Rates ready for documents until <field name="l10n_cr_rates_ready_until" class="oe_inline"/>
+                        </div>
+                        <div class="mt8 text-muted" invisible="l10n_cr_rates_status != 'today'">
+                            <i class="oi" data-icon="info"/> Rates ready for documents until today. The BCCR publishes tomorrow's rate around 17:30.
+                        </div>
+                        <div class="mt8 text-warning" invisible="l10n_cr_rates_status != 'missing'">
+                            <i class="oi" data-icon="warning"/> Today's rate isn't loaded.
+                        </div>
+                        <div class="mt8 text-muted" invisible="not l10n_cr_last_update">
+                            Last automatic update: <field name="l10n_cr_last_update" class="oe_inline"/>
                         </div>
                     </div>
                 </setting>

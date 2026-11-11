@@ -13,6 +13,8 @@ _logger = logging.getLogger(__name__)
 
 # Odoo 20 converts with the last rate dated before the document (odoo/odoo@cba671d), so rates are stored a day early
 RATE_DATE_OFFSET = timedelta(days=1)
+# The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
+CR_TZ = 'America/Costa_Rica'
 
 
 class ResCurrency(models.Model):
@@ -95,7 +97,7 @@ class ResCurrencyRate(models.Model):
 
     @api.model
     def _cron_update(self, first_date=False, last_date=False):
-        """Load the BCCR rates from first_date to last_date, by default today's, for each company that updates them."""
+        """Load the BCCR rates from first_date to last_date for each company that updates them."""
         companies = self.env['res.company'].sudo().search([
             ('parent_id', '=', False),
             ('l10n_cr_update_rates', '=', True),
@@ -105,8 +107,10 @@ class ResCurrencyRate(models.Model):
             _logger.info("No company updates its exchange rates from the BCCR")
             return
 
-        first_date = first_date or fields.Date.today()
-        last_date = last_date or first_date
+        # By default today's rate and tomorrow's, which the BCCR publishes in the evening
+        today = fields.Date.context_today(self.with_context(tz=CR_TZ))
+        first_date = first_date or today
+        last_date = last_date or today + timedelta(days=1)
 
         # The rates are the same for every token, so companies sharing one share the request
         for token, token_companies in companies.grouped('l10n_cr_bccr_token').items():
@@ -115,6 +119,7 @@ class ResCurrencyRate(models.Model):
                 rates = BccrApi(self.env, token).get_rates(first_date, last_date)
             except UserError as e:
                 _logger.error("Exchange rate update failed for %s: %s", ', '.join(token_companies.mapped('name')), e)
+                token_companies.l10n_cr_last_update_failed = True
                 continue
             for company in token_companies:
                 self._l10n_cr_store_rates(company, rates)
@@ -142,6 +147,5 @@ class ResCurrencyRate(models.Model):
             else:
                 self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
 
-        # The date the newest rate applies to, which only moves forward
-        company.l10n_cr_last_rate_date = max(filter(None, [company.l10n_cr_last_rate_date, max(rates)]))
+        company.l10n_cr_last_update_failed = False
         _logger.info("BCCR exchange rates loaded for %s from %s to %s", company.name, min(rates), max(rates))
