@@ -6,12 +6,20 @@
         <field name="inherit_id" ref="account.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='main_currency_setting_container']" position="inside">
-                <setting id="bccr_token" invisible="not group_multi_currency" help="Token generated on the BCCR SDDE site" documentation="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil">
+                <setting id="l10n_cr_exchange_rates" string="BCCR Exchange Rates" help="Load the BCCR's daily selling and buying rates of the dollar" invisible="not group_multi_currency or not l10n_cr_rates_available">
                     <field name="l10n_cr_update_rates"/>
                     <div class="content-group" invisible="not l10n_cr_update_rates">
-                        <div class="row mt16">
-                            <label for="l10n_cr_bccr_token" class="col-lg-3 o_light_label"/>
+                        <div class="mt16">
+                            <a href="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil" target="_blank" class="btn-link" role="button">
+                                <i class="oi" data-icon="east"/> Generate a free token on the BCCR's site
+                            </a>
+                        </div>
+                        <div class="row mt8">
+                            <label for="l10n_cr_bccr_token" string="Token" class="col-lg-3 o_light_label"/>
                             <field name="l10n_cr_bccr_token" password="True"/>
+                        </div>
+                        <div class="mt8 text-muted" invisible="not l10n_cr_last_rate_date">
+                            Rates ready for documents until <field name="l10n_cr_last_rate_date" class="oe_inline"/>
                         </div>
                     </div>
                 </setting>
