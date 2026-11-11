@@ -84,6 +84,20 @@ class ResConfigSettings(models.TransientModel):
             else:
                 settings.l10n_cr_rates_status = 'missing'
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        settings_list = super().create(vals_list)
+        # Related fields are written on create, and only those that changed stay in the values
+        for settings, vals in zip(settings_list, vals_list):
+            if (
+                (vals.get('l10n_cr_update_rates') or 'l10n_cr_bccr_token' in vals)
+                and settings.l10n_cr_update_rates
+                and settings.l10n_cr_bccr_token
+                and settings.l10n_cr_rates_available
+            ):
+                settings.company_id.root_id._l10n_cr_update_rates(timeout=TIMEOUT)
+        return settings_list
+
     def set_values(self):
         super().set_values()
         cron = self._l10n_cr_get_cron()
