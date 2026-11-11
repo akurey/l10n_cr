@@ -5,9 +5,6 @@ import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import UserError
-
-from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
 
@@ -106,23 +103,7 @@ class ResCurrencyRate(models.Model):
         if not companies:
             _logger.info("No company updates its exchange rates from the BCCR")
             return
-
-        # By default today's rate and tomorrow's, which the BCCR publishes in the evening
-        today = fields.Date.context_today(self.with_context(tz=CR_TZ))
-        first_date = first_date or today
-        last_date = last_date or today + timedelta(days=1)
-
-        # The rates are the same for every token, so companies sharing one share the request
-        for token, token_companies in companies.grouped('l10n_cr_bccr_token').items():
-            # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
-            try:
-                rates = BccrApi(self.env, token).get_rates(first_date, last_date)
-            except UserError as e:
-                _logger.error("Exchange rate update failed for %s: %s", ', '.join(token_companies.mapped('name')), e)
-                token_companies.l10n_cr_last_update_failed = True
-                continue
-            for company in token_companies:
-                self._l10n_cr_store_rates(company, rates)
+        companies._l10n_cr_update_rates(first_date, last_date)
 
     def _l10n_cr_store_rates(self, company, rates):
         """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies."""
