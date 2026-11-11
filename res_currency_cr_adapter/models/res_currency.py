@@ -2,7 +2,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from datetime import timedelta
+from datetime import datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
 
@@ -12,6 +13,9 @@ _logger = logging.getLogger(__name__)
 RATE_DATE_OFFSET = timedelta(days=1)
 # The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
 CR_TZ = 'America/Costa_Rica'
+# A failed or early update is retried every hour until the working day starts, in Costa Rica
+RETRY_INTERVAL = timedelta(hours=1)
+RETRY_UNTIL = time(6)
 
 
 class ResCurrency(models.Model):
@@ -107,7 +111,11 @@ class ResCurrencyRate(models.Model):
 
     @api.model
     def _cron_update(self, first_date=False, last_date=False):
-        """Load the BCCR rates from first_date to last_date for each company that updates them."""
+        """Load the BCCR rates from first_date to last_date for each company that updates them.
+
+        Without dates, only the companies still missing the rate the update is after are loaded, and the update is
+        retried every hour while any of them still misses it, until the morning.
+        """
         companies = self.env['res.company'].sudo().search([
             ('parent_id', '=', False),
             ('l10n_cr_update_rates', '=', True),
@@ -116,7 +124,27 @@ class ResCurrencyRate(models.Model):
         if not companies:
             _logger.info("No company updates its exchange rates from the BCCR")
             return
-        companies._l10n_cr_update_rates(first_date, last_date)
+        if first_date or last_date:
+            companies._l10n_cr_update_rates(first_date, last_date)
+            return
+
+        now = datetime.now(ZoneInfo(CR_TZ))
+        # The evening update is after tomorrow's rate, and its retries after midnight are still after that same day's
+        target_date = now.date() + timedelta(days=1) if now.time() >= RETRY_UNTIL else now.date()
+
+        def is_missing(company):
+            ready_until = company._l10n_cr_get_rates_ready_until()
+            return not ready_until or ready_until < target_date
+
+        companies.filtered(is_missing)._l10n_cr_update_rates()
+        missing_companies = companies.filtered(is_missing)
+        retry_at = now + RETRY_INTERVAL
+        cron = self.env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
+        if missing_companies and cron and retry_at <= datetime.combine(target_date, RETRY_UNTIL, now.tzinfo):
+            cron.sudo()._trigger(retry_at.astimezone(timezone.utc).replace(tzinfo=None))
+            _logger.info(
+                "Exchange rates of %s still missing for %s, retrying at %s",
+                ', '.join(missing_companies.mapped('name')), target_date, retry_at.strftime('%H:%M'))
 
     def _l10n_cr_store_rates(self, company, rates, replace=False):
         """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies.
