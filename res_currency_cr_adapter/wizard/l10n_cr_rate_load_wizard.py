@@ -3,7 +3,7 @@
 from datetime import timedelta
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tools import format_date
 
 from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ
@@ -33,7 +33,11 @@ class L10nCrRateLoadWizard(models.TransientModel):
 
     def action_load(self):
         self.ensure_one()
-        error = self.company_id._l10n_cr_update_rates(
+        # Whoever may enter rates by hand may load them, with a token only Settings administrators can read
+        self.env['res.currency.rate'].check_access('create')
+        if self.company_id not in self.env.user.company_ids.root_id:
+            raise AccessError(self.env._("You can only load the exchange rates of your own companies."))
+        error = self.company_id.sudo()._l10n_cr_update_rates(
             self.date_from, self.date_to, replace=self.replace).get(self.company_id)
         if error:
             notification = {'type': 'danger', 'message': error}
