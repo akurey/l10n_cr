@@ -13,6 +13,15 @@ _logger = logging.getLogger(__name__)
 RATE_DATE_OFFSET = timedelta(days=1)
 # The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
 CR_TZ = 'America/Costa_Rica'
+# The BCCR publishes tomorrow's rate around 17:30, so the update runs in the evening
+UPDATE_HOURS = range(18, 24)
+RATES_STATUSES = [
+    ('error', 'Failed'),
+    ('ready', 'Ready'),
+    ('late', 'Tomorrow missing'),
+    ('today', 'Ready for today'),
+    ('missing', 'Missing'),
+]
 # A failed or early update is retried every hour until the working day starts, in Costa Rica
 RETRY_INTERVAL = timedelta(hours=1)
 RETRY_UNTIL = time(6)
@@ -22,6 +31,13 @@ class ResCurrency(models.Model):
     _inherit = 'res.currency'
 
     show_buying_rate = fields.Boolean(compute='_compute_show_buying_rate')
+    # The update's status, also for accounting administrators, who can't open Settings
+    l10n_cr_show_update = fields.Boolean(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
+    l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_retry_at = fields.Char(compute='_compute_l10n_cr_rates_status')
 
     @api.depends_context('company')
     def _compute_show_buying_rate(self):
@@ -30,6 +46,21 @@ class ResCurrency(models.Model):
         for currency in self:
             currency.show_buying_rate = currency._origin == rated_currency
 
+    @api.depends('show_buying_rate')
+    @api.depends_context('company')
+    def _compute_l10n_cr_rates_status(self):
+        # The token is only readable by Settings administrators
+        company = self.env.company.root_id.sudo()
+        status = company.l10n_cr_update_rates and company.l10n_cr_bccr_token and company._l10n_cr_get_rates_status()
+        for currency in self:
+            show_update = bool(status) and currency.show_buying_rate
+            currency.l10n_cr_show_update = show_update
+            currency.l10n_cr_rates_status = show_update and status['status']
+            currency.l10n_cr_rates_ready_until = show_update and status['ready_until']
+            currency.l10n_cr_rates_entered_manually = show_update and status['entered_manually']
+            currency.l10n_cr_last_update = show_update and status['last_update']
+            currency.l10n_cr_retry_at = show_update and status['retry_at']
+
     def action_view_rates(self):
         """Odoo's rate list, without the buying columns for a currency that doesn't use them."""
         self.ensure_one()
@@ -37,6 +68,15 @@ class ResCurrency(models.Model):
         action['domain'] = [('currency_id', '=', self.id)]
         action['context'] = {'default_currency_id': self.id, 'hide_buying_rate': not self.show_buying_rate}
         return action
+
+    def action_l10n_cr_update_rates(self):
+        # Whoever may enter rates by hand may load them, with a token only Settings administrators can read
+        self.env['res.currency.rate'].check_access('create')
+        return self.env.company.root_id.sudo()._l10n_cr_action_update_rates()
+
+    def action_l10n_cr_open_rate_load_wizard(self):
+        self.env['res.currency.rate'].check_access('create')
+        return self.env.company.root_id._l10n_cr_action_open_rate_load_wizard()
 
 
 class ResCurrencyRate(models.Model):

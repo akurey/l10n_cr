@@ -54,6 +54,44 @@
             <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="attributes">
                 <attribute name="column_invisible">parent.show_buying_rate</attribute>
             </xpath>
+            <!-- The update's status and actions, also for accounting administrators, who can't open Settings -->
+            <xpath expr="//form/div[hasclass('alert')]" position="before">
+                <header invisible="not l10n_cr_show_update" groups="account.group_account_manager,base.group_system">
+                    <button name="action_l10n_cr_update_rates" type="object" string="Update Now"/>
+                    <button name="action_l10n_cr_open_rate_load_wizard" type="object" string="Load Past Rates"/>
+                </header>
+            </xpath>
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-info mb-0" role="alert" groups="account.group_account_manager,base.group_system"
+                     invisible="not l10n_cr_show_update or l10n_cr_rates_status not in ('ready', 'today')">
+                    <div invisible="l10n_cr_rates_status != 'ready'">
+                        BCCR rates ready until <field name="l10n_cr_rates_ready_until" class="oe_inline"/><span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
+                    </div>
+                    <div invisible="l10n_cr_rates_status != 'today'">
+                        BCCR rates ready until today<span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
+                    </div>
+                    <div class="small" invisible="not l10n_cr_last_update">
+                        Last update <field name="l10n_cr_last_update" class="oe_inline"/>
+                    </div>
+                </div>
+                <div class="alert alert-warning mb-0" role="alert" groups="account.group_account_manager,base.group_system"
+                     invisible="not l10n_cr_show_update or l10n_cr_rates_status not in ('late', 'missing')">
+                    <div invisible="l10n_cr_rates_status != 'late'">Tomorrow's BCCR rate is still missing after today's update</div>
+                    <div invisible="l10n_cr_rates_status != 'missing'">Today's BCCR rate isn't loaded</div>
+                    <div class="small">
+                        <span invisible="not l10n_cr_retry_at">Retrying at <field name="l10n_cr_retry_at" class="oe_inline"/> · </span>
+                        <span invisible="not l10n_cr_last_update">Last update <field name="l10n_cr_last_update" class="oe_inline"/></span>
+                    </div>
+                </div>
+                <div class="alert alert-danger mb-0" role="alert" groups="account.group_account_manager,base.group_system"
+                     invisible="not l10n_cr_show_update or l10n_cr_rates_status != 'error'">
+                    <div>The last BCCR update failed. An administrator can check the token, or the server log</div>
+                    <div class="small">
+                        <span invisible="not l10n_cr_retry_at">Retrying at <field name="l10n_cr_retry_at" class="oe_inline"/> · </span>
+                        <span invisible="not l10n_cr_last_update">Last update <field name="l10n_cr_last_update" class="oe_inline"/></span>
+                    </div>
+                </div>
+            </xpath>
             <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="after">
                 <field name="company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
                        column_invisible="not parent.show_buying_rate"/>
