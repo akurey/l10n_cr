@@ -4,7 +4,7 @@
         <field name="name">Costa Rica: Update BCCR exchange rates</field>
         <field name="model_id" ref="model_res_currency_rate"/>
         <field name="state">code</field>
-        <field name="code">model._cron_update()</field>
+        <field name="code">model._cron_l10n_cr_update_rates()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
         <!-- 18:00 in Costa Rica -->

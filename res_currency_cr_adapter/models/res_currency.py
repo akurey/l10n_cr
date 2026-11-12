@@ -187,7 +187,7 @@ class ResCurrencyRate(models.Model):
         return super().write(vals)
 
     @api.model
-    def _cron_update(self, first_date=False, last_date=False):
+    def _cron_l10n_cr_update_rates(self, first_date=False, last_date=False):
         """Load the BCCR rates from first_date to last_date for each company that updates them.
 
         Without dates, only the companies still missing the rate the update is after are loaded, and the update is
