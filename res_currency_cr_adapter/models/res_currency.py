@@ -61,6 +61,14 @@ class ResCurrency(models.Model):
             currency.l10n_cr_last_update = show_update and status['last_update']
             currency.l10n_cr_retry_at = show_update and status['retry_at']
 
+    def _compute_current_rate(self):
+        super()._compute_current_rate()
+        company = self.env['res.company'].browse(self.env.context.get('company_id')) or self.env.company
+        rated_currency = company.root_id._l10n_cr_get_rated_currency()
+        for currency in self:
+            if currency._origin == rated_currency and currency.rate_date:
+                currency.rate_date += RATE_DATE_OFFSET
+
     def action_view_rates(self):
         """Odoo's rate list, without the buying columns for a currency that doesn't use them."""
         self.ensure_one()
@@ -83,6 +91,13 @@ class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
     currency_show_buying_rate = fields.Boolean(related='currency_id.show_buying_rate')
+    # The rated currency's rates are shown with the BCCR's date, the day after the one Odoo applies them from
+    l10n_cr_date = fields.Date(
+        string='BCCR Date',
+        compute='_compute_l10n_cr_date',
+        inverse='_inverse_l10n_cr_date',
+        help="Day this rate applies to documents, as the BCCR dates it.",
+    )
     # Rates that existed before this field are taken as entered manually, since nothing tells them apart
     l10n_cr_source = fields.Selection(
         selection=[('manual', 'Entered manually'), ('bccr', 'BCCR')],
@@ -142,6 +157,28 @@ class ResCurrencyRate(models.Model):
         for currency_rate in self:
             buying_inverse_company_rate = currency_rate.buying_inverse_company_rate
             currency_rate.buying_company_rate = 1 / buying_inverse_company_rate if buying_inverse_company_rate else 0
+
+    @api.depends('name')
+    def _compute_l10n_cr_date(self):
+        for currency_rate in self:
+            currency_rate.l10n_cr_date = currency_rate.name and currency_rate.name + RATE_DATE_OFFSET
+
+    @api.onchange('currency_id')
+    def _onchange_currency_id_l10n_cr_date(self):
+        if not self._origin and self.currency_show_buying_rate and self.name == fields.Date.context_today(self):
+            self.name -= RATE_DATE_OFFSET
+
+    def _inverse_l10n_cr_date(self):
+        for currency_rate in self.filtered('l10n_cr_date'):
+            currency_rate.name = currency_rate.l10n_cr_date - RATE_DATE_OFFSET
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Set Odoo's date before creating, as the default one could clash with an existing rate
+        for vals in vals_list:
+            if vals.get('l10n_cr_date'):
+                vals['name'] = fields.Date.to_date(vals.pop('l10n_cr_date')) - RATE_DATE_OFFSET
+        return super().create(vals_list)
 
     def write(self, vals):
         # A rate changed by hand is no longer the BCCR's
