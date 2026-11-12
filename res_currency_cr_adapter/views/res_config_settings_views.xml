@@ -44,9 +44,10 @@
                             <div class="text-warning" invisible="l10n_cr_rates_status != 'missing'">
                                 <i class="oi" data-icon="warning"/> Today's rate isn't loaded
                             </div>
-                            <div class="text-muted small" invisible="not l10n_cr_next_update">
-                                Next update <field name="l10n_cr_next_update" class="oe_inline"/>
+                            <div class="text-muted small" invisible="not l10n_cr_last_update">
+                                Last update <field name="l10n_cr_last_update" class="oe_inline"/>
                             </div>
+                            <button name="action_l10n_cr_update_rates" type="object" class="btn-link px-0" icon="refresh" string="Update now" invisible="not l10n_cr_bccr_token"/>
                         </div>
                     </div>
                 </setting>
