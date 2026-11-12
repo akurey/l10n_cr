@@ -34,6 +34,7 @@ class ResConfigSettings(models.TransientModel):
         store=True,
     )
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_last_update')
+    l10n_cr_retry_at = fields.Char(compute='_compute_l10n_cr_retry_at')
     l10n_cr_last_update_failed = fields.Boolean(related='company_id.root_id.l10n_cr_last_update_failed')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
@@ -66,6 +67,15 @@ class ResConfigSettings(models.TransientModel):
         for settings in self:
             last_update = settings.company_id.root_id.l10n_cr_last_update
             settings.l10n_cr_last_update = last_update and settings._l10n_cr_format_last_update(last_update)
+
+    def _compute_l10n_cr_retry_at(self):
+        cron = self._l10n_cr_get_cron()
+        retry = cron and self.env['ir.cron.trigger'].sudo().search([
+            ('cron_id', '=', cron.id),
+            ('call_at', '>', fields.Datetime.now()),
+        ], order='call_at', limit=1)
+        self.l10n_cr_retry_at = retry and retry.call_at.replace(tzinfo=timezone.utc).astimezone(
+            ZoneInfo(CR_TZ)).strftime('%H:%M')
 
     @api.depends('company_id')
     def _compute_l10n_cr_update_time(self):

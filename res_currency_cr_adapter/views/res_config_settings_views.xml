@@ -44,6 +44,9 @@
                             <div class="text-warning" invisible="l10n_cr_rates_status != 'missing'">
                                 <i class="oi" data-icon="warning"/> Today's rate isn't loaded
                             </div>
+                            <div class="text-muted small" invisible="not l10n_cr_retry_at or l10n_cr_rates_status == 'ready'">
+                                Retrying at <field name="l10n_cr_retry_at" class="oe_inline"/>
+                            </div>
                             <div class="text-muted small" invisible="not l10n_cr_last_update">
                                 Last update <field name="l10n_cr_last_update" class="oe_inline"/>
                             </div>
