@@ -13,8 +13,8 @@ _logger = logging.getLogger(__name__)
 RATE_DATE_OFFSET = timedelta(days=1)
 # The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
 CR_TZ = 'America/Costa_Rica'
-# The BCCR publishes tomorrow's rate around 17:30, so the update runs in the evening
-UPDATE_HOURS = range(18, 24)
+# The BCCR publishes tomorrow's rate around 17:30, and the update first runs at 18:00
+UPDATE_TIME = time(18)
 RATES_STATUSES = [
     ('error', 'Failed'),
     ('ready', 'Ready'),

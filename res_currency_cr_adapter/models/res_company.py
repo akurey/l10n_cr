@@ -8,7 +8,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import format_date
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET, UPDATE_HOURS
+from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET, UPDATE_TIME
 from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
@@ -117,7 +117,6 @@ class ResCompany(models.Model):
         now = datetime.now(ZoneInfo(CR_TZ))
         today = now.date()
         cron = self._l10n_cr_get_cron()
-        hour = cron and self._l10n_cr_get_update_hour(cron)
         last_rate = self._l10n_cr_get_last_rate()
         ready_until = last_rate.name + RATE_DATE_OFFSET if last_rate else False
         if self.l10n_cr_last_update_failed:
@@ -125,7 +124,7 @@ class ResCompany(models.Model):
         elif ready_until and ready_until > today:
             status = 'ready'
         elif ready_until == today:
-            status = 'late' if hour in UPDATE_HOURS and now.hour >= hour else 'today'
+            status = 'late' if now.time() >= UPDATE_TIME else 'today'
         else:
             status = 'missing'
         retry = cron and self.env['ir.cron.trigger'].sudo().search([
@@ -174,11 +173,6 @@ class ResCompany(models.Model):
     def _l10n_cr_get_cron(self):
         cron = self.env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
         return cron and cron.sudo()
-
-    @api.model
-    def _l10n_cr_get_update_hour(self, cron):
-        """Hour of the day, in Costa Rica, at which the scheduled action runs."""
-        return self._l10n_cr_to_cr_time(cron.nextcall).hour
 
     @api.model
     def _l10n_cr_to_cr_time(self, utc_datetime):

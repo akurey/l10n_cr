@@ -1,11 +1,8 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
-
 from odoo import api, fields, models
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATES_STATUSES, UPDATE_HOURS
+from odoo.addons.res_currency_cr_adapter.models.res_currency import RATES_STATUSES
 
 
 class ResConfigSettings(models.TransientModel):
@@ -18,14 +15,6 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.root_id.l10n_cr_bccr_token',
         readonly=False,
         groups='base.group_system',
-    )
-    l10n_cr_update_time = fields.Selection(
-        selection=[(str(hour), f'{hour}:00') for hour in UPDATE_HOURS],
-        string='Update Time',
-        help="Costa Rica time. One scheduled action updates every company at this time.",
-        compute='_compute_l10n_cr_update_time',
-        readonly=False,
-        store=True,
     )
     l10n_cr_last_update_failed = fields.Boolean(related='company_id.root_id.l10n_cr_last_update_failed')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
@@ -46,13 +35,6 @@ class ResConfigSettings(models.TransientModel):
         # Otherwise saving would switch the update back on right after the company switched it off
         if not self.l10n_cr_rates_available:
             self.l10n_cr_update_rates = False
-
-    @api.depends('company_id')
-    def _compute_l10n_cr_update_time(self):
-        cron = self.env['res.company']._l10n_cr_get_cron()
-        hour = cron and self.env['res.company']._l10n_cr_get_update_hour(cron)
-        for settings in self:
-            settings.l10n_cr_update_time = hour in UPDATE_HOURS and str(hour)
 
     @api.depends('company_id', 'l10n_cr_last_update_failed')
     def _compute_l10n_cr_rates_status(self):
@@ -78,18 +60,6 @@ class ResConfigSettings(models.TransientModel):
             ):
                 settings.company_id.root_id._l10n_cr_update_rates()
         return settings_list
-
-    def set_values(self):
-        super().set_values()
-        Company = self.env['res.company']
-        cron = Company._l10n_cr_get_cron()
-        hour = self.l10n_cr_update_time and int(self.l10n_cr_update_time)
-        if cron and hour and hour != Company._l10n_cr_get_update_hour(cron):
-            now = datetime.now(ZoneInfo(CR_TZ))
-            next_update = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-            if next_update <= now:
-                next_update += timedelta(days=1)
-            cron.nextcall = next_update.astimezone(timezone.utc).replace(tzinfo=None)
 
     def action_l10n_cr_update_rates(self):
         return self.company_id.root_id._l10n_cr_action_update_rates()
