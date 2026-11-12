@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from odoo import api, fields, models
 from odoo.tools import format_date
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ
+from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET
 
 # The BCCR publishes tomorrow's rate around 17:30, so the update runs in the evening
 UPDATE_HOURS = range(18, 24)
@@ -36,6 +36,7 @@ class ResConfigSettings(models.TransientModel):
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_last_update')
     l10n_cr_last_update_failed = fields.Boolean(related='company_id.root_id.l10n_cr_last_update_failed')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_status = fields.Selection(
         selection=[
             ('error', 'Failed'),
@@ -73,8 +74,10 @@ class ResConfigSettings(models.TransientModel):
         hour = cron and self._l10n_cr_get_update_hour(cron)
         updated_today = hour in UPDATE_HOURS and now.hour >= hour
         for settings in self:
-            ready_until = settings.company_id.root_id._l10n_cr_get_rates_ready_until()
+            last_rate = settings.company_id.root_id._l10n_cr_get_last_rate()
+            ready_until = last_rate and last_rate.name + RATE_DATE_OFFSET
             settings.l10n_cr_rates_ready_until = ready_until
+            settings.l10n_cr_rates_entered_manually = last_rate.l10n_cr_source == 'manual'
             if settings.l10n_cr_last_update_failed:
                 settings.l10n_cr_rates_status = 'error'
             elif ready_until and ready_until > today:

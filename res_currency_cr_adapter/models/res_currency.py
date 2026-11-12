@@ -39,6 +39,13 @@ class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
     currency_show_buying_rate = fields.Boolean(related='currency_id.show_buying_rate')
+    # Rates that existed before this field are taken as entered manually, since nothing tells them apart
+    l10n_cr_source = fields.Selection(
+        selection=[('manual', 'Entered manually'), ('bccr', 'BCCR')],
+        string='Source',
+        required=True,
+        default='manual',
+    )
 
     # Costa Rica also publishes a buying rate, stored and shown like Odoo's rate
     buying_rate = fields.Float(
@@ -92,6 +99,12 @@ class ResCurrencyRate(models.Model):
             buying_inverse_company_rate = currency_rate.buying_inverse_company_rate
             currency_rate.buying_company_rate = 1 / buying_inverse_company_rate if buying_inverse_company_rate else 0
 
+    def write(self, vals):
+        # A rate changed by hand is no longer the BCCR's
+        if {'rate', 'buying_rate'} & vals.keys() and 'l10n_cr_source' not in vals:
+            vals = {**vals, 'l10n_cr_source': 'manual'}
+        return super().write(vals)
+
     @api.model
     def _cron_update(self, first_date=False, last_date=False):
         """Load the BCCR rates from first_date to last_date for each company that updates them."""
@@ -105,10 +118,10 @@ class ResCurrencyRate(models.Model):
             return
         companies._l10n_cr_update_rates(first_date, last_date)
 
-    def _l10n_cr_store_rates(self, company, rates, replace=True):
+    def _l10n_cr_store_rates(self, company, rates, replace=False):
         """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies.
 
-        :param replace: whether rates the company already has are overwritten, or left as they are
+        :param replace: whether rates entered manually are also overwritten, not only the BCCR's
         """
         currency = company._l10n_cr_get_rated_currency()
         rate_dates = [date - RATE_DATE_OFFSET for date in rates]
@@ -123,12 +136,13 @@ class ResCurrencyRate(models.Model):
             # Odoo rates a currency against the company's: a colón company stores dollars per colón, the inverse
             # of the colones per dollar the BCCR publishes, and a dollar company stores the BCCR's values as they are
             if company.currency_id.name == 'CRC':
-                vals = {'rate': 1 / selling, 'buying_rate': 1 / buying}
+                vals = {'rate': 1 / selling, 'buying_rate': 1 / buying, 'l10n_cr_source': 'bccr'}
             else:
-                vals = {'rate': selling, 'buying_rate': buying}
+                vals = {'rate': selling, 'buying_rate': buying, 'l10n_cr_source': 'bccr'}
             if rate_date in existing_rates:
-                if replace:
-                    existing_rates[rate_date].write(vals)
+                existing_rate = existing_rates[rate_date]
+                if replace or existing_rate.l10n_cr_source == 'bccr':
+                    existing_rate.write(vals)
             else:
                 self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
 

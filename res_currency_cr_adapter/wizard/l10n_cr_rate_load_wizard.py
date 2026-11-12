@@ -19,8 +19,8 @@ class L10nCrRateLoadWizard(models.TransientModel):
     date_to = fields.Date(string='To', required=True, default=lambda self: self._get_today())
     replace = fields.Boolean(
         string='Replace Rates',
-        help="Overwrite the rates the company already has in the period with the BCCR's, "
-             "including those entered by hand. Otherwise only the missing days are loaded.",
+        help="Also overwrite the rates entered manually in the period with the BCCR's. "
+             "Missing days and rates from the BCCR are always loaded.",
     )
 
     @api.constrains('date_from', 'date_to')

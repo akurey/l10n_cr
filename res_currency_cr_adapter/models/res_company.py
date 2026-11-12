@@ -28,13 +28,17 @@ class ResCompany(models.Model):
             return Currency
         return {'CRC': self.env.ref('base.USD'), 'USD': self.env.ref('base.CRC')}.get(self.currency_id.name, Currency)
 
-    def _l10n_cr_get_rates_ready_until(self):
-        """Last date whose documents have a rate of the currency the BCCR rates, or False without any."""
+    def _l10n_cr_get_last_rate(self):
+        """Latest rate of the currency the BCCR rates, the company's own or shared."""
         self.ensure_one()
-        last_rate = self.env['res.currency.rate'].search([
+        return self.env['res.currency.rate'].search([
             ('company_id', 'in', [False, self.id]),
             ('currency_id', '=', self._l10n_cr_get_rated_currency().id),
         ], order='name desc', limit=1)
+
+    def _l10n_cr_get_rates_ready_until(self):
+        """Last date whose documents have a rate of the currency the BCCR rates, or False without any."""
+        last_rate = self._l10n_cr_get_last_rate()
         return last_rate and last_rate.name + RATE_DATE_OFFSET
 
     def _l10n_cr_get_first_missing_date(self, today):
@@ -42,11 +46,11 @@ class ResCompany(models.Model):
         ready_until = self._l10n_cr_get_rates_ready_until()
         return min(ready_until + timedelta(days=1), today) if ready_until else today
 
-    def _l10n_cr_update_rates(self, first_date=False, last_date=False, timeout=TIMEOUT, replace=True):
+    def _l10n_cr_update_rates(self, first_date=False, last_date=False, timeout=TIMEOUT, replace=False):
         """Load the BCCR rates from first_date to last_date for these root companies.
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow.
-        Without replace, rates the companies already have in the range are left as they are.
+        Rates entered manually are only overwritten with replace.
 
         :return: {company: error} of the companies whose update failed
         """
