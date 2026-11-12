@@ -127,6 +127,16 @@ class ResConfigSettings(models.TransientModel):
             'params': {**notification, 'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'}},
         }
 
+    def action_l10n_cr_open_rate_load_wizard(self):
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.env._("Load Past Exchange Rates"),
+            'res_model': 'l10n_cr.rate.load.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_company_id': self.company_id.root_id.id, 'dialog_size': 'medium'},
+        }
+
     def _l10n_cr_get_cron(self):
         cron = self.env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
         return cron and cron.sudo()

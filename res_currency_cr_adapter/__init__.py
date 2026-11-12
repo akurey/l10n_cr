@@ -3,6 +3,7 @@
 
 from . import models
 from . import tools
+from . import wizard
 
 
 def uninstall_hook(env):

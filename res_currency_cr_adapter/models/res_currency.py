@@ -105,8 +105,11 @@ class ResCurrencyRate(models.Model):
             return
         companies._l10n_cr_update_rates(first_date, last_date)
 
-    def _l10n_cr_store_rates(self, company, rates):
-        """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies."""
+    def _l10n_cr_store_rates(self, company, rates, replace=True):
+        """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies.
+
+        :param replace: whether rates the company already has are overwritten, or left as they are
+        """
         currency = company._l10n_cr_get_rated_currency()
         rate_dates = [date - RATE_DATE_OFFSET for date in rates]
         existing_rates = self.search([
@@ -124,7 +127,8 @@ class ResCurrencyRate(models.Model):
             else:
                 vals = {'rate': selling, 'buying_rate': buying}
             if rate_date in existing_rates:
-                existing_rates[rate_date].write(vals)
+                if replace:
+                    existing_rates[rate_date].write(vals)
             else:
                 self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
 

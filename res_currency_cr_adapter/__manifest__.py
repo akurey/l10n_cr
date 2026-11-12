@@ -13,9 +13,11 @@
         'account',
     ],
     'data': [
+        'security/ir.access.csv',
         'data/ir_cron_data.xml',
         'views/res_currency_views.xml',
         'views/res_config_settings_views.xml',
+        'wizard/l10n_cr_rate_load_wizard_views.xml',
     ],
     'uninstall_hook': 'uninstall_hook',
 }

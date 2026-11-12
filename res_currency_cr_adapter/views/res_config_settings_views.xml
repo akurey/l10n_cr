@@ -47,7 +47,10 @@
                             <div class="text-muted small" invisible="not l10n_cr_last_update">
                                 Last update <field name="l10n_cr_last_update" class="oe_inline"/>
                             </div>
-                            <button name="action_l10n_cr_update_rates" type="object" class="btn-link px-0" icon="refresh" string="Update now" invisible="not l10n_cr_bccr_token"/>
+                            <div class="mt8" invisible="not l10n_cr_bccr_token">
+                                <button name="action_l10n_cr_update_rates" type="object" class="btn-link px-0 me-3" icon="refresh" string="Update now"/>
+                                <button name="action_l10n_cr_open_rate_load_wizard" type="object" class="btn-link px-0" icon="history" string="Load past rates"/>
+                            </div>
                         </div>
                     </div>
                 </setting>
