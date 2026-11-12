@@ -29,7 +29,7 @@ def _rename_cron(cr):
     # loaded from the module's .po files after the upgrade
     cr.execute("""
         UPDATE ir_act_server action
-           SET name = jsonb_build_object('en_US', 'Costa Rica: Update currency rates')
+           SET name = jsonb_build_object('en_US', 'Costa Rica: Update BCCR exchange rates')
           FROM ir_model_data imd
          WHERE imd.module = 'res_currency_cr_adapter'
            AND imd.name = 'ir_cron_currency_rate_update_ir_actions_server'
