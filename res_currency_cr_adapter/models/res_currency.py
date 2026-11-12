@@ -13,6 +13,8 @@ _logger = logging.getLogger(__name__)
 
 # Odoo 20 converts with the last rate dated before the document (odoo/odoo@cba671d), so rates are stored a day early
 RATE_DATE_OFFSET = timedelta(days=1)
+# The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
+CR_TZ = 'America/Costa_Rica'
 
 
 class ResCurrency(models.Model):
@@ -22,14 +24,10 @@ class ResCurrency(models.Model):
 
     @api.depends_context('company')
     def _compute_show_buying_rate(self):
-        # The BCCR rates the dollar in colones: a Costa Rican company rates the other currency of that pair
-        company = self.env.company
-        rated_currency = company.account_fiscal_country_id.code == 'CR' and {
-            'CRC': 'USD',
-            'USD': 'CRC',
-        }.get(company.currency_id.name)
+        # Rates are stored on the root company, which its branches share
+        rated_currency = self.env.company.root_id._l10n_cr_get_rated_currency()
         for currency in self:
-            currency.show_buying_rate = currency.name == rated_currency
+            currency.show_buying_rate = currency._origin == rated_currency
 
     def action_view_rates(self):
         """Odoo's rate list, without the buying columns for a currency that doesn't use them."""
@@ -99,34 +97,55 @@ class ResCurrencyRate(models.Model):
 
     @api.model
     def _cron_update(self, first_date=False, last_date=False):
-        """Load the BCCR rates from first_date to last_date, by default today's."""
-        bccr_token = self.env['ir.config_parameter'].sudo().get_str('bccr_token')
-
-        # The token turns the update on: without one there is nothing to do yet
-        if not bccr_token:
-            _logger.info("No BCCR token configured, the exchange rate is not updated")
+        """Load the BCCR rates from first_date to last_date for each company that updates them."""
+        companies = self.env['res.company'].sudo().search([
+            ('parent_id', '=', False),
+            ('l10n_cr_update_rates', '=', True),
+            ('l10n_cr_bccr_token', '!=', False),
+        ]).filtered(lambda company: company._l10n_cr_get_rated_currency())
+        if not companies:
+            _logger.info("No company updates its exchange rates from the BCCR")
             return
 
-        first_date = first_date or fields.Date.today()
-        last_date = last_date or first_date
+        # By default today's rate and tomorrow's, which the BCCR publishes in the evening
+        today = fields.Date.context_today(self.with_context(tz=CR_TZ))
+        first_date = first_date or today
+        last_date = last_date or today + timedelta(days=1)
 
-        # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
-        try:
-            rates = BccrApi(self.env, bccr_token).get_rates(first_date, last_date)
-        except UserError as e:
-            _logger.error("Exchange rate update failed: %s", e)
-            return
+        # The rates are the same for every token, so companies sharing one share the request
+        for token, token_companies in companies.grouped('l10n_cr_bccr_token').items():
+            # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
+            try:
+                rates = BccrApi(self.env, token).get_rates(first_date, last_date)
+            except UserError as e:
+                _logger.error("Exchange rate update failed for %s: %s", ', '.join(token_companies.mapped('name')), e)
+                token_companies.l10n_cr_last_update_failed = True
+                continue
+            for company in token_companies:
+                self._l10n_cr_store_rates(company, rates)
 
-        currency = self.env.ref('base.USD')
+    def _l10n_cr_store_rates(self, company, rates):
+        """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies."""
+        currency = company._l10n_cr_get_rated_currency()
+        rate_dates = [date - RATE_DATE_OFFSET for date in rates]
+        existing_rates = self.search([
+            ('company_id', '=', company.id),
+            ('currency_id', '=', currency.id),
+            ('name', 'in', rate_dates),
+        ]).grouped('name')
+
         for date, (selling, buying) in rates.items():
             rate_date = date - RATE_DATE_OFFSET
-
-            # Odoo stores dollars per colón, the inverse of the colones per dollar the BCCR publishes
-            vals = {'rate': 1 / selling, 'buying_rate': 1 / buying}
-            existing_rate = self.search([('name', '=', rate_date), ('currency_id', '=', currency.id)], limit=1)
-            if existing_rate:
-                existing_rate.write(vals)
+            # Odoo rates a currency against the company's: a colón company stores dollars per colón, the inverse
+            # of the colones per dollar the BCCR publishes, and a dollar company stores the BCCR's values as they are
+            if company.currency_id.name == 'CRC':
+                vals = {'rate': 1 / selling, 'buying_rate': 1 / buying}
             else:
-                self.create({**vals, 'name': rate_date, 'currency_id': currency.id})
+                vals = {'rate': selling, 'buying_rate': buying}
+            if rate_date in existing_rates:
+                existing_rates[rate_date].write(vals)
+            else:
+                self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
 
-        _logger.info("BCCR exchange rates loaded for %s to %s", min(rates), max(rates))
+        company.l10n_cr_last_update_failed = False
+        _logger.info("BCCR exchange rates loaded for %s from %s to %s", company.name, min(rates), max(rates))
