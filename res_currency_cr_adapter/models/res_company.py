@@ -3,7 +3,7 @@
 import logging
 from datetime import timedelta
 
-from odoo import fields, models
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET
@@ -20,13 +20,40 @@ class ResCompany(models.Model):
     l10n_cr_last_update = fields.Datetime(string='Last Exchange Rate Update', readonly=True)
     l10n_cr_last_update_failed = fields.Boolean(string='Last Exchange Rate Update Failed', readonly=True)
 
+    def write(self, vals):
+        if not {'currency_id', 'account_fiscal_country_id', 'country_id'} & vals.keys():
+            return super().write(vals)
+        rated_currencies = {company: company._l10n_cr_get_rated_currency() for company in self}
+        res = super().write(vals)
+        for company in self:
+            former_currency = rated_currencies[company]
+            rated_currency = company._l10n_cr_get_rated_currency()
+            if rated_currency == former_currency:
+                continue
+            # Odoo divides every rate by the company currency's, so the BCCR's rates of the former currency would
+            # distort the conversions; rates entered manually are left to the user
+            if former_currency:
+                self.env['res.currency.rate'].sudo().search([
+                    ('company_id', '=', company.id),
+                    ('currency_id', '=', former_currency.id),
+                    ('l10n_cr_source', '=', 'bccr'),
+                ]).unlink()
+            if not rated_currency and company.l10n_cr_update_rates:
+                company.l10n_cr_update_rates = False
+        return res
+
+    @api.model
+    def _l10n_cr_get_rated_currency_for(self, fiscal_country, currency):
+        """Currency the BCCR rates for a company of that fiscal country and currency, or an empty recordset."""
+        Currency = self.env['res.currency']
+        if fiscal_country.code != 'CR':
+            return Currency
+        return {'CRC': self.env.ref('base.USD'), 'USD': self.env.ref('base.CRC')}.get(currency.name, Currency)
+
     def _l10n_cr_get_rated_currency(self):
         """Currency the BCCR rates for this company: the dollar for a colón company, the colón for a dollar one."""
         self.ensure_one()
-        Currency = self.env['res.currency']
-        if self.account_fiscal_country_id.code != 'CR':
-            return Currency
-        return {'CRC': self.env.ref('base.USD'), 'USD': self.env.ref('base.CRC')}.get(self.currency_id.name, Currency)
+        return self._l10n_cr_get_rated_currency_for(self.account_fiscal_country_id, self.currency_id)
 
     def _l10n_cr_get_last_rate(self):
         """Latest rate of the currency the BCCR rates, the company's own or shared."""

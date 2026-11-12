@@ -48,10 +48,18 @@ class ResConfigSettings(models.TransientModel):
         compute='_compute_l10n_cr_rates_status',
     )
 
-    @api.depends('company_id')
+    # From the form's currency and fiscal country, as they are saved together with the update switch
+    @api.depends('currency_id', 'account_fiscal_country_id')
     def _compute_l10n_cr_rates_available(self):
         for settings in self:
-            settings.l10n_cr_rates_available = bool(settings.company_id.root_id._l10n_cr_get_rated_currency())
+            settings.l10n_cr_rates_available = bool(self.env['res.company']._l10n_cr_get_rated_currency_for(
+                settings.account_fiscal_country_id, settings.currency_id))
+
+    @api.onchange('currency_id', 'account_fiscal_country_id')
+    def _onchange_l10n_cr_rates_available(self):
+        # Otherwise saving would switch the update back on right after the company switched it off
+        if not self.l10n_cr_rates_available:
+            self.l10n_cr_update_rates = False
 
     @api.depends('company_id')
     def _compute_l10n_cr_last_update(self):
@@ -92,8 +100,9 @@ class ResConfigSettings(models.TransientModel):
         settings_list = super().create(vals_list)
         # Related fields are written on create, and only those that changed stay in the values
         for settings, vals in zip(settings_list, vals_list):
+            changed_fields = {'l10n_cr_bccr_token', 'currency_id', 'account_fiscal_country_id'} & vals.keys()
             if (
-                (vals.get('l10n_cr_update_rates') or 'l10n_cr_bccr_token' in vals)
+                (vals.get('l10n_cr_update_rates') or changed_fields)
                 and settings.l10n_cr_update_rates
                 and settings.l10n_cr_bccr_token
                 and settings.l10n_cr_rates_available
