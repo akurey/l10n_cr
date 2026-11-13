@@ -30,7 +30,8 @@ def _rename_cron(cr):
     cr.execute("""
         UPDATE ir_act_server action
            SET name = jsonb_build_object('en_US', 'Costa Rica: Update BCCR exchange rates'),
-               code = 'model._cron_l10n_cr_update_rates()'
+               code = 'model._cron_l10n_cr_update_rates()',
+               model_id = (SELECT id FROM ir_model WHERE model = 'res.company')
           FROM ir_model_data imd
          WHERE imd.module = 'res_currency_cr_adapter'
            AND imd.name = 'ir_cron_currency_rate_update_ir_actions_server'
