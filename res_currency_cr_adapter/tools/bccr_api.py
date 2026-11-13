@@ -24,7 +24,7 @@ ERROR_CAUSES = {
     401: _lt("the token is missing, invalid or expired"),
     403: _lt("the user has no valid subscription, or the gateway rejected the user agent"),
     404: _lt("wrong endpoint or missing parameters"),
-    429: _lt("too many requests, lower the frequency of the update"),
+    429: _lt("too many requests, try again later"),
     500: _lt("BCCR internal error, or the token was rejected"),
 }
 
