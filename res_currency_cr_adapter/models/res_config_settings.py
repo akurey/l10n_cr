@@ -11,11 +11,7 @@ class ResConfigSettings(models.TransientModel):
     l10n_cr_rates_available = fields.Boolean(compute='_compute_l10n_cr_rates_available')
     # The update runs on the root company, so a branch shows and edits its root's settings
     l10n_cr_update_rates = fields.Boolean(related='company_id.root_id.l10n_cr_update_rates', readonly=False)
-    l10n_cr_bccr_token = fields.Char(
-        related='company_id.root_id.l10n_cr_bccr_token',
-        readonly=False,
-        groups='base.group_system',
-    )
+    l10n_cr_bccr_token = fields.Char(config_parameter='bccr_token')
     l10n_cr_last_update_failed = fields.Boolean(related='company_id.root_id.l10n_cr_last_update_failed')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
@@ -58,7 +54,8 @@ class ResConfigSettings(models.TransientModel):
                 and settings.l10n_cr_bccr_token
                 and settings.l10n_cr_rates_available
             ):
-                settings.company_id.root_id._l10n_cr_update_rates()
+                # The token is only saved after create, by set_values
+                settings.company_id.root_id._l10n_cr_update_rates(token=settings.l10n_cr_bccr_token)
         return settings_list
 
     def action_l10n_cr_update_rates(self):

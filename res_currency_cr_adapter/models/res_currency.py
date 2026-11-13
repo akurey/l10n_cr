@@ -51,7 +51,11 @@ class ResCurrency(models.Model):
     def _compute_l10n_cr_rates_status(self):
         # The token is only readable by Settings administrators
         company = self.env.company.root_id.sudo()
-        status = company.l10n_cr_update_rates and company.l10n_cr_bccr_token and company._l10n_cr_get_rates_status()
+        status = (
+            company.l10n_cr_update_rates
+            and company._l10n_cr_get_bccr_token()
+            and company._l10n_cr_get_rates_status()
+        )
         for currency in self:
             show_update = bool(status) and currency.show_buying_rate
             currency.l10n_cr_show_update = show_update
@@ -196,9 +200,8 @@ class ResCurrencyRate(models.Model):
         companies = self.env['res.company'].sudo().search([
             ('parent_id', '=', False),
             ('l10n_cr_update_rates', '=', True),
-            ('l10n_cr_bccr_token', '!=', False),
         ]).filtered(lambda company: company._l10n_cr_get_rated_currency())
-        if not companies:
+        if not companies or not companies._l10n_cr_get_bccr_token():
             _logger.info("No company updates its exchange rates from the BCCR")
             return
         if first_date or last_date:

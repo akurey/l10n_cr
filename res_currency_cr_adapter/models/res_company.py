@@ -18,7 +18,6 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
-    l10n_cr_bccr_token = fields.Char(string='BCCR Token', groups='base.group_system')
     l10n_cr_last_update = fields.Datetime(string='Last Exchange Rate Update', readonly=True)
     l10n_cr_last_update_failed = fields.Boolean(string='Last Exchange Rate Update Failed', readonly=True)
 
@@ -75,8 +74,12 @@ class ResCompany(models.Model):
         ready_until = self._l10n_cr_get_rates_ready_until()
         return min(ready_until + timedelta(days=1), today) if ready_until else today
 
-    def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
-        """Load the BCCR rates from first_date to last_date for these root companies.
+    @api.model
+    def _l10n_cr_get_bccr_token(self):
+        return self.env['ir.config_parameter'].sudo().get_str('bccr_token')
+
+    def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False, token=None):
+        """Load the BCCR rates from first_date to last_date for these root companies, in a single request.
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow.
         Rates entered manually are only overwritten with replace.
@@ -88,23 +91,19 @@ class ResCompany(models.Model):
         last_date = last_date or today + timedelta(days=1)
         first_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in self}
 
-        errors = {}
-        # The rates are the same for every token, so companies sharing one share the request
-        for token, token_companies in self.grouped('l10n_cr_bccr_token').items():
-            # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
-            try:
-                rates = BccrApi(self.env, token).get_rates(
-                    min(first_dates[company] for company in token_companies), last_date)
-            except UserError as e:
-                _logger.error("Exchange rate update failed for %s: %s", ', '.join(token_companies.mapped('name')), e)
-                token_companies.l10n_cr_last_update_failed = True
-                errors.update(dict.fromkeys(token_companies, str(e)))
-                continue
-            # Each company only gets its own missing days, so rates it already has are left alone
-            for company in token_companies:
-                company_rates = {date: rate for date, rate in rates.items() if date >= first_dates[company]}
-                self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
-        return errors
+        # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
+        try:
+            rates = BccrApi(self.env, token or self._l10n_cr_get_bccr_token()).get_rates(
+                min(first_dates.values()), last_date)
+        except UserError as e:
+            _logger.error("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
+            self.l10n_cr_last_update_failed = True
+            return dict.fromkeys(self, str(e))
+        # Each company only gets its own missing days, so rates it already has are left alone
+        for company in self:
+            company_rates = {date: rate for date, rate in rates.items() if date >= first_dates[company]}
+            self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
+        return {}
 
     def _l10n_cr_get_rates_status(self):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
