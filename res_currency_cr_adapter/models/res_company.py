@@ -188,4 +188,4 @@ class ResCompany(models.Model):
             return self.env._("today at %(time)s", time=time)
         if days == 1:
             return self.env._("yesterday at %(time)s", time=time)
-        return self.env._("on %(date)s at %(time)s", date=last_update.strftime('%d/%m'), time=time)
+        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, last_update.date()), time=time)
