@@ -90,6 +90,8 @@ class ResCompany(models.Model):
 
         :return: {company: error} of the companies whose update failed
         """
+        if not self:
+            return {}
         # By default up to tomorrow's rate, which the BCCR publishes in the evening
         today = fields.Date.context_today(self.with_context(tz=CR_TZ))
         last_date = last_date or today + timedelta(days=1)
