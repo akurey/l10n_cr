@@ -145,9 +145,9 @@ class ResCompany(models.Model):
     def _l10n_cr_get_rates_status(self):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
 
-        :return: dict with the status ('ready', 'late', 'today' or 'missing'), the date the rates are ready until,
-            whether the latest one was entered manually, when the scheduled update last ran, as text, with its
-            error, and when it retries
+        :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, whether
+            the latest one was entered manually, when the scheduled update last ran, as text, with its error, and
+            when it runs next, as text
         """
         self.ensure_one()
         now = datetime.now(ZoneInfo(CR_TZ))
@@ -155,25 +155,29 @@ class ResCompany(models.Model):
         cron = self._l10n_cr_get_cron()
         last_rate = self._l10n_cr_get_last_rate()
         ready_until = last_rate.name + RATE_DATE_OFFSET if last_rate else False
-        if ready_until and ready_until > today:
+        # Until the evening update, today's rate is all there can be
+        if ready_until and (ready_until > today or ready_until == today and now.time() < UPDATE_TIME):
             status = 'ready'
         elif ready_until == today:
-            status = 'late' if now.time() >= UPDATE_TIME else 'today'
+            status = 'late'
         else:
             status = 'missing'
         last_run = self.l10n_cr_last_scheduled_update or {}
         last_run_date = fields.Datetime.to_datetime(last_run['date']) if last_run else False
-        retry = cron and self.env['ir.cron.trigger'].sudo().search([
-            ('cron_id', '=', cron.id),
-            ('call_at', '>', fields.Datetime.now()),
-        ], order='call_at', limit=1)
+        next_run = False
+        if cron and cron.active and self.l10n_cr_update_rates and self._l10n_cr_get_bccr_token():
+            retry = self.env['ir.cron.trigger'].sudo().search([
+                ('cron_id', '=', cron.id),
+                ('call_at', '>', fields.Datetime.now()),
+            ], order='call_at', limit=1)
+            next_run = min(retry.call_at, cron.nextcall) if retry else cron.nextcall
         return {
             'status': status,
             'ready_until': ready_until,
             'entered_manually': last_rate.l10n_cr_source == 'manual',
-            'last_update': last_run_date and self._l10n_cr_format_last_update(last_run_date),
+            'last_update': last_run_date and self._l10n_cr_format_datetime(last_run_date),
             'last_update_error': last_run.get('error') or False,
-            'retry_at': self._l10n_cr_to_cr_time(retry.call_at).strftime('%H:%M') if retry else False,
+            'next_update': next_run and self._l10n_cr_format_datetime(next_run),
         }
 
     def _l10n_cr_action_update_rates(self):
@@ -216,13 +220,15 @@ class ResCompany(models.Model):
         return utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
 
     @api.model
-    def _l10n_cr_format_last_update(self, last_update):
-        """Describe a past UTC datetime in Costa Rica time, relative to today when recent."""
-        last_update = self._l10n_cr_to_cr_time(last_update)
-        time = last_update.strftime('%H:%M')
-        days = (datetime.now(ZoneInfo(CR_TZ)).date() - last_update.date()).days
+    def _l10n_cr_format_datetime(self, utc_datetime):
+        """Describe a UTC datetime in Costa Rica time, relative to today when near."""
+        cr_datetime = self._l10n_cr_to_cr_time(utc_datetime)
+        time = cr_datetime.strftime('%H:%M')
+        days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
         if days == 0:
             return self.env._("today at %(time)s", time=time)
-        if days == 1:
+        if days == -1:
             return self.env._("yesterday at %(time)s", time=time)
-        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, last_update.date()), time=time)
+        if days == 1:
+            return self.env._("tomorrow at %(time)s", time=time)
+        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=time)

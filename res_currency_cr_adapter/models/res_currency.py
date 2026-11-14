@@ -17,7 +17,6 @@ UPDATE_TIME = time(18)
 RATES_STATUSES = [
     ('ready', 'Ready'),
     ('late', 'Tomorrow missing'),
-    ('today', 'Ready for today'),
     ('missing', 'Missing'),
 ]
 
@@ -33,7 +32,7 @@ class ResCurrency(models.Model):
     l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update_failed = fields.Boolean(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_retry_at = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
 
     @api.depends_context('company')
     def _compute_show_buying_rate(self):
@@ -60,7 +59,7 @@ class ResCurrency(models.Model):
             currency.l10n_cr_rates_entered_manually = show_update and status['entered_manually']
             currency.l10n_cr_last_update = show_update and status['last_update']
             currency.l10n_cr_last_update_failed = show_update and bool(status['last_update_error'])
-            currency.l10n_cr_retry_at = show_update and status['retry_at']
+            currency.l10n_cr_next_update = show_update and status['next_update']
 
     def _compute_current_rate(self):
         super()._compute_current_rate()

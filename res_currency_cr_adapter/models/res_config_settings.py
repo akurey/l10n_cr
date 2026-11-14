@@ -17,7 +17,7 @@ class ResConfigSettings(models.TransientModel):
     l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update_error = fields.Char(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_retry_at = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
 
     # From the form's currency and fiscal country, as they are saved together with the update switch
     @api.depends('currency_id', 'account_fiscal_country_id')
@@ -41,7 +41,7 @@ class ResConfigSettings(models.TransientModel):
             settings.l10n_cr_rates_entered_manually = status['entered_manually']
             settings.l10n_cr_last_update = status['last_update']
             settings.l10n_cr_last_update_error = status['last_update_error']
-            settings.l10n_cr_retry_at = status['retry_at']
+            settings.l10n_cr_next_update = status['next_update']
 
     def action_l10n_cr_update_rates(self):
         return self.company_id.root_id._l10n_cr_action_update_rates()
