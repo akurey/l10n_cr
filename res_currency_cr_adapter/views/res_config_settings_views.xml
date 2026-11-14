@@ -19,9 +19,6 @@
                             <field name="l10n_cr_bccr_token" password="True"/>
                         </div>
                         <div class="mt16">
-                            <div class="text-danger" invisible="l10n_cr_rates_status != 'error'">
-                                <i class="oi" data-icon="error"/> The last update failed. Check the token, or the server log
-                            </div>
                             <div class="text-success" invisible="l10n_cr_rates_status != 'ready'">
                                 <i class="oi" data-icon="check"/> Ready until <field name="l10n_cr_rates_ready_until" class="oe_inline"/><span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
                             </div>
@@ -34,11 +31,14 @@
                             <div class="text-warning" invisible="l10n_cr_rates_status != 'missing'">
                                 <i class="oi" data-icon="warning"/> Today's rate isn't loaded
                             </div>
-                            <div class="text-muted small" invisible="not l10n_cr_retry_at or l10n_cr_rates_status == 'ready'">
+                            <div class="text-muted small" invisible="not l10n_cr_retry_at or l10n_cr_rates_status not in ('late', 'missing')">
                                 Retrying at <field name="l10n_cr_retry_at" class="oe_inline"/>
                             </div>
                             <div class="text-muted small" invisible="not l10n_cr_last_update">
-                                Last update <field name="l10n_cr_last_update" class="oe_inline"/>
+                                Last automatic update<span invisible="not l10n_cr_last_update_error"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/>
+                            </div>
+                            <div class="text-danger small" invisible="not l10n_cr_last_update_error or l10n_cr_rates_status not in ('late', 'missing')">
+                                <field name="l10n_cr_last_update_error"/>
                             </div>
                             <div class="mt8" invisible="not l10n_cr_bccr_token">
                                 <button name="action_l10n_cr_update_rates" type="object" class="btn-link px-0 me-3" icon="refresh" string="Update now"/>

@@ -15,7 +15,6 @@ CR_TZ = 'America/Costa_Rica'
 # The BCCR publishes tomorrow's rate around 17:30, and the update first runs at 18:00
 UPDATE_TIME = time(18)
 RATES_STATUSES = [
-    ('error', 'Failed'),
     ('ready', 'Ready'),
     ('late', 'Tomorrow missing'),
     ('today', 'Ready for today'),
@@ -33,6 +32,7 @@ class ResCurrency(models.Model):
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update_failed = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_retry_at = fields.Char(compute='_compute_l10n_cr_rates_status')
 
     @api.depends_context('company')
@@ -59,6 +59,7 @@ class ResCurrency(models.Model):
             currency.l10n_cr_rates_ready_until = show_update and status['ready_until']
             currency.l10n_cr_rates_entered_manually = show_update and status['entered_manually']
             currency.l10n_cr_last_update = show_update and status['last_update']
+            currency.l10n_cr_last_update_failed = show_update and bool(status['last_update_error'])
             currency.l10n_cr_retry_at = show_update and status['retry_at']
 
     def _compute_current_rate(self):
@@ -214,5 +215,4 @@ class ResCurrencyRate(models.Model):
             else:
                 self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
 
-        company.write({'l10n_cr_last_update': fields.Datetime.now(), 'l10n_cr_last_update_failed': False})
         _logger.info("BCCR exchange rates loaded for %s from %s to %s", company.name, min(rates), max(rates))

@@ -22,8 +22,8 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
-    l10n_cr_last_update = fields.Datetime(string='Last Exchange Rate Update', readonly=True)
-    l10n_cr_last_update_failed = fields.Boolean(string='Last Exchange Rate Update Failed', readonly=True)
+    # The scheduled update's last run, as {'date': UTC datetime, 'error': message or None}
+    l10n_cr_last_scheduled_update = fields.Json(readonly=True)
 
     def write(self, vals):
         if not {'currency_id', 'account_fiscal_country_id', 'country_id'} & vals.keys():
@@ -102,7 +102,6 @@ class ResCompany(models.Model):
             rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(first_dates.values()), last_date)
         except UserError as e:
             _logger.error("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
-            self.l10n_cr_last_update_failed = True
             return dict.fromkeys(self, str(e))
         # Each company only gets its own missing days, so rates it already has are left alone
         for company in self:
@@ -130,7 +129,10 @@ class ResCompany(models.Model):
             ready_until = company._l10n_cr_get_rates_ready_until()
             return not ready_until or ready_until < target_date
 
-        companies.filtered(is_missing)._l10n_cr_update_rates()
+        errors = companies.filtered(is_missing)._l10n_cr_update_rates()
+        run_date = fields.Datetime.to_string(fields.Datetime.now())
+        for company in companies:
+            company.l10n_cr_last_scheduled_update = {'date': run_date, 'error': errors.get(company)}
         missing_companies = companies.filtered(is_missing)
         retry_at = now + RETRY_INTERVAL
         cron = self._l10n_cr_get_cron()
@@ -143,9 +145,9 @@ class ResCompany(models.Model):
     def _l10n_cr_get_rates_status(self):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
 
-        :return: dict with the status ('error', 'ready', 'late', 'today' or 'missing'), the date the rates are ready
-            until, whether the latest one was entered manually, and when the rates were last loaded and the next
-            retry runs, as text
+        :return: dict with the status ('ready', 'late', 'today' or 'missing'), the date the rates are ready until,
+            whether the latest one was entered manually, when the scheduled update last ran, as text, with its
+            error, and when it retries
         """
         self.ensure_one()
         now = datetime.now(ZoneInfo(CR_TZ))
@@ -153,14 +155,14 @@ class ResCompany(models.Model):
         cron = self._l10n_cr_get_cron()
         last_rate = self._l10n_cr_get_last_rate()
         ready_until = last_rate.name + RATE_DATE_OFFSET if last_rate else False
-        if self.l10n_cr_last_update_failed:
-            status = 'error'
-        elif ready_until and ready_until > today:
+        if ready_until and ready_until > today:
             status = 'ready'
         elif ready_until == today:
             status = 'late' if now.time() >= UPDATE_TIME else 'today'
         else:
             status = 'missing'
+        last_run = self.l10n_cr_last_scheduled_update or {}
+        last_run_date = fields.Datetime.to_datetime(last_run['date']) if last_run else False
         retry = cron and self.env['ir.cron.trigger'].sudo().search([
             ('cron_id', '=', cron.id),
             ('call_at', '>', fields.Datetime.now()),
@@ -169,7 +171,8 @@ class ResCompany(models.Model):
             'status': status,
             'ready_until': ready_until,
             'entered_manually': last_rate.l10n_cr_source == 'manual',
-            'last_update': self.l10n_cr_last_update and self._l10n_cr_format_last_update(self.l10n_cr_last_update),
+            'last_update': last_run_date and self._l10n_cr_format_last_update(last_run_date),
+            'last_update_error': last_run.get('error') or False,
             'retry_at': self._l10n_cr_to_cr_time(retry.call_at).strftime('%H:%M') if retry else False,
         }
 

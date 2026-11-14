@@ -12,11 +12,11 @@ class ResConfigSettings(models.TransientModel):
     # The update runs on the root company, so a branch shows and edits its root's settings
     l10n_cr_update_rates = fields.Boolean(related='company_id.root_id.l10n_cr_update_rates', readonly=False)
     l10n_cr_bccr_token = fields.Char(config_parameter='bccr_token')
-    l10n_cr_last_update_failed = fields.Boolean(related='company_id.root_id.l10n_cr_last_update_failed')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update_error = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_retry_at = fields.Char(compute='_compute_l10n_cr_rates_status')
 
     # From the form's currency and fiscal country, as they are saved together with the update switch
@@ -32,7 +32,7 @@ class ResConfigSettings(models.TransientModel):
         if not self.l10n_cr_rates_available:
             self.l10n_cr_update_rates = False
 
-    @api.depends('company_id', 'l10n_cr_last_update_failed')
+    @api.depends('company_id')
     def _compute_l10n_cr_rates_status(self):
         for settings in self:
             status = settings.company_id.root_id._l10n_cr_get_rates_status()
@@ -40,6 +40,7 @@ class ResConfigSettings(models.TransientModel):
             settings.l10n_cr_rates_ready_until = status['ready_until']
             settings.l10n_cr_rates_entered_manually = status['entered_manually']
             settings.l10n_cr_last_update = status['last_update']
+            settings.l10n_cr_last_update_error = status['last_update_error']
             settings.l10n_cr_retry_at = status['retry_at']
 
     def action_l10n_cr_update_rates(self):
