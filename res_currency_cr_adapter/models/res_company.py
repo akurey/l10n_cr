@@ -110,21 +110,15 @@ class ResCompany(models.Model):
         return {}
 
     @api.model
-    def _cron_l10n_cr_update_rates(self, first_date=False, last_date=False):
-        """Load the BCCR rates from first_date to last_date for each company that updates them.
-
-        Without dates, only the companies still missing the rate the update is after are loaded, and the update is
-        retried every hour while any of them still misses it, until the morning.
-        """
+    def _cron_l10n_cr_update_rates(self):
+        """Load the missing BCCR rates of each company that updates them, retrying every hour while any is still
+        missing, until the morning."""
         companies = self.sudo().search([
             ('parent_id', '=', False),
             ('l10n_cr_update_rates', '=', True),
         ]).filtered(lambda company: company._l10n_cr_get_rated_currency())
         if not companies or not companies._l10n_cr_get_bccr_token():
             _logger.info("No company updates its exchange rates from the BCCR")
-            return
-        if first_date or last_date:
-            companies._l10n_cr_update_rates(first_date, last_date)
             return
 
         now = datetime.now(ZoneInfo(CR_TZ))
