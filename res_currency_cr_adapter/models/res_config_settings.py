@@ -42,22 +42,6 @@ class ResConfigSettings(models.TransientModel):
             settings.l10n_cr_last_update = status['last_update']
             settings.l10n_cr_retry_at = status['retry_at']
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        settings_list = super().create(vals_list)
-        # Related fields are written on create, and only those that changed stay in the values
-        for settings, vals in zip(settings_list, vals_list):
-            changed_fields = {'l10n_cr_bccr_token', 'currency_id', 'account_fiscal_country_id'} & vals.keys()
-            if (
-                (vals.get('l10n_cr_update_rates') or changed_fields)
-                and settings.l10n_cr_update_rates
-                and settings.l10n_cr_bccr_token
-                and settings.l10n_cr_rates_available
-            ):
-                # The token is only saved after create, by set_values
-                settings.company_id.root_id._l10n_cr_update_rates(token=settings.l10n_cr_bccr_token)
-        return settings_list
-
     def action_l10n_cr_update_rates(self):
         return self.company_id.root_id._l10n_cr_action_update_rates()
 

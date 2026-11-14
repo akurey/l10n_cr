@@ -82,7 +82,7 @@ class ResCompany(models.Model):
     def _l10n_cr_get_bccr_token(self):
         return self.env['ir.config_parameter'].sudo().get_str('bccr_token')
 
-    def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False, token=None):
+    def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
         """Load the BCCR rates from first_date to last_date for these root companies, in a single request.
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow.
@@ -97,8 +97,7 @@ class ResCompany(models.Model):
 
         # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
         try:
-            rates = BccrApi(self.env, token or self._l10n_cr_get_bccr_token()).get_rates(
-                min(first_dates.values()), last_date)
+            rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(first_dates.values()), last_date)
         except UserError as e:
             _logger.error("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
             self.l10n_cr_last_update_failed = True
