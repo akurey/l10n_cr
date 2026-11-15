@@ -1,0 +1,322 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* cr_website_sale_einvoice
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-15 14:18+0000\n"
+"PO-Revision-Date: 2026-11-15 14:18+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/models/res_partner.py:0
+msgid " or "
+msgstr " o "
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "<option value=\"\">Choose the activity for the invoice</option>"
+msgstr "<option value=\"\">Elegir la actividad para la factura</option>"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "A company's billing data is updated by our sales team."
+msgstr ""
+"Los datos de facturación de una empresa los actualiza el equipo de ventas."
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/models/res_partner.py:0
+msgid ""
+"A cédula jurídica has 10 characters without dashes, for example 3101123456."
+msgstr ""
+"Una cédula jurídica tiene 10 caracteres sin guiones, por ejemplo 3101123456."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_partner_id
+msgid ""
+"A third party (another person or a company) the customer asked to invoice. "
+"Empty: the customer."
+msgstr ""
+"Un tercero (otra persona o una empresa) a cuyo nombre el cliente pidió la "
+"factura. Vacío: el cliente."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__cr_einvoice_verified
+msgid "Billing Data Checked"
+msgstr "Datos de facturación verificados"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_partner__cr_einvoice_checked
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_users__cr_einvoice_checked
+msgid "Billing Data Checked with Hacienda"
+msgstr "Datos de facturación verificados con Hacienda"
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/models/res_partner.py:0
+msgid "Choose a personal identification type: cédula física, DIMEX or NITE."
+msgstr ""
+"Elegir un tipo de identificación personal: cédula física, DIMEX o NITE."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model,name:cr_website_sale_einvoice.model_res_partner
+msgid "Contact"
+msgstr "Contacto"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__cr_einvoice_choice_made
+msgid "Cr Einvoice Choice Made"
+msgstr "Elección de factura electrónica hecha"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model,website_form_label:cr_website_sale_einvoice.model_res_partner
+msgid "Create a Customer"
+msgstr "Crear un cliente"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_partner__display_name
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__display_name
+msgid "Display Name"
+msgstr "Nombre en pantalla"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Economic activity"
+msgstr "Actividad económica"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__cr_einvoice_requested
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.view_sales_order_filter_einvoice
+msgid "Electronic Invoice"
+msgstr "Factura electrónica"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_partner__cr_einvoice_requested_by_id
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_users__cr_einvoice_requested_by_id
+msgid "Electronic Invoice Requested By"
+msgstr "Factura electrónica solicitada por"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.view_sales_order_filter_einvoice
+msgid "Electronic Invoice to Check"
+msgstr "Factura electrónica por verificar"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.checkout_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.portal_einvoice_page
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.portal_my_home_einvoice
+msgid "Electronic invoice"
+msgstr "Factura electrónica"
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/controllers/main.py:0
+msgid ""
+"Hacienda registers this number with another identification type. Check the "
+"type."
+msgstr ""
+"Hacienda registra este número con otro tipo de identificación. Revisar el "
+"tipo."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "I want an electronic invoice in my name"
+msgstr "Quiero factura electrónica a mi nombre"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_partner__id
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__id
+msgid "ID"
+msgstr "Identificación"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Identification number"
+msgstr "Número de identificación"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Identification type"
+msgstr "Tipo de identificación"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "In the name of a third party (another person or a company)"
+msgstr "A nombre de un tercero (otra persona o una empresa)"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__cr_einvoice_partner_id
+msgid "Invoice in the Name of"
+msgstr "Factura a nombre de"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Issued to"
+msgstr "A nombre de"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Name in Hacienda:"
+msgstr "Nombre en Hacienda:"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.portal_einvoice_page
+msgid ""
+"Orders where you ask for an electronic invoice are billed with this data."
+msgstr "Los pedidos con factura electrónica se facturan con estos datos."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Press \"Save\" to request it."
+msgstr "Para pedirla, tocar \"Guardar\"."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model,name:cr_website_sale_einvoice.model_sale_order
+msgid "Sales Order"
+msgstr "Orden de venta"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Save"
+msgstr "Guardar"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_res_partner__cr_einvoice_checked
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_res_users__cr_einvoice_checked
+msgid ""
+"Set when the customer saved their electronic invoice data on the website and"
+" Hacienda's registry confirmed it; cleared when Hacienda could not be "
+"reached."
+msgstr ""
+"Se marca cuando el cliente guardó sus datos de factura electrónica en el "
+"sitio y el registro de Hacienda los confirmó; se desmarca si Hacienda no "
+"respondió."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_choice_made
+msgid ""
+"Technical: the customer chose explicitly, so a new billing address keeps "
+"their choice."
+msgstr ""
+"Técnico: el cliente eligió explícitamente, así que una nueva dirección de "
+"facturación mantiene su elección."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_requested
+msgid ""
+"The customer asked for an electronic invoice (FE), in their name or a third "
+"party's. Otherwise the order is invoiced with an electronic ticket (TE)."
+msgstr ""
+"El cliente pidió factura electrónica (FE), a su nombre o de un tercero. Si "
+"no, el pedido se factura con tiquete electrónico (TE)."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_verified
+msgid ""
+"The customer's identification was confirmed by Hacienda's registry, or is a "
+"company's data kept by the sales team. If not, check it before invoicing, "
+"then tick this box."
+msgstr ""
+"La identificación del cliente la confirmó el registro de Hacienda, o son "
+"datos de una empresa que mantiene el equipo de ventas. Si no, revisarla "
+"antes de facturar y marcar esta casilla."
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/models/res_partner.py:0
+msgid ""
+"The identification number must have %(lengths)s digits, with no leading "
+"zero, dashes or spaces."
+msgstr ""
+"El número de identificación debe tener %(lengths)s dígitos, sin cero al "
+"inicio, guiones ni espacios."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid ""
+"The name and economic activity are taken from Hacienda's registry. Sent to"
+msgstr ""
+"El nombre y la actividad económica se toman del registro de Hacienda. Se "
+"envía a"
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/controllers/main.py:0
+msgid "The phone number must have 8 digits."
+msgstr "El número de teléfono debe tener 8 dígitos."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_res_partner__cr_einvoice_requested_by_id
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_res_users__cr_einvoice_requested_by_id
+msgid ""
+"The website customer who asked for electronic invoices in this partner's "
+"name (a third party)."
+msgstr ""
+"El cliente del sitio que pidió facturas electrónicas a nombre de este "
+"contacto (un tercero)."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Third party's e-mail to receive the invoice"
+msgstr "Correo del tercero para recibir la factura"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Third party's identification number"
+msgstr "Número de identificación del tercero"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Third party's identification type"
+msgstr "Tipo de identificación del tercero"
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/controllers/main.py:0
+msgid "Too many identification lookups. Try again in an hour."
+msgstr ""
+"Demasiadas consultas de identificación. Intentar de nuevo en una hora."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Without it, an electronic ticket is issued."
+msgstr "Sin ella, se emite un tiquete electrónico."
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/controllers/main.py:0
+msgid "Write the e-mail address where the third party receives the invoice."
+msgstr "Escribir el correo donde el tercero recibe la factura."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.portal_einvoice_page
+msgid "Your billing data was saved."
+msgstr "Los datos de facturación se guardaron."
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/controllers/main.py:0
+msgid "Your company's billing data is incomplete. Contact us to complete it."
+msgstr ""
+"Los datos de facturación de la empresa están incompletos. Contactar al "
+"equipo de ventas para completarlos."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.portal_my_home_einvoice
+msgid "Your data for electronic invoices"
+msgstr "Datos para la factura electrónica"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "· activity"
+msgstr "· actividad"
