@@ -245,12 +245,18 @@ class ResCurrencyRate(models.Model):
             # Euro, only when the company uses it (imports from Europe)
             euro = self.env.ref('base.EUR')
             if euro.active:
+                # The euro is only published on business days: a week earlier covers the first date of the range,
+                # and each day takes the last value published up to it (as the BCCR does for the dollar).
                 euro_in_dollars = self._bccr_get_series(
-                    BCCR_EUR_USD_INDICATOR, initial_date, end_date, bccr_token)
-                for current_date_str in sorted(set(euro_in_dollars) & set(selling_rates) & set(buying_rates)):
-                    self._cr_set_rate(euro, current_date_str,
-                                      euro_in_dollars[current_date_str] * selling_rates[current_date_str],
-                                      euro_in_dollars[current_date_str] * buying_rates[current_date_str])
+                    BCCR_EUR_USD_INDICATOR, initial_date - timedelta(days=7), end_date, bccr_token)
+                published = sorted(euro_in_dollars)
+                for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
+                    known = [day for day in published if day <= current_date_str]
+                    if not known:
+                        continue
+                    usd_per_eur = euro_in_dollars[known[-1]]
+                    self._cr_set_rate(euro, current_date_str, usd_per_eur * selling_rates[current_date_str],
+                                      usd_per_eur * buying_rates[current_date_str])
 
         if exchange_source == 'hacienda':
             _logger.info("Getting exchange rates from HACIENDA")
