@@ -1,5 +1,6 @@
 import re
 import time
+from collections import defaultdict
 
 from odoo import _, http
 from odoo.exceptions import UserError
@@ -11,17 +12,27 @@ from odoo.addons.website_sale.controllers.main import WebsiteSale
 ERROR_KEY = 'cr_einvoice_error'
 PENDING_KEY = 'cr_einvoice_pending'
 LOOKUPS_KEY = 'cr_einvoice_lookups'
-# Hacienda lookups per session and hour: enough for typos, not for scraping the registry through us.
+# Hacienda lookups per hour: enough for typos, not for scraping the registry through the store. Counted per
+# session and, since a new session is one cookie away, per IP address too (per server process).
 MAX_LOOKUPS_PER_HOUR = 10
+MAX_LOOKUPS_PER_IP_HOUR = 30
 COSTA_RICA_PHONE_DIGITS = 8
+_lookups_by_ip = defaultdict(list)
+
+
+def _recent(stamps, now):
+    return [stamp for stamp in stamps if now - stamp < 3600]
 
 
 def _lookup_allowed():
     now = time.time()
-    recent = [stamp for stamp in request.session.get(LOOKUPS_KEY, []) if now - stamp < 3600]
-    if len(recent) >= MAX_LOOKUPS_PER_HOUR:
+    by_session = _recent(request.session.get(LOOKUPS_KEY, []), now)
+    ip = request.httprequest.remote_addr
+    by_ip = _lookups_by_ip[ip] = _recent(_lookups_by_ip[ip], now)
+    if len(by_session) >= MAX_LOOKUPS_PER_HOUR or len(by_ip) >= MAX_LOOKUPS_PER_IP_HOUR:
         return False
-    request.session[LOOKUPS_KEY] = recent + [now]
+    request.session[LOOKUPS_KEY] = by_session + [now]
+    by_ip.append(now)
     return True
 
 
@@ -44,7 +55,7 @@ def save_einvoice_data(partner_sudo, id_code, number, activity_code=None):
         return False, _("Too many identification lookups. Try again in an hour.")
     if lookup and lookup['id_code'] and lookup['id_code'] != id_code:
         return False, _("Hacienda registers this number with another identification type. Check the type.")
-    activity_codes = [code for code, __, __ in (lookup or {}).get('activities', [])]
+    activity_codes = [code for code, __ in (lookup or {}).get('choices', [])]
     if len(activity_codes) > 1 and activity_code not in activity_codes:
         request.session[PENDING_KEY] = {'number': number, 'id_code': id_code, 'lookup': lookup}
         return None, None
@@ -62,7 +73,8 @@ class EinvoiceWebsiteSale(WebsiteSale):
         if redirection := self._check_cart(order_sudo):
             return redirection
         if not requested:
-            order_sudo.cr_einvoice_requested = False
+            request.session.pop(PENDING_KEY, None)
+            order_sudo.write({'cr_einvoice_requested': False, 'cr_einvoice_choice_made': True})
             return request.redirect('/shop/checkout')
         partner_sudo = order_sudo.partner_invoice_id.commercial_partner_id
         if partner_sudo.is_company:
@@ -71,7 +83,7 @@ class EinvoiceWebsiteSale(WebsiteSale):
                 request.session[ERROR_KEY] = _("Your company's billing data is incomplete. Contact us to "
                                                "complete it.")
                 return request.redirect('/shop/checkout#cr_einvoice')
-            order_sudo.write({'cr_einvoice_requested': True, 'cr_einvoice_verified': True})
+            order_sudo.write({'cr_einvoice_requested': True, 'cr_einvoice_choice_made': True})
             return request.redirect('/shop/checkout')
         if not partner_sudo._can_be_edited_by_current_customer(order_sudo=order_sudo):
             raise request.not_found()
@@ -80,7 +92,7 @@ class EinvoiceWebsiteSale(WebsiteSale):
             request.session[ERROR_KEY] = error
         if error or verified is None:
             return request.redirect('/shop/checkout#cr_einvoice')
-        order_sudo.write({'cr_einvoice_requested': True, 'cr_einvoice_verified': verified})
+        order_sudo.write({'cr_einvoice_requested': True, 'cr_einvoice_choice_made': True})
         return request.redirect('/shop/checkout')
 
     def _validate_address_values(self, address_values, partner_sudo, address_type, *args, **kwargs):

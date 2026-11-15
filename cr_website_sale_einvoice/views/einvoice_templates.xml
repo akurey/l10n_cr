@@ -18,6 +18,7 @@
             </div>
             <p t-if="toggle" class="small text-muted o_cr_einvoice_ticket_note">Without it, an electronic ticket is issued.</p>
             <div class="o_cr_einvoice_fields">
+                <p t-if="toggle and not requested and not pending" class="small fw-bold mb-2">Press "Save" to request it.</p>
                 <t t-if="einvoice_partner.is_company">
                     <p class="mb-1">Issued to <strong t-out="einvoice_partner.name"/>
                         <t t-if="einvoice_partner.vat">(<t t-out="einvoice_partner.identification_id.sudo().name"/> <t t-out="einvoice_partner.vat"/>)</t>.</p>
@@ -44,7 +45,7 @@
                         <label class="form-label" for="cr_einvoice_activity">Economic activity</label>
                         <select class="form-select" id="cr_einvoice_activity" name="activity" required="required">
                             <option value="">Choose the activity for the invoice</option>
-                            <t t-foreach="pending['lookup']['activities']" t-as="activity">
+                            <t t-foreach="pending['lookup']['choices']" t-as="activity">
                                 <option t-att-value="activity[0]" t-out="'%s - %s' % (activity[0], activity[1])"/>
                             </t>
                         </select>
@@ -60,14 +61,17 @@
                     </p>
                 </t>
             </div>
-            <button type="submit" class="btn btn-outline-primary btn-sm">Save</button>
+            <button type="submit" class="btn btn-outline-primary btn-sm o_cr_einvoice_save">Save</button>
         </form>
     </template>
 
     <!-- The ID number is given in the electronic invoice section, with its type (required by Hacienda);
          Odoo's generic company name / tax ID inputs would store a number without a type. -->
     <template id="address_form_without_vat" inherit_id="portal.address_form_fields" name="No tax ID in address forms">
-        <xpath expr="//t[@name='b2b_fields']" position="replace"/>
+        <!-- Hidden rather than removed: other modules use this node as an xpath anchor. -->
+        <xpath expr="//t[@name='b2b_fields']" position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
     </template>
 
     <template id="checkout_einvoice" inherit_id="website_sale.checkout" name="Electronic invoice at checkout">
