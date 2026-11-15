@@ -25,28 +25,6 @@ class ResCompany(models.Model):
     # The scheduled update's last run, as {'date': UTC datetime, 'error': message or None}
     l10n_cr_last_scheduled_update = fields.Json(readonly=True)
 
-    def write(self, vals):
-        if not {'currency_id', 'account_fiscal_country_id', 'country_id'} & vals.keys():
-            return super().write(vals)
-        rated_currencies = {company: company._l10n_cr_get_rated_currency() for company in self}
-        res = super().write(vals)
-        for company in self:
-            former_currency = rated_currencies[company]
-            rated_currency = company._l10n_cr_get_rated_currency()
-            if rated_currency == former_currency:
-                continue
-            # Odoo divides every rate by the company currency's, so the BCCR's rates of the former currency would
-            # distort the conversions; rates entered manually are left to the user
-            if former_currency:
-                self.env['res.currency.rate'].sudo().search([
-                    ('company_id', '=', company.id),
-                    ('currency_id', '=', former_currency.id),
-                    ('l10n_cr_source', '=', 'bccr'),
-                ]).unlink()
-            if not rated_currency and company.l10n_cr_update_rates:
-                company.l10n_cr_update_rates = False
-        return res
-
     @api.model
     def _l10n_cr_get_rated_currency_for(self, fiscal_country, currency):
         """Currency the BCCR rates for a company of that fiscal country and currency, or an empty recordset."""
