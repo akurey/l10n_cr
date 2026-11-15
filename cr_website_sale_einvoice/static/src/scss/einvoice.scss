@@ -1,0 +1,7 @@
+// The data fields show only while the customer asks for the electronic invoice (no JavaScript needed).
+.o_cr_einvoice_form:has(#cr_einvoice_requested:not(:checked)) .o_cr_einvoice_fields {
+    display: none;
+}
+.o_cr_einvoice_form:has(#cr_einvoice_requested:checked) .o_cr_einvoice_ticket_note {
+    display: none;
+}
