@@ -15,6 +15,9 @@ _logger = logging.getLogger(__name__)
 BCCR_API_BASE = 'https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API'
 BCCR_SELLING_INDICATOR = '318'  # Tipo cambio venta
 BCCR_BUYING_INDICATOR = '317'  # Tipo cambio compra
+# The BCCR publishes the euro against the US dollar (USD per EUR). The euro in colones is that rate times the
+# dollar's: EUR → USD → CRC, the way the BCCR itself derives it.
+BCCR_EUR_USD_INDICATOR = '333'
 BCCR_TIMEOUT = 60
 
 # The API gateway answers 403 to the default user agent of the requests
@@ -239,6 +242,22 @@ class ResCurrencyRate(models.Model):
                               'original_rate_2': buying_original_rate,
                               'currency_id': currency_id.id})
 
+            # Euro, only when the company uses it (imports from Europe)
+            euro = self.env.ref('base.EUR')
+            if euro.active:
+                # The euro is only published on business days: a week earlier covers the first date of the range,
+                # and each day takes the last value published up to it (as the BCCR does for the dollar).
+                euro_in_dollars = self._bccr_get_series(
+                    BCCR_EUR_USD_INDICATOR, initial_date - timedelta(days=7), end_date, bccr_token)
+                published = sorted(euro_in_dollars)
+                for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
+                    known = [day for day in published if day <= current_date_str]
+                    if not known:
+                        continue
+                    usd_per_eur = euro_in_dollars[known[-1]]
+                    self._cr_set_rate(euro, current_date_str, usd_per_eur * selling_rates[current_date_str],
+                                      usd_per_eur * buying_rates[current_date_str])
+
         if exchange_source == 'hacienda':
             _logger.info("Getting exchange rates from HACIENDA")
 
@@ -342,6 +361,21 @@ class ResCurrencyRate(models.Model):
                 _logger.info(vals)
 
         _logger.info("=========================================================")
+
+    def _cr_set_rate(self, currency, date, selling_crc, buying_crc):
+        """Create or update `currency`'s rate on `date` from its price in colones (selling and buying)."""
+        vals = {
+            'rate': 1 / selling_crc,
+            'original_rate': selling_crc,
+            'rate_2': 1 / buying_crc,
+            'original_rate_2': buying_crc,
+        }
+        rate = self.search([('name', '=', date), ('currency_id', '=', currency.id)], limit=1)
+        if rate:
+            rate.write(vals)
+        else:
+            self.create(dict(vals, name=date, currency_id=currency.id))
+        _logger.info("%s rate on %s: %s CRC (selling), %s CRC (buying)", currency.name, date, selling_crc, buying_crc)
 
     def _create_the_latest_exchange_rate_to_date(self, currency, date=None):
         name = date or datetime.now()
