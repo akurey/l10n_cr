@@ -15,9 +15,9 @@ CR_TZ = 'America/Costa_Rica'
 # The BCCR publishes tomorrow's rate around 17:30, and the update first runs at 18:00
 UPDATE_TIME = time(18)
 RATES_STATUSES = [
-    ('ready', 'Ready'),
-    ('late', 'Tomorrow missing'),
-    ('missing', 'Missing'),
+    ('ready', 'Up to date'),
+    ('late', 'Tomorrow pending'),
+    ('missing', 'Out of date'),
 ]
 
 
@@ -29,7 +29,6 @@ class ResCurrency(models.Model):
     l10n_cr_show_update = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update_failed = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
@@ -56,7 +55,6 @@ class ResCurrency(models.Model):
             currency.l10n_cr_show_update = show_update
             currency.l10n_cr_rates_status = show_update and status['status']
             currency.l10n_cr_rates_ready_until = show_update and status['ready_until']
-            currency.l10n_cr_rates_entered_manually = show_update and status['entered_manually']
             currency.l10n_cr_last_update = show_update and status['last_update']
             currency.l10n_cr_last_update_failed = show_update and bool(status['last_update_error'])
             currency.l10n_cr_next_update = show_update and status['next_update']

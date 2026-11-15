@@ -145,9 +145,8 @@ class ResCompany(models.Model):
     def _l10n_cr_get_rates_status(self):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
 
-        :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, whether
-            the latest one was entered manually, when the scheduled update last ran, as text, with its error, and
-            when it runs next, as text
+        :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, when the
+            scheduled update last ran, as text, with its error, and when it runs next, as text
         """
         self.ensure_one()
         now = datetime.now(ZoneInfo(CR_TZ))
@@ -174,7 +173,6 @@ class ResCompany(models.Model):
         return {
             'status': status,
             'ready_until': ready_until,
-            'entered_manually': last_rate.l10n_cr_source == 'manual',
             'last_update': last_run_date and self._l10n_cr_format_datetime(last_run_date),
             'last_update_error': last_run.get('error') or False,
             'next_update': next_run and self._l10n_cr_format_datetime(next_run),

@@ -14,7 +14,6 @@ class ResConfigSettings(models.TransientModel):
     l10n_cr_bccr_token = fields.Char(config_parameter='bccr_token')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_rates_entered_manually = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update_error = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
@@ -38,7 +37,6 @@ class ResConfigSettings(models.TransientModel):
             status = settings.company_id.root_id._l10n_cr_get_rates_status()
             settings.l10n_cr_rates_status = status['status']
             settings.l10n_cr_rates_ready_until = status['ready_until']
-            settings.l10n_cr_rates_entered_manually = status['entered_manually']
             settings.l10n_cr_last_update = status['last_update']
             settings.l10n_cr_last_update_error = status['last_update_error']
             settings.l10n_cr_next_update = status['next_update']
