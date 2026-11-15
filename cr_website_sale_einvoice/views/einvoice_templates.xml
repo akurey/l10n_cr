@@ -25,7 +25,12 @@
                     <p class="small text-muted mb-2">A company's billing data is updated by our sales team.</p>
                 </t>
                 <t t-else="">
-                    <div class="row g-2">
+                    <div t-if="toggle" class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="cr_einvoice_third_party" name="third_party"
+                               value="1" t-att-checked="third_party or pending.get('third_party')"/>
+                        <label class="form-check-label" for="cr_einvoice_third_party">In the name of a third party (another person or a company)</label>
+                    </div>
+                    <div class="row g-2 o_cr_einvoice_own">
                         <div class="col-md-5">
                             <label class="form-label" for="cr_einvoice_type">Identification type</label>
                             <select class="form-select" id="cr_einvoice_type" name="identification_type">
@@ -40,6 +45,29 @@
                                    autocomplete="off" t-att-value="current_vat" placeholder="112340567"/>
                         </div>
                     </div>
+                    <div t-if="toggle" class="row g-2 o_cr_einvoice_third">
+                        <t t-set="third_types" t-value="einvoice_partner.env['identification.type'].sudo().search([('code', 'in', ('01', '02', '03', '04'))], order='code')"/>
+                        <t t-set="third" t-value="order_einvoice_partner or einvoice_partner.browse()"/>
+                        <div class="col-md-5">
+                            <label class="form-label" for="cr_einvoice_third_type">Third party's identification type</label>
+                            <select class="form-select" id="cr_einvoice_third_type" name="third_type">
+                                <t t-foreach="third_types" t-as="id_type">
+                                    <option t-att-value="id_type.code" t-att-selected="id_type.code == (pending.get('id_code') if pending.get('third_party') else third.identification_id.code or '02')" t-out="id_type.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label" for="cr_einvoice_third_vat">Third party's identification number</label>
+                            <input class="form-control" id="cr_einvoice_third_vat" name="third_vat" autocomplete="off"
+                                   t-att-value="pending.get('number') if pending.get('third_party') else third.vat or ''" placeholder="3101123456"/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="cr_einvoice_third_email">Third party's e-mail to receive the invoice</label>
+                            <input class="form-control" id="cr_einvoice_third_email" name="third_email" type="email"
+                                   t-att-value="pending.get('email') if pending.get('third_party') else third.email or ''"/>
+                        </div>
+                        <p t-if="third and not pending" class="small col-12 mb-0">Issued to <strong t-out="third.name"/>.</p>
+                    </div>
                     <div t-if="pending.get('lookup')" class="mt-2">
                         <p class="mb-1">Name in Hacienda: <strong t-out="pending['lookup']['name']"/></p>
                         <label class="form-label" for="cr_einvoice_activity">Economic activity</label>
@@ -50,14 +78,13 @@
                             </t>
                         </select>
                     </div>
-                    <p t-elif="einvoice_partner.vat and einvoice_partner.identification_id" class="small mt-2 mb-0">
+                    <p t-elif="einvoice_partner.vat and einvoice_partner.identification_id" class="small mt-2 mb-0 o_cr_einvoice_own">
                         Issued to <strong t-out="einvoice_partner.name"/>
                         <t t-if="einvoice_partner.activity_id"> · activity <t t-out="einvoice_partner.activity_id.sudo().code"/></t>.
                     </p>
                     <p class="small text-muted mt-2 mb-2">
                         The name and economic activity are taken from Hacienda's registry. Sent to
                         <strong t-out="einvoice_partner.email or request.env.user.email"/>.
-                        For an invoice in a company's name, contact our sales team.
                     </p>
                 </t>
             </div>
@@ -83,6 +110,8 @@
                     <t t-set="action" t-valuef="/shop/einvoice"/>
                     <t t-set="toggle" t-value="True"/>
                     <t t-set="requested" t-value="order.cr_einvoice_requested"/>
+                    <t t-set="third_party" t-value="bool(order.cr_einvoice_partner_id)"/>
+                    <t t-set="order_einvoice_partner" t-value="order.cr_einvoice_partner_id.sudo()"/>
                 </t>
             </div>
         </xpath>

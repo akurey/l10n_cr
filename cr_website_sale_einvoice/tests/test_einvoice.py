@@ -152,6 +152,38 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertTrue(self.cart.cr_einvoice_requested)
         self.assertEqual(self.cart._prepare_invoice()['tipo_documento'], 'FE')
 
+    def test_invoice_in_a_third_partys_name(self):
+        with patch(LOOKUP, return_value=hacienda(name='EMPRESA TERCERA S.A.', id_code='02', activities=['5610.0'])):
+            self._submit(requested='1', third_party='1', third_type='02', third_vat='3-101-123456',
+                         third_email='facturas@tercera.example')
+        receptor = self.cart.cr_einvoice_partner_id
+        self.assertEqual((receptor.name, receptor.vat, receptor.is_company),
+                         ('EMPRESA TERCERA S.A.', '3101123456', True))
+        self.assertEqual(receptor.email, 'facturas@tercera.example')
+        self.assertEqual(receptor.cr_einvoice_requested_by_id, self.customer)
+        self.assertFalse(self.customer.vat, "the customer's own data is untouched")
+        invoice_vals = self.cart._prepare_invoice()
+        self.assertEqual((invoice_vals['tipo_documento'], invoice_vals['partner_id']), ('FE', receptor.id))
+
+    def test_third_party_needs_an_email_and_is_reused(self):
+        with patch(LOOKUP) as lookup:
+            session = self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456')
+        self.assertIn('e-mail', session[ERROR_KEY])
+        lookup.assert_not_called()
+        with patch(LOOKUP, return_value=hacienda(name='TERCERA', id_code='02', activities=['5610.0'])):
+            self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456', third_email='a@b.cr')
+            first = self.cart.cr_einvoice_partner_id
+            self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456', third_email='c@d.cr')
+        self.assertEqual(self.cart.cr_einvoice_partner_id, first, "the same third party is not duplicated")
+        self.assertEqual(first.email, 'c@d.cr')
+
+    def test_taxpayers_get_the_einvoice_by_default(self):
+        with patch(LOOKUP, return_value=hacienda(activities=[])):
+            self._submit(requested='1', identification_type='01', vat='112340567')
+        self.assertFalse(self.cart.copy().cr_einvoice_requested, "without an activity: ticket by default")
+        self.customer.activity_id = self.env['economic.activity'].sudo().create({'code': '4773.0', 'name': 'Venta'})
+        self.assertTrue(self.cart.copy().cr_einvoice_requested, "a taxpayer gets the FE by default")
+
     def test_backend_orders_keep_the_module_choice_and_export_is_fee(self):
         backend = self.cart.copy({'website_id': False})
         self.assertNotIn('tipo_documento', backend._prepare_invoice())
@@ -195,6 +227,7 @@ class TestCheckoutEinvoice(TransactionCase):
             self._submit(requested='1', identification_type='01', vat='112340567')
         next_cart = self.cart.copy()
         self.assertTrue(next_cart.cr_einvoice_requested and next_cart.cr_einvoice_verified)
+        self.assertEqual(next_cart._prepare_invoice()['tipo_documento'], 'FE')
 
 
 @tagged('post_install', '-at_install')
