@@ -122,7 +122,7 @@ class ResCompany(models.Model):
         else:
             status = 'missing'
         next_run = False
-        cron = self._l10n_cr_get_cron()
+        cron = self.sudo().env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
         if cron and cron.active and self.l10n_cr_update_rates and self._l10n_cr_get_bccr_token():
             next_run = cron.nextcall
             if status == 'ready':
@@ -167,11 +167,6 @@ class ResCompany(models.Model):
             'target': 'new',
             'context': {'default_company_id': self.id, 'dialog_size': 'medium'},
         }
-
-    @api.model
-    def _l10n_cr_get_cron(self):
-        cron = self.env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
-        return cron and cron.sudo()
 
     @api.model
     def _l10n_cr_to_cr_time(self, utc_datetime):
