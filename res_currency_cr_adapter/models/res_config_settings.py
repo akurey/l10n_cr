@@ -14,7 +14,7 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.root_id.l10n_cr_bccr_rates_enabled',
         readonly=False,
     )
-    l10n_cr_bccr_token = fields.Char(config_parameter='res_currency_cr_adapter.bccr_token')
+    l10n_cr_bccr_token = fields.Char(string='BCCR Token', config_parameter='res_currency_cr_adapter.bccr_token')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')

@@ -41,7 +41,7 @@
                         </div>
                     </div>
                 </setting>
-                <setting id="l10n_cr_bccr_token" string="BCCR Token" help="Shared by all companies" invisible="not group_multi_currency or not l10n_cr_rates_available or not l10n_cr_bccr_rates_enabled">
+                <setting id="l10n_cr_bccr_token" help="Shared by all companies" invisible="not group_multi_currency or not l10n_cr_rates_available or not l10n_cr_bccr_rates_enabled">
                     <field name="l10n_cr_bccr_token" password="True"/>
                     <div class="mt8" invisible="l10n_cr_bccr_token">
                         <a href="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil" target="_blank" class="btn-link" role="button">
