@@ -63,10 +63,10 @@ class ResCompany(models.Model):
         By default each company catches up from its first missing rate, or today without any, to tomorrow.
         Rates entered manually are only overwritten with replace.
 
-        :return: {company: error} of the companies whose update failed
+        :return: the error message if the update failed, else False
         """
         if not self:
-            return {}
+            return False
         # By default up to tomorrow's rate, which the BCCR publishes in the evening
         today = fields.Date.context_today(self.with_context(tz=CR_TZ))
         last_date = last_date or today + timedelta(days=1)
@@ -77,12 +77,12 @@ class ResCompany(models.Model):
             rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(first_dates.values()), last_date)
         except UserError as e:
             _logger.error("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
-            return dict.fromkeys(self, str(e))
+            return str(e)
         # Each company only gets its own missing days, so rates it already has are left alone
         for company in self:
             company_rates = {date: rate for date, rate in rates.items() if date >= first_dates[company]}
             self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
-        return {}
+        return False
 
     @api.model
     def _cron_l10n_cr_update_rates(self):
@@ -104,10 +104,14 @@ class ResCompany(models.Model):
             ready_until = company._l10n_cr_get_rates_ready_until()
             return not ready_until or ready_until < target_date
 
-        errors = companies.filtered(is_missing)._l10n_cr_update_rates()
+        updated_companies = companies.filtered(is_missing)
+        error = updated_companies._l10n_cr_update_rates()
         run_date = fields.Datetime.to_string(fields.Datetime.now())
         for company in companies:
-            company.l10n_cr_last_scheduled_update = {'date': run_date, 'error': errors.get(company)}
+            company.l10n_cr_last_scheduled_update = {
+                'date': run_date,
+                'error': error if company in updated_companies else None,
+            }
         missing_companies = companies.filtered(is_missing)
         retry_at = now + RETRY_INTERVAL
         cron = self._l10n_cr_get_cron()
@@ -155,7 +159,7 @@ class ResCompany(models.Model):
     def _l10n_cr_action_update_rates(self):
         """Load the company's missing rates and notify the result, then reload the view."""
         self.ensure_one()
-        error = self._l10n_cr_update_rates().get(self)
+        error = self._l10n_cr_update_rates()
         if error:
             notification = {'type': 'danger', 'message': error}
         else:

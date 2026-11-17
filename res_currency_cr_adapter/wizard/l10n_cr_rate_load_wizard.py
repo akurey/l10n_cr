@@ -37,8 +37,7 @@ class L10nCrRateLoadWizard(models.TransientModel):
         self.env['res.currency.rate'].check_access('create')
         if self.company_id not in self.env.user.company_ids.root_id:
             raise AccessError(self.env._("You can only load the exchange rates of your own companies."))
-        error = self.company_id.sudo()._l10n_cr_update_rates(
-            self.date_from, self.date_to, replace=self.replace).get(self.company_id)
+        error = self.company_id.sudo()._l10n_cr_update_rates(self.date_from, self.date_to, replace=self.replace)
         if error:
             notification = {'type': 'danger', 'message': error}
         else:
