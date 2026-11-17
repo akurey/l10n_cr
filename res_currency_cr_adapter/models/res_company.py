@@ -88,14 +88,8 @@ class ResCompany(models.Model):
     def _cron_l10n_cr_update_rates(self):
         """Load the missing BCCR rates of each company that updates them, retrying every hour while any is still
         missing, until the morning."""
-        companies = self.sudo().search([
-            ('parent_id', '=', False),
-            ('l10n_cr_update_rates', '=', True),
-        ]).filtered(lambda company: company._l10n_cr_get_rated_currency())
-        if not companies or not companies._l10n_cr_get_bccr_token():
-            _logger.info("No company updates its exchange rates from the BCCR")
+        if not self._l10n_cr_get_bccr_token():
             return
-
         now = datetime.now(ZoneInfo(CR_TZ))
         # The evening update is after tomorrow's rate, and its retries after midnight are still after that same day's
         target_date = now.date() + timedelta(days=1) if now.time() >= RETRY_UNTIL else now.date()
@@ -104,14 +98,15 @@ class ResCompany(models.Model):
             ready_until = company._l10n_cr_get_rates_ready_until()
             return not ready_until or ready_until < target_date
 
-        updated_companies = companies.filtered(is_missing)
-        error = updated_companies._l10n_cr_update_rates()
+        companies = self.sudo().search([
+            ('parent_id', '=', False),
+            ('l10n_cr_update_rates', '=', True),
+        ]).filtered(lambda company: company._l10n_cr_get_rated_currency() and is_missing(company))
+
+        error = companies._l10n_cr_update_rates()
         run_date = fields.Datetime.to_string(fields.Datetime.now())
         for company in companies:
-            company.l10n_cr_last_scheduled_update = {
-                'date': run_date,
-                'error': error if company in updated_companies else None,
-            }
+            company.l10n_cr_last_scheduled_update = {'date': run_date, 'error': error}
         missing_companies = companies.filtered(is_missing)
         retry_at = now + RETRY_INTERVAL
         cron = self._l10n_cr_get_cron()
