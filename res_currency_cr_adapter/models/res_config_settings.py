@@ -21,12 +21,13 @@ class ResConfigSettings(models.TransientModel):
     l10n_cr_last_update_error = fields.Char(compute='_compute_l10n_cr_rates_status')
     l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
 
-    # From the form's currency and fiscal country, so the setting follows them before they are saved
     @api.depends('currency_id', 'account_fiscal_country_id')
     def _compute_l10n_cr_rates_available(self):
+        # From the form's currency and fiscal country, so the setting follows them before they are saved
         for settings in self:
-            settings.l10n_cr_rates_available = bool(self.env['res.company']._l10n_cr_get_rated_currency_for(
-                settings.account_fiscal_country_id, settings.currency_id))
+            rated_currency = self.env['res.company']._l10n_cr_get_rated_currency_for(
+                settings.account_fiscal_country_id, settings.currency_id)
+            settings.l10n_cr_rates_available = bool(rated_currency)
 
     @api.depends('company_id')
     def _compute_l10n_cr_rates_status(self):
