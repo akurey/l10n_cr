@@ -44,6 +44,15 @@ class ResCompany(models.Model):
             ('currency_id', '=', self._l10n_cr_get_rated_currency().id),
         ], order='company_id.id, name desc', limit=1).l10n_cr_date
 
+    @api.model
+    def _l10n_cr_is_missing_rates(self, ready_until, now):
+        """Whether rates ready until that date lack the latest one due at that Costa Rica time.
+
+        Tomorrow's rate is due from the evening, and today's before.
+        """
+        due_date = now.date() + timedelta(days=1) if now.time() >= UPDATE_TIME else now.date()
+        return not ready_until or ready_until < due_date
+
     def _l10n_cr_get_first_missing_date(self, today):
         """First date whose rate is missing, from the end of the company's rates and at most today."""
         ready_until = self._l10n_cr_get_rates_ready_until()
@@ -85,13 +94,6 @@ class ResCompany(models.Model):
         return error
 
     @api.model
-    def _l10n_cr_is_missing_rates(self, ready_until, now):
-        """Whether rates ready until that date lack the latest one due at that Costa Rica time: tomorrow's from the
-        evening, else today's."""
-        due_date = now.date() + timedelta(days=1) if now.time() >= UPDATE_TIME else now.date()
-        return not ready_until or ready_until < due_date
-
-    @api.model
     def _cron_l10n_cr_update_rates(self):
         """Load the due BCCR rates of each company that updates them and is missing any.
 
@@ -106,7 +108,6 @@ class ResCompany(models.Model):
             ('l10n_cr_update_rates', '=', True),
         ]).filtered(lambda company: company._l10n_cr_get_rated_currency()
                     and self._l10n_cr_is_missing_rates(company._l10n_cr_get_rates_ready_until(), now))
-
         companies._l10n_cr_update_rates()
 
     def _l10n_cr_get_rates_status(self):
@@ -141,6 +142,20 @@ class ResCompany(models.Model):
             'next_update': next_run and self._l10n_cr_format_datetime(next_run),
         }
 
+    @api.model
+    def _l10n_cr_format_datetime(self, utc_datetime):
+        """Describe a UTC datetime in Costa Rica time, relative to today when near."""
+        cr_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
+        time = format_time(self.env, utc_datetime, tz=CR_TZ, time_format='short')
+        days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
+        if days == 0:
+            return self.env._("today at %(time)s", time=time)
+        if days == -1:
+            return self.env._("yesterday at %(time)s", time=time)
+        if days == 1:
+            return self.env._("tomorrow at %(time)s", time=time)
+        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=time)
+
     def _l10n_cr_action_update_rates(self):
         """Load the company's missing rates and notify the result, then reload the view."""
         self.ensure_one()
@@ -165,17 +180,3 @@ class ResCompany(models.Model):
             'target': 'new',
             'context': {'default_company_id': self.id, 'dialog_size': 'medium'},
         }
-
-    @api.model
-    def _l10n_cr_format_datetime(self, utc_datetime):
-        """Describe a UTC datetime in Costa Rica time, relative to today when near."""
-        cr_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
-        time = format_time(self.env, utc_datetime, tz=CR_TZ, time_format='short')
-        days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
-        if days == 0:
-            return self.env._("today at %(time)s", time=time)
-        if days == -1:
-            return self.env._("yesterday at %(time)s", time=time)
-        if days == 1:
-            return self.env._("tomorrow at %(time)s", time=time)
-        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=time)
