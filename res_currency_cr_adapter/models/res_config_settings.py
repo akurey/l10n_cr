@@ -11,7 +11,7 @@ class ResConfigSettings(models.TransientModel):
     l10n_cr_rates_available = fields.Boolean(compute='_compute_l10n_cr_rates_available')
     # The update runs on the root company, so a branch shows and edits its root's settings
     l10n_cr_update_rates = fields.Boolean(related='company_id.root_id.l10n_cr_update_rates', readonly=False)
-    l10n_cr_bccr_token = fields.Char(config_parameter='bccr_token')
+    l10n_cr_bccr_token = fields.Char(config_parameter='res_currency_cr_adapter.bccr_token')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')

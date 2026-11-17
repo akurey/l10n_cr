@@ -55,7 +55,7 @@ class ResCompany(models.Model):
 
     @api.model
     def _l10n_cr_get_bccr_token(self):
-        return self.env['ir.config_parameter'].sudo().get_str('bccr_token')
+        return self.env['ir.config_parameter'].sudo().get_str('res_currency_cr_adapter.bccr_token')
 
     def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
         """Load the BCCR rates from first_date to last_date for these root companies, in a single request.
