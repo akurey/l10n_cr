@@ -80,9 +80,11 @@ class ResCompany(models.Model):
         return False
 
     @api.model
-    def _l10n_cr_get_due_date(self, now):
-        """Last date whose rate is due at that Costa Rica time: tomorrow's from the evening, else today's."""
-        return now.date() + timedelta(days=1) if now.time() >= UPDATE_TIME else now.date()
+    def _l10n_cr_is_missing_rates(self, ready_until, now):
+        """Whether rates ready until that date lack the latest one due at that Costa Rica time: tomorrow's from the
+        evening, else today's."""
+        due_date = now.date() + timedelta(days=1) if now.time() >= UPDATE_TIME else now.date()
+        return not ready_until or ready_until < due_date
 
     @api.model
     def _cron_l10n_cr_update_rates(self):
@@ -94,16 +96,11 @@ class ResCompany(models.Model):
         if not self._l10n_cr_get_bccr_token():
             return
         now = datetime.now(ZoneInfo(CR_TZ))
-        due_date = self._l10n_cr_get_due_date(now)
-
-        def is_missing(company):
-            ready_until = company._l10n_cr_get_rates_ready_until()
-            return not ready_until or ready_until < due_date
-
         companies = self.sudo().search([
             ('parent_id', '=', False),
             ('l10n_cr_update_rates', '=', True),
-        ]).filtered(lambda company: company._l10n_cr_get_rated_currency() and is_missing(company))
+        ]).filtered(lambda company: company._l10n_cr_get_rated_currency()
+                    and self._l10n_cr_is_missing_rates(company._l10n_cr_get_rates_ready_until(), now))
 
         error = companies._l10n_cr_update_rates()
         run_date = fields.Datetime.to_string(now.astimezone(timezone.utc))
@@ -120,7 +117,7 @@ class ResCompany(models.Model):
         today = now.date()
         cron = self._l10n_cr_get_cron()
         ready_until = self._l10n_cr_get_rates_ready_until()
-        if ready_until and ready_until >= self._l10n_cr_get_due_date(now):
+        if not self._l10n_cr_is_missing_rates(ready_until, now):
             status = 'ready'
         elif ready_until == today:
             status = 'late'
