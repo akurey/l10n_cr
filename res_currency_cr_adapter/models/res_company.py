@@ -145,19 +145,14 @@ class ResCompany(models.Model):
         """Load the company's missing rates and notify the result, then reload the view."""
         self.ensure_one()
         error = self._l10n_cr_update_rates()
-        if error:
-            notification = {'type': 'danger', 'message': error}
-        else:
-            notification = {
-                'type': 'success',
-                'message': self.env._(
-                    "Exchange rates loaded up to %(date)s",
-                    date=format_date(self.env, self._l10n_cr_get_rates_ready_until())),
-            }
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
-            'params': {**notification, 'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'}},
+            'params': {
+                'type': 'danger' if error else 'success',
+                'message': error or self.env._("Exchange rates updated"),
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
         }
 
     def _l10n_cr_action_open_rate_load_wizard(self):
