@@ -8,7 +8,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import format_date
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET, UPDATE_TIME
+from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, UPDATE_TIME
 from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
@@ -37,18 +37,16 @@ class ResCompany(models.Model):
         self.ensure_one()
         return self._l10n_cr_get_rated_currency_for(self.account_fiscal_country_id, self.currency_id)
 
-    def _l10n_cr_get_last_rate(self):
-        """Latest rate of the currency the BCCR rates, the company's own first and else shared."""
+    def _l10n_cr_get_rates_ready_until(self):
+        """Last date whose documents have a rate of the currency the BCCR rates, or False without any.
+
+        The company's own rates come first and else the shared ones.
+        """
         self.ensure_one()
         return self.env['res.currency.rate'].search([
             ('company_id', 'in', [False, self.id]),
             ('currency_id', '=', self._l10n_cr_get_rated_currency().id),
-        ], order='company_id.id, name desc', limit=1)
-
-    def _l10n_cr_get_rates_ready_until(self):
-        """Last date whose documents have a rate of the currency the BCCR rates, or False without any."""
-        last_rate = self._l10n_cr_get_last_rate()
-        return last_rate.name + RATE_DATE_OFFSET if last_rate else False
+        ], order='company_id.id, name desc', limit=1).l10n_cr_date
 
     def _l10n_cr_get_first_missing_date(self, today):
         """First date whose rate is missing, from the end of the company's rates and at most today."""
@@ -129,8 +127,7 @@ class ResCompany(models.Model):
         now = datetime.now(ZoneInfo(CR_TZ))
         today = now.date()
         cron = self._l10n_cr_get_cron()
-        last_rate = self._l10n_cr_get_last_rate()
-        ready_until = last_rate.name + RATE_DATE_OFFSET if last_rate else False
+        ready_until = self._l10n_cr_get_rates_ready_until()
         # Until the evening update, today's rate is all there can be
         if ready_until and (ready_until > today or ready_until == today and now.time() < UPDATE_TIME):
             status = 'ready'
