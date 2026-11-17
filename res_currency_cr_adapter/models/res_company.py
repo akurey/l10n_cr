@@ -167,13 +167,9 @@ class ResCompany(models.Model):
         }
 
     @api.model
-    def _l10n_cr_to_cr_time(self, utc_datetime):
-        return utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
-
-    @api.model
     def _l10n_cr_format_datetime(self, utc_datetime):
         """Describe a UTC datetime in Costa Rica time, relative to today when near."""
-        cr_datetime = self._l10n_cr_to_cr_time(utc_datetime)
+        cr_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
         time = cr_datetime.strftime('%H:%M')
         days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
         if days == 0:
