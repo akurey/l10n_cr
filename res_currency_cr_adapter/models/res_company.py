@@ -38,12 +38,12 @@ class ResCompany(models.Model):
         return self._l10n_cr_get_rated_currency_for(self.account_fiscal_country_id, self.currency_id)
 
     def _l10n_cr_get_last_rate(self):
-        """Latest rate of the currency the BCCR rates, the company's own or shared."""
+        """Latest rate of the currency the BCCR rates, the company's own first and else shared."""
         self.ensure_one()
         return self.env['res.currency.rate'].search([
             ('company_id', 'in', [False, self.id]),
             ('currency_id', '=', self._l10n_cr_get_rated_currency().id),
-        ], order='name desc', limit=1)
+        ], order='company_id.id, name desc', limit=1)
 
     def _l10n_cr_get_rates_ready_until(self):
         """Last date whose documents have a rate of the currency the BCCR rates, or False without any."""
