@@ -22,7 +22,7 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
-    # The scheduled update's last run, as {'date': UTC datetime, 'error': message or None}
+    # The scheduled update's last run, as {'date': UTC datetime, 'error': message or False}
     l10n_cr_last_scheduled_update = fields.Json(readonly=True)
 
     @api.model
@@ -86,11 +86,14 @@ class ResCompany(models.Model):
     @api.model
     def _cron_l10n_cr_update_rates(self):
         """Load the missing BCCR rates of each company that updates them, retrying every hour while any is still
-        missing, until the morning."""
+        missing.
+
+        From 06:00 a run wants tomorrow's rate, and the night's retries after midnight still want that same date, so
+        the retries stop at 06:00 of that date, before the working day starts.
+        """
         if not self._l10n_cr_get_bccr_token():
             return
         now = datetime.now(ZoneInfo(CR_TZ))
-        # The evening update is after tomorrow's rate, and its retries after midnight are still after that same day's
         target_date = now.date() + timedelta(days=1) if now.time() >= RETRY_UNTIL else now.date()
 
         def is_missing(company):
@@ -103,9 +106,8 @@ class ResCompany(models.Model):
         ]).filtered(lambda company: company._l10n_cr_get_rated_currency() and is_missing(company))
 
         error = companies._l10n_cr_update_rates()
-        run_date = fields.Datetime.to_string(fields.Datetime.now())
-        for company in companies:
-            company.l10n_cr_last_scheduled_update = {'date': run_date, 'error': error}
+        run_date = fields.Datetime.to_string(now.astimezone(timezone.utc))
+        companies.l10n_cr_last_scheduled_update = {'date': run_date, 'error': error}
         missing_companies = companies.filtered(is_missing)
         retry_at = now + RETRY_INTERVAL
         cron = self._l10n_cr_get_cron()
