@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    l10n_cr_bccr_rates_enabled = fields.Boolean(string='Update Exchange Rates')
+    l10n_cr_bccr_rates_enabled = fields.Boolean(string='BCCR Exchange Rates')
     # The last BCCR update, as {'date': UTC datetime, 'error': message or False}
     l10n_cr_last_update = fields.Json(readonly=True)
 
