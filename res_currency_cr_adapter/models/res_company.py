@@ -28,10 +28,9 @@ class ResCompany(models.Model):
     @api.model
     def _l10n_cr_get_rated_currency_for(self, fiscal_country, currency):
         """Currency the BCCR rates for a company of that fiscal country and currency, or an empty recordset."""
-        Currency = self.env['res.currency']
-        if fiscal_country.code != 'CR':
-            return Currency
-        return {'CRC': self.env.ref('base.USD'), 'USD': self.env.ref('base.CRC')}.get(currency.name, Currency)
+        if fiscal_country.code != 'CR' or currency.name not in ('CRC', 'USD'):
+            return self.env['res.currency']
+        return self.env.ref('base.USD' if currency.name == 'CRC' else 'base.CRC')
 
     def _l10n_cr_get_rated_currency(self):
         """Currency the BCCR rates for this company: the dollar for a colón company, the colón for a dollar one."""
