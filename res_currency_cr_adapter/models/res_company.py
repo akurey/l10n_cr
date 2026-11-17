@@ -60,27 +60,26 @@ class ResCompany(models.Model):
     def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
         """Load the BCCR rates from first_date to last_date for these root companies, in a single request.
 
-        By default each company catches up from its first missing rate, or today without any, to tomorrow.
-        Rates entered manually are only overwritten with replace.
+        By default each company catches up from its first missing rate, or today without any, to tomorrow's rate,
+        which the BCCR publishes in the evening. Each company only stores the dates from its own start date, so the
+        rates it already has are left alone, and rates entered manually are only overwritten with replace.
 
-        :return: the error message if the update failed, else False
+        :return: the error message if the update failed, else False; it isn't raised, since Odoo deactivates a cron
+            after repeated failures
         """
         if not self:
             return False
-        # By default up to tomorrow's rate, which the BCCR publishes in the evening
-        today = fields.Date.context_today(self.with_context(tz=CR_TZ))
+        today = datetime.now(ZoneInfo(CR_TZ)).date()
         last_date = last_date or today + timedelta(days=1)
-        first_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in self}
+        start_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in self}
 
-        # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
         try:
-            rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(first_dates.values()), last_date)
+            rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(start_dates.values()), last_date)
         except UserError as e:
-            _logger.error("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
+            _logger.warning("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
             return str(e)
-        # Each company only gets its own missing days, so rates it already has are left alone
-        for company in self:
-            company_rates = {date: rate for date, rate in rates.items() if date >= first_dates[company]}
+        for company, start_date in start_dates.items():
+            company_rates = {date: rate for date, rate in rates.items() if date >= start_date}
             self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
         return False
 
