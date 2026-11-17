@@ -18,8 +18,8 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
-    # The scheduled update's last run, as {'date': UTC datetime, 'error': message or False}
-    l10n_cr_last_scheduled_update = fields.Json(readonly=True)
+    # The last BCCR update, as {'date': UTC datetime, 'error': message or False}
+    l10n_cr_last_update = fields.Json(readonly=True)
 
     @api.model
     def _l10n_cr_get_rated_currency_for(self, fiscal_country, currency):
@@ -58,26 +58,31 @@ class ResCompany(models.Model):
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow's rate,
         which the BCCR publishes in the evening. Each company only stores the dates from its own start date, so the
-        rates it already has are left alone, and rates entered manually are only overwritten with replace.
+        rates it already has are left alone, and rates entered manually are only overwritten with replace. The result
+        is stamped on each company as its last update.
 
         :return: the error message if the update failed, else False; it isn't raised, since Odoo deactivates a cron
             after repeated failures
         """
         if not self:
             return False
-        today = datetime.now(ZoneInfo(CR_TZ)).date()
+        now = datetime.now(ZoneInfo(CR_TZ))
+        today = now.date()
         last_date = last_date or today + timedelta(days=1)
         start_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in self}
 
+        error = False
         try:
             rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(start_dates.values()), last_date)
         except UserError as e:
             _logger.warning("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
-            return str(e)
-        for company, start_date in start_dates.items():
-            company_rates = {date: rate for date, rate in rates.items() if date >= start_date}
-            self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
-        return False
+            error = str(e)
+        else:
+            for company, start_date in start_dates.items():
+                company_rates = {date: rate for date, rate in rates.items() if date >= start_date}
+                self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
+        self.l10n_cr_last_update = {'date': fields.Datetime.to_string(now.astimezone(timezone.utc)), 'error': error}
+        return error
 
     @api.model
     def _l10n_cr_is_missing_rates(self, ready_until, now):
@@ -102,15 +107,13 @@ class ResCompany(models.Model):
         ]).filtered(lambda company: company._l10n_cr_get_rated_currency()
                     and self._l10n_cr_is_missing_rates(company._l10n_cr_get_rates_ready_until(), now))
 
-        error = companies._l10n_cr_update_rates()
-        run_date = fields.Datetime.to_string(now.astimezone(timezone.utc))
-        companies.l10n_cr_last_scheduled_update = {'date': run_date, 'error': error}
+        companies._l10n_cr_update_rates()
 
     def _l10n_cr_get_rates_status(self):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
 
         :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, when the
-            scheduled update last ran, as text, with its error, and when it runs next, as text
+            last update ran, as text, with its error, and when it runs next, as text
         """
         self.ensure_one()
         now = datetime.now(ZoneInfo(CR_TZ))
@@ -129,7 +132,7 @@ class ResCompany(models.Model):
                 # The hourly runs skip the company until its next rate is due
                 due_at = datetime.combine(ready_until, UPDATE_TIME, now.tzinfo).astimezone(timezone.utc)
                 next_run = max(next_run, due_at.replace(tzinfo=None))
-        last_run = self.l10n_cr_last_scheduled_update
+        last_run = self.l10n_cr_last_update
         return {
             'status': status,
             'ready_until': ready_until,

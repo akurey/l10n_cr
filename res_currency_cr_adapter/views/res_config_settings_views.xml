@@ -29,7 +29,7 @@
                                 Next automatic update <field name="l10n_cr_next_update" class="oe_inline"/>
                             </div>
                             <div class="text-muted small" invisible="not l10n_cr_last_update">
-                                Last automatic update<span invisible="not l10n_cr_last_update_error"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/>
+                                Last update<span invisible="not l10n_cr_last_update_error"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/>
                             </div>
                             <div class="text-danger small" invisible="not l10n_cr_last_update_error or l10n_cr_rates_status == 'ready'">
                                 <field name="l10n_cr_last_update_error" class="w-100"/>
