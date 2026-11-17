@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
+    l10n_cr_bccr_rates_enabled = fields.Boolean(string='Update Exchange Rates')
     # The last BCCR update, as {'date': UTC datetime, 'error': message or False}
     l10n_cr_last_update = fields.Json(readonly=True)
 
@@ -105,7 +105,7 @@ class ResCompany(models.Model):
         now = datetime.now(ZoneInfo(CR_TZ))
         companies = self.sudo().search([
             ('parent_id', '=', False),
-            ('l10n_cr_update_rates', '=', True),
+            ('l10n_cr_bccr_rates_enabled', '=', True),
         ]).filtered(lambda company: company._l10n_cr_get_rated_currency()
                     and self._l10n_cr_is_missing_rates(company._l10n_cr_get_rates_ready_until(), now))
         companies._l10n_cr_update_rates()
@@ -127,7 +127,7 @@ class ResCompany(models.Model):
             status = 'missing'
         next_run = False
         cron = self.sudo().env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
-        if cron and cron.active and self.l10n_cr_update_rates and self._l10n_cr_get_bccr_token():
+        if cron and cron.active and self.l10n_cr_bccr_rates_enabled and self._l10n_cr_get_bccr_token():
             next_run = cron.nextcall
             if status == 'ready':
                 # The hourly runs skip the company until its next rate is due

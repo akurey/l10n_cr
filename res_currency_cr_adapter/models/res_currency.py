@@ -46,7 +46,7 @@ class ResCurrency(models.Model):
         # The token is only readable by Settings administrators
         company = self.env.company.root_id.sudo()
         status = (
-            company.l10n_cr_update_rates
+            company.l10n_cr_bccr_rates_enabled
             and company._l10n_cr_get_bccr_token()
             and company._l10n_cr_get_rates_status()
         )
