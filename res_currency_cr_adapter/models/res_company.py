@@ -1,17 +1,21 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import format_date, format_time
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, UPDATE_TIME
 from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
+
+# The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
+CR_TZ = 'America/Costa_Rica'
+# Tomorrow's rate is loaded from 18:00, leaving a margin after the BCCR usually publishes it, around 17:30
+UPDATE_TIME = time(18)
 
 
 class ResCompany(models.Model):
@@ -146,15 +150,15 @@ class ResCompany(models.Model):
     def _l10n_cr_format_datetime(self, utc_datetime):
         """Describe a UTC datetime in Costa Rica time, relative to today when near."""
         cr_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
-        time = format_time(self.env, utc_datetime, tz=CR_TZ, time_format='short')
+        hour = format_time(self.env, utc_datetime, tz=CR_TZ, time_format='short')
         days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
         if days == 0:
-            return self.env._("today at %(time)s", time=time)
+            return self.env._("today at %(time)s", time=hour)
         if days == -1:
-            return self.env._("yesterday at %(time)s", time=time)
+            return self.env._("yesterday at %(time)s", time=hour)
         if days == 1:
-            return self.env._("tomorrow at %(time)s", time=time)
-        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=time)
+            return self.env._("tomorrow at %(time)s", time=hour)
+        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=hour)
 
     def _l10n_cr_action_update_rates(self):
         """Load the company's missing rates and notify the result, then reload the view."""

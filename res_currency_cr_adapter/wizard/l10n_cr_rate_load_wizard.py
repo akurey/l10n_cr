@@ -6,7 +6,7 @@ from odoo import api, fields, models
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tools import format_date
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ
+from odoo.addons.res_currency_cr_adapter.models.res_company import CR_TZ
 
 
 class L10nCrRateLoadWizard(models.TransientModel):
