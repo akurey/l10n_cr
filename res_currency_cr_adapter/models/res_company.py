@@ -114,29 +114,27 @@ class ResCompany(models.Model):
         """
         self.ensure_one()
         now = datetime.now(ZoneInfo(CR_TZ))
-        today = now.date()
-        cron = self._l10n_cr_get_cron()
         ready_until = self._l10n_cr_get_rates_ready_until()
         if not self._l10n_cr_is_missing_rates(ready_until, now):
             status = 'ready'
-        elif ready_until == today:
+        elif ready_until == now.date():
             status = 'late'
         else:
             status = 'missing'
-        last_run = self.l10n_cr_last_scheduled_update or {}
-        last_run_date = fields.Datetime.to_datetime(last_run['date']) if last_run else False
         next_run = False
+        cron = self._l10n_cr_get_cron()
         if cron and cron.active and self.l10n_cr_update_rates and self._l10n_cr_get_bccr_token():
             next_run = cron.nextcall
             if status == 'ready':
-                # The hourly runs do nothing until the evening the rate after the last one is due
+                # The hourly runs skip the company until its next rate is due
                 due_at = datetime.combine(ready_until, UPDATE_TIME, now.tzinfo).astimezone(timezone.utc)
                 next_run = max(next_run, due_at.replace(tzinfo=None))
+        last_run = self.l10n_cr_last_scheduled_update
         return {
             'status': status,
             'ready_until': ready_until,
-            'last_update': last_run_date and self._l10n_cr_format_datetime(last_run_date),
-            'last_update_error': last_run.get('error') or False,
+            'last_update': last_run and self._l10n_cr_format_datetime(fields.Datetime.to_datetime(last_run['date'])),
+            'last_update_error': last_run and last_run['error'] or False,
             'next_update': next_run and self._l10n_cr_format_datetime(next_run),
         }
 
