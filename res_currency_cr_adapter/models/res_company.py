@@ -1,7 +1,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
@@ -12,10 +12,6 @@ from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, UPDAT
 from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
-
-# A failed or early update is retried every hour until the working day starts, in Costa Rica
-RETRY_INTERVAL = timedelta(hours=1)
-RETRY_UNTIL = time(6)
 
 
 class ResCompany(models.Model):
@@ -84,21 +80,25 @@ class ResCompany(models.Model):
         return False
 
     @api.model
-    def _cron_l10n_cr_update_rates(self):
-        """Load the missing BCCR rates of each company that updates them, retrying every hour while any is still
-        missing.
+    def _l10n_cr_get_due_date(self, now):
+        """Last date whose rate is due at that Costa Rica time: tomorrow's from the evening, else today's."""
+        return now.date() + timedelta(days=1) if now.time() >= UPDATE_TIME else now.date()
 
-        From 06:00 a run wants tomorrow's rate, and the night's retries after midnight still want that same date, so
-        the retries stop at 06:00 of that date, before the working day starts.
+    @api.model
+    def _cron_l10n_cr_update_rates(self):
+        """Load the due BCCR rates of each company that updates them and is missing any.
+
+        It runs every hour and does nothing while no rate is missing, so a failed or late update is retried within
+        the hour, and tomorrow's rate has the evening to load before the first documents of its day.
         """
         if not self._l10n_cr_get_bccr_token():
             return
         now = datetime.now(ZoneInfo(CR_TZ))
-        target_date = now.date() + timedelta(days=1) if now.time() >= RETRY_UNTIL else now.date()
+        due_date = self._l10n_cr_get_due_date(now)
 
         def is_missing(company):
             ready_until = company._l10n_cr_get_rates_ready_until()
-            return not ready_until or ready_until < target_date
+            return not ready_until or ready_until < due_date
 
         companies = self.sudo().search([
             ('parent_id', '=', False),
@@ -108,14 +108,6 @@ class ResCompany(models.Model):
         error = companies._l10n_cr_update_rates()
         run_date = fields.Datetime.to_string(now.astimezone(timezone.utc))
         companies.l10n_cr_last_scheduled_update = {'date': run_date, 'error': error}
-        missing_companies = companies.filtered(is_missing)
-        retry_at = now + RETRY_INTERVAL
-        cron = self._l10n_cr_get_cron()
-        if missing_companies and cron and retry_at <= datetime.combine(target_date, RETRY_UNTIL, now.tzinfo):
-            cron._trigger(retry_at.astimezone(timezone.utc).replace(tzinfo=None))
-            _logger.info(
-                "Exchange rates of %s still missing for %s, retrying at %s",
-                ', '.join(missing_companies.mapped('name')), target_date, retry_at.strftime('%H:%M'))
 
     def _l10n_cr_get_rates_status(self):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
@@ -128,8 +120,7 @@ class ResCompany(models.Model):
         today = now.date()
         cron = self._l10n_cr_get_cron()
         ready_until = self._l10n_cr_get_rates_ready_until()
-        # Until the evening update, today's rate is all there can be
-        if ready_until and (ready_until > today or ready_until == today and now.time() < UPDATE_TIME):
+        if ready_until and ready_until >= self._l10n_cr_get_due_date(now):
             status = 'ready'
         elif ready_until == today:
             status = 'late'
@@ -139,11 +130,11 @@ class ResCompany(models.Model):
         last_run_date = fields.Datetime.to_datetime(last_run['date']) if last_run else False
         next_run = False
         if cron and cron.active and self.l10n_cr_update_rates and self._l10n_cr_get_bccr_token():
-            retry = self.env['ir.cron.trigger'].sudo().search([
-                ('cron_id', '=', cron.id),
-                ('call_at', '>', fields.Datetime.now()),
-            ], order='call_at', limit=1)
-            next_run = min(retry.call_at, cron.nextcall) if retry else cron.nextcall
+            next_run = cron.nextcall
+            if status == 'ready':
+                # The hourly runs do nothing until the evening the rate after the last one is due
+                due_at = datetime.combine(ready_until, UPDATE_TIME, now.tzinfo).astimezone(timezone.utc)
+                next_run = max(next_run, due_at.replace(tzinfo=None))
         return {
             'status': status,
             'ready_until': ready_until,
