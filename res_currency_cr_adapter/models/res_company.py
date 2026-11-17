@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import format_date
+from odoo.tools import format_date, format_time
 
 from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, UPDATE_TIME
 from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
@@ -170,7 +170,7 @@ class ResCompany(models.Model):
     def _l10n_cr_format_datetime(self, utc_datetime):
         """Describe a UTC datetime in Costa Rica time, relative to today when near."""
         cr_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
-        time = cr_datetime.strftime('%H:%M')
+        time = format_time(self.env, utc_datetime, tz=CR_TZ, time_format='short')
         days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
         if days == 0:
             return self.env._("today at %(time)s", time=time)
