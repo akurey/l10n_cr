@@ -80,7 +80,7 @@
                     <div class="small">
                         <span invisible="not l10n_cr_next_update">Next automatic update <field name="l10n_cr_next_update" class="oe_inline"/></span>
                         <span invisible="not l10n_cr_next_update or not l10n_cr_last_update"> · </span>
-                        <span invisible="not l10n_cr_last_update">Last update<span invisible="not l10n_cr_last_update_failed"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/></span>
+                        <span invisible="not l10n_cr_last_update">Last update<span invisible="not l10n_cr_last_update_error"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/></span>
                     </div>
                 </div>
                 <div class="alert alert-warning mb-0" role="alert" groups="account.group_account_manager,base.group_system"
@@ -91,7 +91,7 @@
                     <div class="small">
                         <span invisible="not l10n_cr_next_update">Next automatic update <field name="l10n_cr_next_update" class="oe_inline"/></span>
                         <span invisible="not l10n_cr_next_update or not l10n_cr_last_update"> · </span>
-                        <span invisible="not l10n_cr_last_update">Last update<span invisible="not l10n_cr_last_update_failed"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/></span>
+                        <span invisible="not l10n_cr_last_update">Last update<span invisible="not l10n_cr_last_update_error"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/></span>
                     </div>
                 </div>
             </xpath>
