@@ -32,7 +32,7 @@ class ResConfigSettings(models.TransientModel):
     @api.depends('company_id')
     def _compute_l10n_cr_rates_status(self):
         for settings in self:
-            status = settings.company_id.root_id._l10n_cr_get_rates_status()
+            status = settings.company_id._l10n_cr_get_rates_status()
             settings.l10n_cr_rates_status = status.get('status')
             settings.l10n_cr_rates_ready_until = status.get('ready_until')
             settings.l10n_cr_last_update = status.get('last_update')
@@ -40,7 +40,7 @@ class ResConfigSettings(models.TransientModel):
             settings.l10n_cr_next_update = status.get('next_update')
 
     def action_l10n_cr_update_rates(self):
-        return self.company_id.root_id._l10n_cr_action_update_rates()
+        return self.company_id._l10n_cr_action_update_rates()
 
     def action_l10n_cr_open_rate_load_wizard(self):
-        return self.company_id.root_id._l10n_cr_action_open_rate_load_wizard()
+        return self.company_id._l10n_cr_action_open_rate_load_wizard()

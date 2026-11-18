@@ -36,7 +36,7 @@ class ResCurrency(models.Model):
     @api.depends_context('company')
     def _compute_l10n_cr_rates_status(self):
         # Branch users may not read their root company
-        status = self.env.company.root_id.sudo()._l10n_cr_get_rates_status()
+        status = self.env.company.sudo()._l10n_cr_get_rates_status()
         for currency in self:
             currency_status = status if currency.l10n_cr_use_rate_format else {}
             currency.l10n_cr_rates_status = currency_status.get('status')
@@ -63,10 +63,10 @@ class ResCurrency(models.Model):
     def action_l10n_cr_update_rates(self):
         # Whoever may enter rates by hand may load them, with a token only Settings administrators can read
         self.env['res.currency.rate'].check_access('create')
-        return self.env.company.root_id.sudo()._l10n_cr_action_update_rates()
+        return self.env.company.sudo()._l10n_cr_action_update_rates()
 
     def action_l10n_cr_open_rate_load_wizard(self):
-        return self.env.company.root_id._l10n_cr_action_open_rate_load_wizard()
+        return self.env.company._l10n_cr_action_open_rate_load_wizard()
 
 
 class ResCurrencyRate(models.Model):

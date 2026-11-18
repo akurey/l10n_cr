@@ -67,7 +67,7 @@ class ResCompany(models.Model):
         return self.env['ir.config_parameter'].sudo().get_str('res_currency_cr_adapter.bccr_token')
 
     def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
-        """Load the BCCR rates from first_date to last_date for these root companies, in a single request.
+        """Load the BCCR rates from first_date to last_date for the root of these companies, in a single request.
 
         By default each company catches up from its first missing rate, or today without any, to tomorrow's rate,
         which the BCCR publishes in the evening. Each company only stores the dates from its own start date, so the
@@ -77,24 +77,28 @@ class ResCompany(models.Model):
         :return: the error message if the update failed, else False; it isn't raised, since Odoo deactivates a cron
             after repeated failures
         """
-        if not self:
+        companies = self.root_id
+        if not companies:
             return False
         now = datetime.now(ZoneInfo(CR_TZ))
         today = now.date()
         last_date = last_date or today + timedelta(days=1)
-        start_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in self}
+        start_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in companies}
 
         error = False
         try:
             rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(start_dates.values()), last_date)
         except UserError as e:
-            _logger.warning("Exchange rate update failed for %s: %s", ', '.join(self.mapped('name')), e)
+            _logger.warning("Exchange rate update failed for %s: %s", ', '.join(companies.mapped('name')), e)
             error = str(e)
         else:
             for company, start_date in start_dates.items():
                 company_rates = {date: rate for date, rate in rates.items() if date >= start_date}
                 self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
-        self.l10n_cr_last_update = {'date': fields.Datetime.to_string(now.astimezone(timezone.utc)), 'error': error}
+        companies.l10n_cr_last_update = {
+            'date': fields.Datetime.to_string(now.astimezone(timezone.utc)),
+            'error': error,
+        }
         return error
 
     @api.model
@@ -115,16 +119,17 @@ class ResCompany(models.Model):
         companies._l10n_cr_update_rates()
 
     def _l10n_cr_get_rates_status(self):
-        """Status of the company's update, shown in the BCCR setting and on the rated currency.
+        """Status of the update of the company's root, shown in the BCCR setting and on the rated currency.
 
         :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, when the
             last update ran, as text, with its error, and when it runs next, as text; empty while the update is off
         """
         self.ensure_one()
-        if not (self.l10n_cr_bccr_rates_enabled and self._l10n_cr_get_bccr_token()):
+        company = self.root_id
+        if not (company.l10n_cr_bccr_rates_enabled and self._l10n_cr_get_bccr_token()):
             return {}
         now = datetime.now(ZoneInfo(CR_TZ))
-        ready_until = self._l10n_cr_get_rates_ready_until()
+        ready_until = company._l10n_cr_get_rates_ready_until()
         if not self._l10n_cr_is_missing_rates(ready_until, now):
             status = 'ready'
         elif ready_until == now.date():
@@ -139,7 +144,7 @@ class ResCompany(models.Model):
                 # The hourly runs skip the company until its next rate is due
                 due_at = datetime.combine(ready_until, UPDATE_TIME, now.tzinfo).astimezone(timezone.utc)
                 next_run = max(next_run, due_at.replace(tzinfo=None))
-        last_run = self.l10n_cr_last_update
+        last_run = company.l10n_cr_last_update
         return {
             'status': status,
             'ready_until': ready_until,
@@ -163,7 +168,7 @@ class ResCompany(models.Model):
         return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=hour)
 
     def _l10n_cr_action_update_rates(self):
-        """Load the company's missing rates and notify the result, then reload the view."""
+        """Load the missing rates of the company's root and notify the result, then reload the view."""
         self.ensure_one()
         error = self._l10n_cr_update_rates()
         return {
@@ -184,5 +189,5 @@ class ResCompany(models.Model):
             'res_model': 'l10n_cr.rate.load.wizard',
             'view_mode': 'form',
             'target': 'new',
-            'context': {'default_company_id': self.id, 'dialog_size': 'medium'},
+            'context': {'default_company_id': self.root_id.id, 'dialog_size': 'medium'},
         }
