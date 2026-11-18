@@ -185,7 +185,7 @@ class ResCompany(models.Model):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': self.env._("Load Past Exchange Rates"),
+            'name': self.env._("Load Past Rates"),
             'res_model': 'l10n_cr.rate.load.wizard',
             'view_mode': 'form',
             'target': 'new',
