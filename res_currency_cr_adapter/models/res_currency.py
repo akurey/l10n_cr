@@ -69,7 +69,6 @@ class ResCurrency(models.Model):
         return self.env.company.root_id.sudo()._l10n_cr_action_update_rates()
 
     def action_l10n_cr_open_rate_load_wizard(self):
-        self.env['res.currency.rate'].check_access('create')
         return self.env.company.root_id._l10n_cr_action_open_rate_load_wizard()
 
 
