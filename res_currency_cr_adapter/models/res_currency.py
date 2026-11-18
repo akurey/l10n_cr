@@ -112,6 +112,15 @@ class ResCurrencyRate(models.Model):
         help="Buying rate, expressed like Base/Unit.",
     )
 
+    @api.depends('name')
+    def _compute_l10n_cr_date(self):
+        for currency_rate in self:
+            currency_rate.l10n_cr_date = currency_rate.name and currency_rate.name + RATE_DATE_OFFSET
+
+    def _inverse_l10n_cr_date(self):
+        for currency_rate in self.filtered('l10n_cr_date'):
+            currency_rate.name = currency_rate.l10n_cr_date - RATE_DATE_OFFSET
+
     @api.depends('l10n_cr_buying_rate', 'name', 'currency_id', 'company_id',
                  'currency_id.rate_ids.l10n_cr_buying_rate')
     @api.depends_context('company')
@@ -144,15 +153,6 @@ class ResCurrencyRate(models.Model):
             inverse_rate = currency_rate.l10n_cr_buying_inverse_company_rate
             currency_rate.l10n_cr_buying_company_rate = 1 / inverse_rate if inverse_rate else 0
 
-    @api.depends('name')
-    def _compute_l10n_cr_date(self):
-        for currency_rate in self:
-            currency_rate.l10n_cr_date = currency_rate.name and currency_rate.name + RATE_DATE_OFFSET
-
-    def _inverse_l10n_cr_date(self):
-        for currency_rate in self.filtered('l10n_cr_date'):
-            currency_rate.name = currency_rate.l10n_cr_date - RATE_DATE_OFFSET
-
     @api.onchange('currency_id')
     def _onchange_currency_id_l10n_cr_date(self):
         # A new rate starts on today's BCCR date, not on the tomorrow that Odoo's default date would show
@@ -173,6 +173,7 @@ class ResCurrencyRate(models.Model):
             vals = {**vals, 'l10n_cr_source': 'manual'}
         return super().write(vals)
 
+    @api.model
     def _l10n_cr_store_rates(self, company, rates, replace=False):
         """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies.
 
