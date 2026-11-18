@@ -17,13 +17,20 @@ RATES_STATUSES = [
 class ResCurrency(models.Model):
     _inherit = 'res.currency'
 
-    l10n_cr_use_rate_format = fields.Boolean(compute='_compute_l10n_cr_use_rate_format')
+    l10n_cr_use_rate_format = fields.Boolean(
+        string='Costa Rica Rate Format',
+        compute='_compute_l10n_cr_use_rate_format',
+    )
     # The update's status, also for accounting administrators, who can't open Settings
-    l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
-    l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_last_update_error = fields.Char(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_rates_status = fields.Selection(
+        string='BCCR Rates Status',
+        selection=RATES_STATUSES,
+        compute='_compute_l10n_cr_rates_status',
+    )
+    l10n_cr_rates_ready_until = fields.Date(string='BCCR Rates Ready Until', compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update = fields.Char(string='Last BCCR Update', compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update_error = fields.Char(string='Last BCCR Update Error', compute='_compute_l10n_cr_rates_status')
+    l10n_cr_next_update = fields.Char(string='Next BCCR Update', compute='_compute_l10n_cr_rates_status')
 
     @api.depends_context('company')
     def _compute_l10n_cr_use_rate_format(self):

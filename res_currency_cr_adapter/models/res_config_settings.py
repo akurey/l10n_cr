@@ -8,18 +8,25 @@ from odoo.addons.res_currency_cr_adapter.models.res_currency import RATES_STATUS
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    l10n_cr_rates_available = fields.Boolean(compute='_compute_l10n_cr_rates_available')
+    l10n_cr_rates_available = fields.Boolean(
+        string='BCCR Rates Applicable',
+        compute='_compute_l10n_cr_rates_available',
+    )
     # The update runs on the root company, so a branch shows and edits its root's settings
     l10n_cr_bccr_rates_enabled = fields.Boolean(
         related='company_id.root_id.l10n_cr_bccr_rates_enabled',
         readonly=False,
     )
     l10n_cr_bccr_token = fields.Char(string='BCCR Token', config_parameter='res_currency_cr_adapter.bccr_token')
-    l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
-    l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_last_update_error = fields.Char(compute='_compute_l10n_cr_rates_status')
-    l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
+    l10n_cr_rates_status = fields.Selection(
+        string='BCCR Rates Status',
+        selection=RATES_STATUSES,
+        compute='_compute_l10n_cr_rates_status',
+    )
+    l10n_cr_rates_ready_until = fields.Date(string='BCCR Rates Ready Until', compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update = fields.Char(string='Last BCCR Update', compute='_compute_l10n_cr_rates_status')
+    l10n_cr_last_update_error = fields.Char(string='Last BCCR Update Error', compute='_compute_l10n_cr_rates_status')
+    l10n_cr_next_update = fields.Char(string='Next BCCR Update', compute='_compute_l10n_cr_rates_status')
 
     @api.depends('currency_id', 'account_fiscal_country_id')
     def _compute_l10n_cr_rates_available(self):

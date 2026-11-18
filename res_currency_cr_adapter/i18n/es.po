@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 20.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-18 05:58+0000\n"
-"PO-Revision-Date: 2026-11-18 05:58+0000\n"
+"POT-Creation-Date: 2026-11-18 06:12+0000\n"
+"PO-Revision-Date: 2026-11-18 06:12+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -189,6 +189,23 @@ msgid "BCCR Exchange Rates"
 msgstr "Tipos de cambio del BCCR"
 
 #. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_rates_available
+msgid "BCCR Rates Applicable"
+msgstr "Tipos de cambio del BCCR aplicables"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_rates_ready_until
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_rates_ready_until
+msgid "BCCR Rates Ready Until"
+msgstr "Tipos de cambio del BCCR disponibles hasta"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_rates_status
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_rates_status
+msgid "BCCR Rates Status"
+msgstr "Estado de los tipos de cambio del BCCR"
+
+#. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_bccr_token
 msgid "BCCR Token"
 msgstr "Token del BCCR"
@@ -256,6 +273,12 @@ msgstr "Ajustes de configuración"
 #: model:ir.module.module,shortdesc:base.module_res_currency_cr_adapter
 msgid "Costa Rica - Exchange Rates"
 msgstr "Costa Rica - Tipos de cambio"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_use_rate_format
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__l10n_cr_currency_use_rate_format
+msgid "Costa Rica Rate Format"
+msgstr "Formato de tipo de cambio de Costa Rica"
 
 #. module: res_currency_cr_adapter
 #: model:ir.actions.server,name:res_currency_cr_adapter.ir_cron_currency_rate_update_ir_actions_server
@@ -350,43 +373,14 @@ msgstr "ID"
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_company__l10n_cr_last_update
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_last_update
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_last_update
-msgid "L10N Cr Last Update"
-msgstr ""
+msgid "Last BCCR Update"
+msgstr "Última actualización del BCCR"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_last_update_error
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_last_update_error
-msgid "L10N Cr Last Update Error"
-msgstr ""
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_next_update
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_next_update
-msgid "L10N Cr Next Update"
-msgstr ""
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_rates_available
-msgid "L10N Cr Rates Available"
-msgstr ""
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_rates_ready_until
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_rates_ready_until
-msgid "L10N Cr Rates Ready Until"
-msgstr ""
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_rates_status
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_rates_status
-msgid "L10N Cr Rates Status"
-msgstr ""
-
-#. module: res_currency_cr_adapter
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_use_rate_format
-#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency_rate__l10n_cr_currency_use_rate_format
-msgid "L10N Cr Use Rate Format"
-msgstr ""
+msgid "Last BCCR Update Error"
+msgstr "Error de la última actualización del BCCR"
 
 #. module: res_currency_cr_adapter
 #: model:ir.model.fields,field_description:res_currency_cr_adapter.field_l10n_cr_rate_load_wizard__write_uid
@@ -433,6 +427,12 @@ msgid ""
 msgstr ""
 "Cargar automáticamente los tipos de cambio de venta y compra del BCCR, "
 "conforme se publican cada tarde"
+
+#. module: res_currency_cr_adapter
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_config_settings__l10n_cr_next_update
+#: model:ir.model.fields,field_description:res_currency_cr_adapter.field_res_currency__l10n_cr_next_update
+msgid "Next BCCR Update"
+msgstr "Próxima actualización del BCCR"
 
 #. module: res_currency_cr_adapter
 #: model_terms:ir.ui.view,arch_db:res_currency_cr_adapter.res_config_settings_view_form
