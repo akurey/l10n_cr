@@ -31,15 +31,15 @@ class ResCurrency(models.Model):
 
     @api.depends_context('company')
     def _compute_l10n_cr_use_rate_format(self):
-        # Rates are stored on the root company, which its branches share
-        rated_currency = self.env.company.root_id._l10n_cr_get_rated_currency()
+        # Rates are stored on the root company, which its branches share but their users may not read
+        rated_currency = self.env.company.root_id.sudo()._l10n_cr_get_rated_currency()
         for currency in self:
             currency.l10n_cr_use_rate_format = currency._origin == rated_currency
 
     @api.depends('l10n_cr_use_rate_format')
     @api.depends_context('company')
     def _compute_l10n_cr_rates_status(self):
-        # The token is only readable by Settings administrators
+        # Branch users may not read their root company
         company = self.env.company.root_id.sudo()
         status = (
             company.l10n_cr_bccr_rates_enabled
