@@ -41,11 +41,9 @@ class ResCurrency(models.Model):
     def _compute_l10n_cr_rates_status(self):
         # Branch users may not read their root company
         company = self.env.company.root_id.sudo()
-        status = (
-            company.l10n_cr_bccr_rates_enabled
-            and company._l10n_cr_get_bccr_token()
-            and company._l10n_cr_get_rates_status()
-        )
+        status = False
+        if company.l10n_cr_bccr_rates_enabled and company._l10n_cr_get_bccr_token():
+            status = company._l10n_cr_get_rates_status()
         for currency in self:
             show_update = bool(status) and currency.l10n_cr_use_rate_format
             currency.l10n_cr_show_update = show_update
