@@ -64,6 +64,20 @@
             <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="attributes">
                 <attribute name="column_invisible">parent.l10n_cr_use_rate_format</attribute>
             </xpath>
+            <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="after">
+                <field name="company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
+                       column_invisible="not parent.l10n_cr_use_rate_format"/>
+                <field name="l10n_cr_buying_company_rate" width="140" digits="[12,12]" string="Buying Unit/Base"
+                       column_invisible="not parent.l10n_cr_use_rate_format"/>
+                <field name="inverse_company_rate" width="140" digits="[12,12]" string="Selling Base/Unit"
+                       column_invisible="not parent.l10n_cr_use_rate_format"/>
+                <field name="l10n_cr_buying_inverse_company_rate" width="140" digits="[12,12]" string="Buying Base/Unit"
+                       column_invisible="not parent.l10n_cr_use_rate_format"/>
+            </xpath>
+            <xpath expr="//field[@name='rate_ids']//field[@name='write_date']" position="before">
+                <field name="l10n_cr_buying_rate" digits="[12,12]" optional="hide" column_invisible="not parent.l10n_cr_use_rate_format"/>
+                <field name="l10n_cr_source" optional="show" readonly="True" column_invisible="not parent.l10n_cr_use_rate_format"/>
+            </xpath>
             <!-- The update's status and actions, also for accounting administrators, who can't open Settings -->
             <xpath expr="//form/div[hasclass('alert')]" position="before">
                 <header invisible="not l10n_cr_rates_status" groups="account.group_account_manager,base.group_system">
@@ -95,23 +109,9 @@
                     </div>
                 </div>
             </xpath>
-            <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="after">
-                <field name="company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
-                       column_invisible="not parent.l10n_cr_use_rate_format"/>
-                <field name="l10n_cr_buying_company_rate" width="140" digits="[12,12]" string="Buying Unit/Base"
-                       column_invisible="not parent.l10n_cr_use_rate_format"/>
-                <field name="inverse_company_rate" width="140" digits="[12,12]" string="Selling Base/Unit"
-                       column_invisible="not parent.l10n_cr_use_rate_format"/>
-                <field name="l10n_cr_buying_inverse_company_rate" width="140" digits="[12,12]" string="Buying Base/Unit"
-                       column_invisible="not parent.l10n_cr_use_rate_format"/>
-            </xpath>
-            <xpath expr="//field[@name='rate_ids']//field[@name='write_date']" position="before">
-                <field name="l10n_cr_buying_rate" digits="[12,12]" optional="hide" column_invisible="not parent.l10n_cr_use_rate_format"/>
-                <field name="l10n_cr_source" optional="show" readonly="True" column_invisible="not parent.l10n_cr_use_rate_format"/>
-            </xpath>
         </field>
     </record>
-    <!-- Odoo's "Show Currency Rates" is replaced by one that hides the buying columns where they don't apply -->
+    <!-- Odoo's "Show Currency Rates" is replaced by one that shows the rates in the Costa Rica format for the currency that uses it -->
     <record id="base.act_view_currency_rates" model="ir.actions.act_window">
         <field name="binding_model_id" eval="False"/>
     </record>
