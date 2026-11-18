@@ -40,18 +40,15 @@ class ResCurrency(models.Model):
     @api.depends_context('company')
     def _compute_l10n_cr_rates_status(self):
         # Branch users may not read their root company
-        company = self.env.company.root_id.sudo()
-        status = False
-        if company.l10n_cr_bccr_rates_enabled and company._l10n_cr_get_bccr_token():
-            status = company._l10n_cr_get_rates_status()
+        status = self.env.company.root_id.sudo()._l10n_cr_get_rates_status()
         for currency in self:
-            show_update = bool(status) and currency.l10n_cr_use_rate_format
-            currency.l10n_cr_show_update = show_update
-            currency.l10n_cr_rates_status = show_update and status['status']
-            currency.l10n_cr_rates_ready_until = show_update and status['ready_until']
-            currency.l10n_cr_last_update = show_update and status['last_update']
-            currency.l10n_cr_last_update_error = show_update and status['last_update_error']
-            currency.l10n_cr_next_update = show_update and status['next_update']
+            currency_status = status if currency.l10n_cr_use_rate_format else {}
+            currency.l10n_cr_show_update = bool(currency_status)
+            currency.l10n_cr_rates_status = currency_status.get('status')
+            currency.l10n_cr_rates_ready_until = currency_status.get('ready_until')
+            currency.l10n_cr_last_update = currency_status.get('last_update')
+            currency.l10n_cr_last_update_error = currency_status.get('last_update_error')
+            currency.l10n_cr_next_update = currency_status.get('next_update')
 
     def _compute_current_rate(self):
         super()._compute_current_rate()

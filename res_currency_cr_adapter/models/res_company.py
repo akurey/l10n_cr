@@ -118,9 +118,11 @@ class ResCompany(models.Model):
         """Status of the company's update, shown in the BCCR setting and on the rated currency.
 
         :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, when the
-            last update ran, as text, with its error, and when it runs next, as text
+            last update ran, as text, with its error, and when it runs next, as text; empty while the update is off
         """
         self.ensure_one()
+        if not (self.l10n_cr_bccr_rates_enabled and self._l10n_cr_get_bccr_token()):
+            return {}
         now = datetime.now(ZoneInfo(CR_TZ))
         ready_until = self._l10n_cr_get_rates_ready_until()
         if not self._l10n_cr_is_missing_rates(ready_until, now):
@@ -131,7 +133,7 @@ class ResCompany(models.Model):
             status = 'missing'
         next_run = False
         cron = self.sudo().env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
-        if cron and cron.active and self.l10n_cr_bccr_rates_enabled and self._l10n_cr_get_bccr_token():
+        if cron and cron.active:
             next_run = cron.nextcall
             if status == 'ready':
                 # The hourly runs skip the company until its next rate is due
