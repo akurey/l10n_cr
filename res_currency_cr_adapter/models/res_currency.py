@@ -1,12 +1,9 @@
 # Copyright 2018 Carlos Wong, Akurey S.A.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-import logging
 from datetime import timedelta
 
 from odoo import api, fields, models
-
-_logger = logging.getLogger(__name__)
 
 # Odoo 20 converts with the last rate dated before the document (odoo/odoo@cba671d), so rates are stored a day early
 RATE_DATE_OFFSET = timedelta(days=1)
@@ -207,5 +204,3 @@ class ResCurrencyRate(models.Model):
             elif replace or existing_rate.l10n_cr_source == 'bccr':
                 existing_rate.write(vals)
         self.create(new_rates)
-
-        _logger.info("BCCR exchange rates loaded for %s from %s to %s", company.name, min(rates), max(rates))
