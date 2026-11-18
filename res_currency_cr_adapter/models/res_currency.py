@@ -179,9 +179,13 @@ class ResCurrencyRate(models.Model):
     def _l10n_cr_store_rates(self, company, rates, replace=False):
         """Store the BCCR's {date: (selling, buying)} for the company, each rate the day before it applies.
 
+        The BCCR publishes colones per dollar, while Odoo rates a currency against the company's: a colón company
+        stores dollars per colón, their inverse, and a dollar company stores the BCCR's values as they are.
+
         :param replace: whether rates entered manually are also overwritten, not only the BCCR's
         """
         currency = company._l10n_cr_get_rated_currency()
+        invert = company.currency_id.name == 'CRC'
         rate_dates = [date - RATE_DATE_OFFSET for date in rates]
         existing_rates = self.search([
             ('company_id', '=', company.id),
@@ -189,19 +193,19 @@ class ResCurrencyRate(models.Model):
             ('name', 'in', rate_dates),
         ]).grouped('name')
 
+        new_rates = []
         for date, (selling, buying) in rates.items():
             rate_date = date - RATE_DATE_OFFSET
-            # Odoo rates a currency against the company's: a colón company stores dollars per colón, the inverse
-            # of the colones per dollar the BCCR publishes, and a dollar company stores the BCCR's values as they are
-            if company.currency_id.name == 'CRC':
-                vals = {'rate': 1 / selling, 'l10n_cr_buying_rate': 1 / buying, 'l10n_cr_source': 'bccr'}
-            else:
-                vals = {'rate': selling, 'l10n_cr_buying_rate': buying, 'l10n_cr_source': 'bccr'}
-            if rate_date in existing_rates:
-                existing_rate = existing_rates[rate_date]
-                if replace or existing_rate.l10n_cr_source == 'bccr':
-                    existing_rate.write(vals)
-            else:
-                self.create({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
+            vals = {
+                'rate': 1 / selling if invert else selling,
+                'l10n_cr_buying_rate': 1 / buying if invert else buying,
+                'l10n_cr_source': 'bccr',
+            }
+            existing_rate = existing_rates.get(rate_date)
+            if not existing_rate:
+                new_rates.append({**vals, 'name': rate_date, 'currency_id': currency.id, 'company_id': company.id})
+            elif replace or existing_rate.l10n_cr_source == 'bccr':
+                existing_rate.write(vals)
+        self.create(new_rates)
 
         _logger.info("BCCR exchange rates loaded for %s from %s to %s", company.name, min(rates), max(rates))
