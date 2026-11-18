@@ -122,7 +122,10 @@ class ResCurrencyRate(models.Model):
         last_rate = self._get_last_rates_for_companies(self.company_id | self.env.company.root_id)
         for currency_rate in self:
             company = currency_rate.company_id or self.env.company.root_id
-            buying_rate = currency_rate.l10n_cr_buying_rate or currency_rate._get_latest_rate().l10n_cr_buying_rate
+            buying_rate = currency_rate.l10n_cr_buying_rate
+            # Like Odoo's rate, only a new one starts from the previous rate; a saved one shows its own, even if empty
+            if not buying_rate and not currency_rate._origin:
+                buying_rate = currency_rate._get_latest_rate().l10n_cr_buying_rate
             currency_rate.l10n_cr_buying_company_rate = buying_rate / last_rate[company]
 
     @api.onchange('l10n_cr_buying_company_rate')
