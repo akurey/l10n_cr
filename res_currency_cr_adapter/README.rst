@@ -2,83 +2,91 @@
    :target: https://www.gnu.org/licenses/agpl
    :alt: License: AGPL-3
 
-========================================
-Adaptación de moneda USD para Costa Rica
-========================================
+===========================
+Costa Rica - Exchange Rates
+===========================
 
-.. |badge1| image:: https://img.shields.io/badge/maturity-Beta-yellow.png
-    :target: https://odoo-community.org/page/development-status
-    :alt: Beta
-.. |badge2| image:: https://img.shields.io/badge/licence-AGPL--3-blue.png
-    :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
-    :alt: License: AGPL-3
-.. |badge3| image:: https://img.shields.io/badge/github-OCA%2Faccount--financial--reporting-lightgray.png?logo=github
-    :target: https://github.com/OCA/account-financial-reporting/tree/11.0/account_financial_report
-    :alt: OCA/account-financial-reporting
-.. |badge4| image:: https://img.shields.io/badge/weblate-Translate%20me-F47D42.png
-    :target: https://translation.odoo-community.org/projects/account-financial-reporting-11-0/account-financial-reporting-11-0-account_financial_report
-    :alt: Translate me on Weblate
-.. |badge5| image:: https://img.shields.io/badge/runbot-Try%20me-875A7B.png
-    :target: https://runbot.odoo-community.org/runbot/91/11.0
-    :alt: Try me on Runbot
-
-|badge1| |badge2| |badge3| |badge4| |badge5| 
-
-
-Módulo para Odoo que adapta la moneda USD para Costa Rica e inicia la actualización automática del tipo de cambio desde el Banco Central de Costa Rica.
+The reference exchange rates of the Banco Central de Costa Rica (BCCR), selling and buying, loaded
+automatically for companies that keep their accounts in colones or in dollars, and shown in the format
+used in Costa Rica.
 
 **Table of contents**
 
 .. contents::
    :local:
 
-Changelog
-=========
+Features
+========
 
-11.0.1.0.0 (2017-10-01)
-~~~~~~~~~~~~~~~~~~~~~~~
+Automatic update
+~~~~~~~~~~~~~~~~
 
-* Creation and first draft of the module
+* The BCCR's selling and buying rates of the dollar, from its Indicadores Económicos web service. A
+  colón company gets the dollar's rates and a dollar company the colón's.
+* The update runs every hour and only loads what is missing. Tomorrow's rate, which the BCCR publishes
+  around 17:30, is loaded from 18:00 Costa Rica time, before the first documents of its day. A failed
+  or late update is retried the next hour, and missed days are caught up.
+* It is switched on per company. Branches use the rates of their root company. The BCCR token is shared
+  by all companies.
+* *Update Now* loads the missing rates right away, and *Load Past Rates* loads a period up to today,
+  optionally replacing the rates entered manually.
 
+Status
+~~~~~~
 
-Bug Tracker
-===========
+In Settings and on the rated currency: whether the rates are up to date, tomorrow's is pending or
+today's is missing, the date they are loaded through, and when the last update ran, whether it failed,
+and when the next one runs. On the currency it is shown to accounting administrators, who can also
+update and load past rates from there.
 
-Bugs are tracked on `GitHub Issues <https://github.com/OdooCR/l10n_cr/issues>`_.
-In case of trouble, please check there if your issue has already been reported.
-If you spotted it first, help us smashing it by providing a detailed and welcomed
-`feedback <https://github.com/OdooCR/l10n_cr/issues/new?body=module:%20l10n_cr%0Aversion:%2011.0%0A%0A**Steps%20to%20reproduce**%0A-%20...%0A%0A**Current%20behavior**%0A%0A**Expected%20behavior**>`_.
+Costa Rica rate format
+~~~~~~~~~~~~~~~~~~~~~~
 
-Do not contact contributors directly about support or help with technical issues.
+For the currency the BCCR rates, on its form and in *Show Currency Rates*:
+
+* Each rate is shown with the BCCR's date, the day it applies to documents. Odoo 20 converts with the
+  last rate dated before the document (`odoo/odoo@cba671d <https://github.com/odoo/odoo/commit/cba671d>`_),
+  so the module stores each rate the day before.
+* The buying rate is shown and edited next to the selling one, as *Unit/Base* and *Base/Unit*.
+* The source of each rate: the BCCR, or entered manually. A rate changed by hand becomes manual, and
+  loads only overwrite it with *Replace Rates*. The rate list can be filtered by source.
+
+Configuration
+=============
+
+In *Invoicing > Configuration > Settings*, under *Currencies*, with multi-currency on, for a company
+whose fiscal country is Costa Rica and whose currency is the colón or the dollar:
+
+#. Tick *BCCR Exchange Rates*.
+#. Enter the *BCCR Token*. It is free: register on the BCCR's
+   `Indicadores Económicos <https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil>`_ site and
+   generate it from *Mi perfil*.
+
+The rates load at the next hourly run, or right away with *Update Now*.
+
+Upgrading from 19.0
+===================
+
+* The rates of the currency the BCCR rates move back a day, to the date Odoo 20 needs. Only companies
+  whose fiscal country is Costa Rica are migrated.
+* The buying rates and the token are kept.
+* Companies that loaded their rates automatically keep the update on. Those that used Hacienda's rates
+  now get the BCCR's, and need a token.
+* The scheduled action runs every hour, and the settings Odoo 20 no longer uses are removed.
 
 Credits
 =======
-Carlos Wong (WhiteTiger008) <cewongq@gmail.com>
 
 Authors
 ~~~~~~~
+
 * `AKUREY S.A. <https://www.akurey.com>`_
-    * Carlos Wong <cwong@akurey.com>
+
+  * Carlos Wong <cwong@akurey.com>
 
 Contributors
 ~~~~~~~~~~~~
+
+* Carlos Wong (WhiteTiger008) <cewongq@gmail.com>
 * Ran
 * Esteban Monge
-
-
-Maintainers
-~~~~~~~~~~~
-
-This module is maintained by the OCA.
-
-.. image:: https://odoo-community.org/logo.png
-   :alt: Odoo Community Association
-   :target: https://odoo-community.org
-
-OCA, or the Odoo Community Association, is a nonprofit organization whose
-mission is to support the collaborative development of Odoo features and
-promote its widespread use.
-
-This module is part of the `OCA/l10n_cr <https://github.com/OCA/l10n_cr>`_ project on GitHub.
-
-You are welcome to contribute. To learn how please visit https://odoo-community.org/page/Contribute.
