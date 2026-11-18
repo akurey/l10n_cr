@@ -167,10 +167,10 @@ class ResCompany(models.Model):
             return self.env._("tomorrow at %(time)s", time=hour)
         return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=hour)
 
-    def _l10n_cr_action_update_rates(self):
-        """Load the missing rates of the company's root and notify the result, then reload the view."""
+    def _l10n_cr_action_update_rates(self, first_date=False, last_date=False, replace=False):
+        """Load the rates of the company's root and notify the result, then reload the view."""
         self.ensure_one()
-        error = self._l10n_cr_update_rates()
+        error = self._l10n_cr_update_rates(first_date, last_date, replace)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
