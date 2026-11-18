@@ -6,7 +6,10 @@
         <field name="inherit_id" ref="account.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='main_currency_setting_container']" position="inside">
-                <setting id="l10n_cr_exchange_rates" company_dependent="1" help="Load the BCCR's selling and buying rates of the dollar automatically, every evening" invisible="not group_multi_currency or not l10n_cr_rates_available">
+                <setting id="l10n_cr_exchange_rates"
+                         company_dependent="1"
+                         help="Load the BCCR's selling and buying exchange rates automatically, as they are published each evening"
+                         invisible="not group_multi_currency or not l10n_cr_rates_available">
                     <field name="l10n_cr_bccr_rates_enabled"/>
                     <div class="content-group mt16" invisible="not l10n_cr_bccr_rates_enabled">
                         <div class="text-warning" invisible="l10n_cr_bccr_token">
@@ -41,7 +44,9 @@
                         </div>
                     </div>
                 </setting>
-                <setting id="l10n_cr_bccr_token" help="Shared by all companies" invisible="not group_multi_currency or not l10n_cr_rates_available or not l10n_cr_bccr_rates_enabled">
+                <setting id="l10n_cr_bccr_token"
+                         help="Shared by all companies"
+                         invisible="not group_multi_currency or not l10n_cr_rates_available or not l10n_cr_bccr_rates_enabled">
                     <field name="l10n_cr_bccr_token" password="True"/>
                     <div class="mt8" invisible="l10n_cr_bccr_token">
                         <a href="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil" target="_blank" class="btn-link" role="button">
