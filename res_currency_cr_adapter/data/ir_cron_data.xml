@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
     <record id="ir_cron_currency_rate_update" model="ir.cron">
-        <field name="name">Costa Rica: Update currency rates</field>
-        <field name="model_id" ref="model_res_currency_rate"/>
+        <field name="name">Costa Rica: Update BCCR exchange rates</field>
+        <field name="model_id" ref="base.model_res_company"/>
         <field name="state">code</field>
-        <field name="code">model._cron_update()</field>
+        <field name="code">model._cron_l10n_cr_update_rates()</field>
         <field name="interval_number">1</field>
-        <field name="interval_type">days</field>
-        <!-- 18:00 in Costa Rica -->
-        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 00:00:00')"/>
+        <field name="interval_type">hours</field>
+        <!-- On the hour, so tomorrow's rate loads at 18:00 in Costa Rica -->
+        <field name="nextcall" eval="(DateTime.now() + timedelta(hours=1)).strftime('%Y-%m-%d %H:00:00')"/>
     </record>
 </odoo>

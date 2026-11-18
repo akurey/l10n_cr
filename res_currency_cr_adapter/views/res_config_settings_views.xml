@@ -6,45 +6,52 @@
         <field name="inherit_id" ref="account.res_config_settings_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//block[@name='main_currency_setting_container']" position="inside">
-                <setting id="l10n_cr_exchange_rates" string="BCCR Exchange Rates" company_dependent="1" help="Load the BCCR's daily selling and buying rates of the dollar" invisible="not group_multi_currency or not l10n_cr_rates_available">
-                    <field name="l10n_cr_update_rates"/>
-                    <div class="content-group" invisible="not l10n_cr_update_rates">
-                        <div class="mt16" invisible="l10n_cr_bccr_token">
-                            <a href="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil" target="_blank" class="btn-link" role="button">
-                                <i class="oi" data-icon="east"/> Generate a free token on the BCCR's site
-                            </a>
+                <setting id="l10n_cr_exchange_rates"
+                         company_dependent="1"
+                         help="Load the BCCR's selling and buying exchange rates automatically, as they are published each evening"
+                         invisible="not group_multi_currency or not l10n_cr_rates_available">
+                    <field name="l10n_cr_bccr_rates_enabled"/>
+                    <div class="content-group mt16" invisible="not l10n_cr_bccr_rates_enabled">
+                        <div class="text-warning" invisible="l10n_cr_bccr_token">
+                            <i class="oi" data-icon="warning"/> Enter the BCCR token to start loading the rates
                         </div>
-                        <div class="row mt8">
-                            <label for="l10n_cr_bccr_token" string="Token" class="col-lg-3 o_light_label"/>
-                            <field name="l10n_cr_bccr_token" password="True"/>
-                        </div>
-                        <div class="mt16">
-                            <div class="text-danger" invisible="l10n_cr_rates_status != 'error'">
-                                <i class="oi" data-icon="error"/> The last update failed. Check the token, or the server log
-                            </div>
+                        <div invisible="not l10n_cr_bccr_token">
                             <div class="text-success" invisible="l10n_cr_rates_status != 'ready'">
-                                <i class="oi" data-icon="check"/> Ready until <field name="l10n_cr_rates_ready_until" class="oe_inline"/><span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
+                                <i class="oi" data-icon="check"/> Rates updated through <field name="l10n_cr_rates_ready_until" class="oe_inline"/>
                             </div>
                             <div class="text-warning" invisible="l10n_cr_rates_status != 'late'">
-                                <i class="oi" data-icon="warning"/> Tomorrow's rate is still missing after today's update
+                                <i class="oi" data-icon="warning"/> Tomorrow's rate isn't loaded yet, rates updated through <field name="l10n_cr_rates_ready_until" class="oe_inline"/>
                             </div>
-                            <div class="text-muted" invisible="l10n_cr_rates_status != 'today'">
-                                <i class="oi" data-icon="info"/> Ready until today<span invisible="not l10n_cr_rates_entered_manually">, entered manually</span>
+                            <div class="text-warning" invisible="l10n_cr_rates_status != 'missing' or not l10n_cr_rates_ready_until">
+                                <i class="oi" data-icon="warning"/> Today's rate is missing, rates updated through <field name="l10n_cr_rates_ready_until" class="oe_inline"/>
                             </div>
-                            <div class="text-warning" invisible="l10n_cr_rates_status != 'missing'">
-                                <i class="oi" data-icon="warning"/> Today's rate isn't loaded
+                            <div class="text-warning" invisible="l10n_cr_rates_status != 'missing' or l10n_cr_rates_ready_until">
+                                <i class="oi" data-icon="warning"/> No rates loaded yet, use "Update Now" to load them
                             </div>
-                            <div class="text-muted small" invisible="not l10n_cr_retry_at or l10n_cr_rates_status == 'ready'">
-                                Retrying at <field name="l10n_cr_retry_at" class="oe_inline"/>
+                            <div class="text-muted small" invisible="not l10n_cr_next_update">
+                                Next automatic update <field name="l10n_cr_next_update" class="oe_inline"/>
                             </div>
                             <div class="text-muted small" invisible="not l10n_cr_last_update">
-                                Last update <field name="l10n_cr_last_update" class="oe_inline"/>
+                                Last update<span invisible="not l10n_cr_last_update_error"> failed</span> <field name="l10n_cr_last_update" class="oe_inline"/>
                             </div>
-                            <div class="mt8" invisible="not l10n_cr_bccr_token">
-                                <button name="action_l10n_cr_update_rates" type="object" class="btn-link px-0 me-3" icon="refresh" string="Update now"/>
-                                <button name="action_l10n_cr_open_rate_load_wizard" type="object" class="btn-link px-0" icon="history" string="Load past rates"/>
+                            <div class="text-danger small" invisible="not l10n_cr_last_update_error or l10n_cr_rates_status == 'ready'">
+                                <field name="l10n_cr_last_update_error" class="w-100"/>
+                            </div>
+                            <div class="mt8">
+                                <button name="action_l10n_cr_update_rates" type="object" class="btn-link px-0 me-3" icon="refresh" string="Update Now"/>
+                                <button name="action_l10n_cr_open_rate_load_wizard" type="object" class="btn-link px-0" icon="history" string="Load Past Rates"/>
                             </div>
                         </div>
+                    </div>
+                </setting>
+                <setting id="l10n_cr_bccr_token"
+                         help="Shared by all companies"
+                         invisible="not group_multi_currency or not l10n_cr_rates_available or not l10n_cr_bccr_rates_enabled">
+                    <field name="l10n_cr_bccr_token" password="True"/>
+                    <div class="mt8" invisible="l10n_cr_bccr_token">
+                        <a href="https://sdd.bccr.fi.cr/es/IndicadoresEconomicos/Inicio/MiPerfil" target="_blank" class="btn-link" role="button">
+                            <i class="oi" data-icon="east"/> Generate a free token on the BCCR's site
+                        </a>
                     </div>
                 </setting>
             </xpath>

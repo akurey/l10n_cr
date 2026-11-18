@@ -1,4 +1,4 @@
-# copyright  2018 Carlos Wong, Akurey S.A.
+# Copyright 2018 Carlos Wong, Akurey S.A.
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 {
@@ -19,5 +19,4 @@
         'views/res_config_settings_views.xml',
         'wizard/l10n_cr_rate_load_wizard_views.xml',
     ],
-    'uninstall_hook': 'uninstall_hook',
 }

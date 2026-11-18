@@ -1,191 +1,193 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools import format_date
+from odoo.tools import format_date, format_time
 
-from odoo.addons.res_currency_cr_adapter.models.res_currency import CR_TZ, RATE_DATE_OFFSET, UPDATE_TIME
 from odoo.addons.res_currency_cr_adapter.tools.bccr_api import BccrApi
 
 _logger = logging.getLogger(__name__)
+
+# The BCCR's calendar is Costa Rica's, whatever the user's or the server's timezone
+CR_TZ = 'America/Costa_Rica'
+# Tomorrow's rate is loaded from 18:00, leaving a margin after the BCCR usually publishes it, around 17:30
+UPDATE_TIME = time(18)
 
 
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    l10n_cr_update_rates = fields.Boolean(string='Update Exchange Rates')
-    l10n_cr_bccr_token = fields.Char(string='BCCR Token', groups='base.group_system')
-    l10n_cr_last_update = fields.Datetime(string='Last Exchange Rate Update', readonly=True)
-    l10n_cr_last_update_failed = fields.Boolean(string='Last Exchange Rate Update Failed', readonly=True)
-
-    def write(self, vals):
-        if not {'currency_id', 'account_fiscal_country_id', 'country_id'} & vals.keys():
-            return super().write(vals)
-        rated_currencies = {company: company._l10n_cr_get_rated_currency() for company in self}
-        res = super().write(vals)
-        for company in self:
-            former_currency = rated_currencies[company]
-            rated_currency = company._l10n_cr_get_rated_currency()
-            if rated_currency == former_currency:
-                continue
-            # Odoo divides every rate by the company currency's, so the BCCR's rates of the former currency would
-            # distort the conversions; rates entered manually are left to the user
-            if former_currency:
-                self.env['res.currency.rate'].sudo().search([
-                    ('company_id', '=', company.id),
-                    ('currency_id', '=', former_currency.id),
-                    ('l10n_cr_source', '=', 'bccr'),
-                ]).unlink()
-            if not rated_currency and company.l10n_cr_update_rates:
-                company.l10n_cr_update_rates = False
-        return res
+    l10n_cr_bccr_rates_enabled = fields.Boolean(string='BCCR Exchange Rates')
+    # The last BCCR update, as {'date': UTC datetime, 'error': message or False}
+    l10n_cr_last_update = fields.Json(string='Last BCCR Update', readonly=True)
 
     @api.model
     def _l10n_cr_get_rated_currency_for(self, fiscal_country, currency):
         """Currency the BCCR rates for a company of that fiscal country and currency, or an empty recordset."""
-        Currency = self.env['res.currency']
-        if fiscal_country.code != 'CR':
-            return Currency
-        return {'CRC': self.env.ref('base.USD'), 'USD': self.env.ref('base.CRC')}.get(currency.name, Currency)
+        if fiscal_country.code != 'CR' or currency.name not in ('CRC', 'USD'):
+            return self.env['res.currency']
+        return self.env.ref('base.USD' if currency.name == 'CRC' else 'base.CRC')
 
     def _l10n_cr_get_rated_currency(self):
         """Currency the BCCR rates for this company: the dollar for a colón company, the colón for a dollar one."""
         self.ensure_one()
         return self._l10n_cr_get_rated_currency_for(self.account_fiscal_country_id, self.currency_id)
 
-    def _l10n_cr_get_last_rate(self):
-        """Latest rate of the currency the BCCR rates, the company's own or shared."""
+    def _l10n_cr_get_rates_ready_until(self):
+        """Last date whose documents have a rate of the currency the BCCR rates, or False without any.
+
+        The company's own rates come first and else the shared ones.
+        """
         self.ensure_one()
         return self.env['res.currency.rate'].search([
             ('company_id', 'in', [False, self.id]),
             ('currency_id', '=', self._l10n_cr_get_rated_currency().id),
-        ], order='name desc', limit=1)
+        ], order='company_id.id, name desc', limit=1).l10n_cr_date
 
-    def _l10n_cr_get_rates_ready_until(self):
-        """Last date whose documents have a rate of the currency the BCCR rates, or False without any."""
-        last_rate = self._l10n_cr_get_last_rate()
-        return last_rate.name + RATE_DATE_OFFSET if last_rate else False
+    @api.model
+    def _l10n_cr_is_missing_rates(self, ready_until, now):
+        """Whether rates ready until that date lack the latest one due at that Costa Rica time.
+
+        Tomorrow's rate is due from the evening, and today's before.
+        """
+        due_date = now.date() + timedelta(days=1) if now.time() >= UPDATE_TIME else now.date()
+        return not ready_until or ready_until < due_date
 
     def _l10n_cr_get_first_missing_date(self, today):
         """First date whose rate is missing, from the end of the company's rates and at most today."""
         ready_until = self._l10n_cr_get_rates_ready_until()
         return min(ready_until + timedelta(days=1), today) if ready_until else today
 
+    @api.model
+    def _l10n_cr_get_bccr_token(self):
+        return self.env['ir.config_parameter'].sudo().get_str('res_currency_cr_adapter.bccr_token')
+
     def _l10n_cr_update_rates(self, first_date=False, last_date=False, replace=False):
-        """Load the BCCR rates from first_date to last_date for these root companies.
+        """Load the BCCR rates from first_date to last_date for the root of these companies, in a single request.
 
-        By default each company catches up from its first missing rate, or today without any, to tomorrow.
-        Rates entered manually are only overwritten with replace.
+        By default each company catches up from its first missing rate, or today without any, to tomorrow's rate,
+        which the BCCR publishes in the evening. Each company only stores the dates from its own start date, so the
+        rates it already has are left alone, and rates entered manually are only overwritten with replace. The result
+        is stamped on each company as its last update.
 
-        :return: {company: error} of the companies whose update failed
+        :return: the error message if the update failed, else False; it isn't raised, since Odoo deactivates a cron
+            after repeated failures
         """
-        # By default up to tomorrow's rate, which the BCCR publishes in the evening
-        today = fields.Date.context_today(self.with_context(tz=CR_TZ))
-        last_date = last_date or today + timedelta(days=1)
-        first_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in self}
-
-        errors = {}
-        # The rates are the same for every token, so companies sharing one share the request
-        for token, token_companies in self.grouped('l10n_cr_bccr_token').items():
-            # Odoo deactivates a cron after repeated failures, so a BCCR outage is only logged
-            try:
-                rates = BccrApi(self.env, token).get_rates(
-                    min(first_dates[company] for company in token_companies), last_date)
-            except UserError as e:
-                _logger.error("Exchange rate update failed for %s: %s", ', '.join(token_companies.mapped('name')), e)
-                token_companies.l10n_cr_last_update_failed = True
-                errors.update(dict.fromkeys(token_companies, str(e)))
-                continue
-            # Each company only gets its own missing days, so rates it already has are left alone
-            for company in token_companies:
-                company_rates = {date: rate for date, rate in rates.items() if date >= first_dates[company]}
-                self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
-        return errors
-
-    def _l10n_cr_get_rates_status(self):
-        """Status of the company's update, shown in the BCCR setting and on the rated currency.
-
-        :return: dict with the status ('error', 'ready', 'late', 'today' or 'missing'), the date the rates are ready
-            until, whether the latest one was entered manually, and when the rates were last loaded and the next
-            retry runs, as text
-        """
-        self.ensure_one()
+        companies = self.root_id
+        if not companies:
+            return False
         now = datetime.now(ZoneInfo(CR_TZ))
         today = now.date()
-        cron = self._l10n_cr_get_cron()
-        last_rate = self._l10n_cr_get_last_rate()
-        ready_until = last_rate.name + RATE_DATE_OFFSET if last_rate else False
-        if self.l10n_cr_last_update_failed:
-            status = 'error'
-        elif ready_until and ready_until > today:
+        last_date = last_date or today + timedelta(days=1)
+        start_dates = {company: first_date or company._l10n_cr_get_first_missing_date(today) for company in companies}
+
+        error = False
+        try:
+            rates = BccrApi(self.env, self._l10n_cr_get_bccr_token()).get_rates(min(start_dates.values()), last_date)
+        except UserError as e:
+            _logger.warning("Exchange rate update failed for %s: %s", ', '.join(companies.mapped('name')), e)
+            error = str(e)
+        else:
+            for company, start_date in start_dates.items():
+                company_rates = {date: rate for date, rate in rates.items() if date >= start_date}
+                self.env['res.currency.rate']._l10n_cr_store_rates(company, company_rates, replace)
+        companies.l10n_cr_last_update = {
+            'date': fields.Datetime.to_string(now.astimezone(timezone.utc)),
+            'error': error,
+        }
+        return error
+
+    @api.model
+    def _cron_l10n_cr_update_rates(self):
+        """Load the due BCCR rates of each company that updates them and is missing any.
+
+        It runs every hour and does nothing while no rate is missing, so a failed or late update is retried within
+        the hour, and tomorrow's rate has the evening to load before the first documents of its day.
+        """
+        if not self._l10n_cr_get_bccr_token():
+            return
+        now = datetime.now(ZoneInfo(CR_TZ))
+        companies = self.sudo().search([
+            ('parent_id', '=', False),
+            ('l10n_cr_bccr_rates_enabled', '=', True),
+        ]).filtered(lambda company: company._l10n_cr_get_rated_currency()
+                    and self._l10n_cr_is_missing_rates(company._l10n_cr_get_rates_ready_until(), now))
+        companies._l10n_cr_update_rates()
+
+    def _l10n_cr_get_rates_status(self):
+        """Status of the update of the company's root, shown in the BCCR setting and on the rated currency.
+
+        :return: dict with the status ('ready', 'late' or 'missing'), the date the rates are ready until, when the
+            last update ran, as text, with its error, and when it runs next, as text; empty while the update is off
+        """
+        self.ensure_one()
+        company = self.root_id
+        if not (company.l10n_cr_bccr_rates_enabled and self._l10n_cr_get_bccr_token()):
+            return {}
+        now = datetime.now(ZoneInfo(CR_TZ))
+        ready_until = company._l10n_cr_get_rates_ready_until()
+        if not self._l10n_cr_is_missing_rates(ready_until, now):
             status = 'ready'
-        elif ready_until == today:
-            status = 'late' if now.time() >= UPDATE_TIME else 'today'
+        elif ready_until == now.date():
+            status = 'late'
         else:
             status = 'missing'
-        retry = cron and self.env['ir.cron.trigger'].sudo().search([
-            ('cron_id', '=', cron.id),
-            ('call_at', '>', fields.Datetime.now()),
-        ], order='call_at', limit=1)
+        next_run = False
+        cron = self.sudo().env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
+        if cron and cron.active:
+            next_run = cron.nextcall
+            if status == 'ready':
+                # The hourly runs skip the company until its next rate is due
+                due_at = datetime.combine(ready_until, UPDATE_TIME, now.tzinfo).astimezone(timezone.utc)
+                next_run = max(next_run, due_at.replace(tzinfo=None))
+        last_run = company.l10n_cr_last_update
         return {
             'status': status,
             'ready_until': ready_until,
-            'entered_manually': last_rate.l10n_cr_source == 'manual',
-            'last_update': self.l10n_cr_last_update and self._l10n_cr_format_last_update(self.l10n_cr_last_update),
-            'retry_at': self._l10n_cr_to_cr_time(retry.call_at).strftime('%H:%M') if retry else False,
+            'last_update': last_run and self._l10n_cr_format_datetime(fields.Datetime.to_datetime(last_run['date'])),
+            'last_update_error': last_run and last_run['error'] or False,
+            'next_update': next_run and self._l10n_cr_format_datetime(next_run),
         }
 
-    def _l10n_cr_action_update_rates(self):
-        """Load the company's missing rates and notify the result, then reload the view."""
+    @api.model
+    def _l10n_cr_format_datetime(self, utc_datetime):
+        """Describe a UTC datetime in Costa Rica time, relative to today when near."""
+        cr_datetime = utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
+        hour = format_time(self.env, utc_datetime, tz=CR_TZ, time_format='short')
+        days = (cr_datetime.date() - datetime.now(ZoneInfo(CR_TZ)).date()).days
+        if days == 0:
+            return self.env._("today at %(time)s", time=hour)
+        if days == -1:
+            return self.env._("yesterday at %(time)s", time=hour)
+        if days == 1:
+            return self.env._("tomorrow at %(time)s", time=hour)
+        return self.env._("on %(date)s at %(time)s", date=format_date(self.env, cr_datetime.date()), time=hour)
+
+    def _l10n_cr_action_update_rates(self, first_date=False, last_date=False, replace=False):
+        """Load the rates of the company's root and notify the result, then reload the view."""
         self.ensure_one()
-        error = self._l10n_cr_update_rates().get(self)
-        if error:
-            notification = {'type': 'danger', 'message': error}
-        else:
-            notification = {
-                'type': 'success',
-                'message': self.env._(
-                    "Exchange rates loaded up to %(date)s",
-                    date=format_date(self.env, self._l10n_cr_get_rates_ready_until())),
-            }
+        error = self._l10n_cr_update_rates(first_date, last_date, replace)
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
-            'params': {**notification, 'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'}},
+            'params': {
+                'type': 'danger' if error else 'success',
+                'message': error or self.env._("Exchange rates updated"),
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
         }
 
     def _l10n_cr_action_open_rate_load_wizard(self):
         self.ensure_one()
         return {
             'type': 'ir.actions.act_window',
-            'name': self.env._("Load Past Exchange Rates"),
+            'name': self.env._("Load Past Rates"),
             'res_model': 'l10n_cr.rate.load.wizard',
             'view_mode': 'form',
             'target': 'new',
-            'context': {'default_company_id': self.id, 'dialog_size': 'medium'},
+            'context': {'default_company_id': self.root_id.id, 'dialog_size': 'medium'},
         }
-
-    @api.model
-    def _l10n_cr_get_cron(self):
-        cron = self.env.ref('res_currency_cr_adapter.ir_cron_currency_rate_update', raise_if_not_found=False)
-        return cron and cron.sudo()
-
-    @api.model
-    def _l10n_cr_to_cr_time(self, utc_datetime):
-        return utc_datetime.replace(tzinfo=timezone.utc).astimezone(ZoneInfo(CR_TZ))
-
-    @api.model
-    def _l10n_cr_format_last_update(self, last_update):
-        """Describe a past UTC datetime in Costa Rica time, relative to today when recent."""
-        last_update = self._l10n_cr_to_cr_time(last_update)
-        time = last_update.strftime('%H:%M')
-        days = (datetime.now(ZoneInfo(CR_TZ)).date() - last_update.date()).days
-        if days == 0:
-            return self.env._("today at %(time)s", time=time)
-        if days == 1:
-            return self.env._("yesterday at %(time)s", time=time)
-        return self.env._("on %(date)s at %(time)s", date=last_update.strftime('%d/%m'), time=time)
