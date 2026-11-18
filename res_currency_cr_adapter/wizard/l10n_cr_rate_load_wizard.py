@@ -1,6 +1,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from datetime import timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, ValidationError
@@ -11,6 +12,9 @@ from odoo.addons.res_currency_cr_adapter.models.res_company import CR_TZ
 class L10nCrRateLoadWizard(models.TransientModel):
     _name = 'l10n_cr.rate.load.wizard'
     _description = "Load Past BCCR Exchange Rates"
+
+    def _get_today(self):
+        return datetime.now(ZoneInfo(CR_TZ)).date()
 
     company_id = fields.Many2one('res.company', required=True, readonly=True)
     date_from = fields.Date(string='From', required=True, default=lambda self: self._get_today().replace(day=1))
@@ -37,6 +41,3 @@ class L10nCrRateLoadWizard(models.TransientModel):
         if self.company_id not in self.env.user.company_ids.root_id:
             raise AccessError(self.env._("You can only load the exchange rates of your own companies."))
         return self.company_id.sudo()._l10n_cr_action_update_rates(self.date_from, self.date_to, self.replace)
-
-    def _get_today(self):
-        return fields.Date.context_today(self.with_context(tz=CR_TZ))
