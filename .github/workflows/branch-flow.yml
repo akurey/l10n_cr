@@ -1,0 +1,39 @@
+name: Branch flow
+
+# Git Flow with a QA stage (see "Branch & PR workflow" in CLAUDE.md):
+#   feature/* | bugfix/*  -> develop -> qa -> 19.0
+#   hotfix/*  -> 19.0, then back-merges 19.0 -> qa -> develop
+# Fails any PR into develop, qa or 19.0 whose head/base pair is not part of that flow.
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  branch-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check head and base branches
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          name='[A-Za-z0-9._-]+'
+          ok=1
+          case "$BASE_REF" in
+            develop)
+              [[ "$HEAD_REF" =~ ^(feature|bugfix)/$name$ || "$HEAD_REF" == qa ]] \
+                || { ok=0; hint="into develop only feature/<ticket>-<name>, bugfix/<ticket>-<name> or the qa back-merge"; } ;;
+            qa)
+              [[ "$HEAD_REF" == develop || "$HEAD_REF" == 19.0 ]] \
+                || { ok=0; hint="into qa only develop (promotion) or 19.0 (hotfix back-merge)"; } ;;
+            19.0)
+              [[ "$HEAD_REF" == qa || "$HEAD_REF" =~ ^hotfix/$name$ ]] \
+                || { ok=0; hint="into 19.0 only qa (release) or hotfix/<ticket>-<name>"; } ;;
+            *)
+              echo "Base '$BASE_REF' is not a flow branch; nothing to check."; exit 0 ;;
+          esac
+          if [ "$ok" = 0 ]; then
+            echo "::error::'$HEAD_REF' -> '$BASE_REF' is not allowed: $hint. See 'Branch & PR workflow' in CLAUDE.md."
+            exit 1
+          fi
+          echo "'$HEAD_REF' -> '$BASE_REF' follows the branch flow."

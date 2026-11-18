@@ -30,5 +30,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    `qa` → `19.0`, back-merges) use a **merge commit, never squash or rebase**; squashing them makes
    the branches diverge and every later promotion conflicts. Feature PRs may be squashed.
 
+**Enforced by:** `.github/workflows/branch-flow.yml` (fails PRs outside the flow) and the Claude Code
+hook `.claude/hooks/branch_flow.py` (blocks bad branch names, direct pushes to `develop`/`qa`/`19.0`
+and wrong `gh pr create` pairs).
+
 **For Claude Code:** new `feature/` and `bugfix/` PRs always use `--base develop`; `hotfix/` uses
 `--base 19.0`. Open promotion PRs (`develop` → `qa`, `qa` → `19.0`) only when the user asks.
