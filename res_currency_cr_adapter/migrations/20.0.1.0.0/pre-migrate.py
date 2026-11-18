@@ -49,25 +49,25 @@ def _rename_cron(cr):
 
 
 def _rename_buying_rate(cr):
-    """Rename the rate_2 field to buying_rate, keeping its data.
+    """Rename the rate_2 field to l10n_cr_buying_rate, keeping its data.
 
-    Without this the upgrade would create an empty buying_rate column and
+    Without this the upgrade would create an empty l10n_cr_buying_rate column and
     leave the loaded buying rates in the old one. The field's id is renamed
     too, or the upgrade would delete the field as one the module no longer
     has.
     """
     if not column_exists(cr, 'res_currency_rate', 'rate_2'):
         return
-    rename_column(cr, 'res_currency_rate', 'rate_2', 'buying_rate')
+    rename_column(cr, 'res_currency_rate', 'rate_2', 'l10n_cr_buying_rate')
     cr.execute("""
         UPDATE ir_model_fields
-           SET name = 'buying_rate'
+           SET name = 'l10n_cr_buying_rate'
          WHERE model = 'res.currency.rate'
            AND name = 'rate_2'
     """)
     cr.execute("""
         UPDATE ir_model_data
-           SET name = 'field_res_currency_rate__buying_rate'
+           SET name = 'field_res_currency_rate__l10n_cr_buying_rate'
          WHERE module = 'res_currency_cr_adapter'
            AND name = 'field_res_currency_rate__rate_2'
     """)

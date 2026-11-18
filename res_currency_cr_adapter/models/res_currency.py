@@ -76,7 +76,7 @@ class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
     l10n_cr_currency_use_rate_format = fields.Boolean(related='currency_id.l10n_cr_use_rate_format')
-    # The rated currency's rates are shown with the BCCR's date, the day after the one Odoo applies them from
+    # Rates in the Costa Rica format are shown with the BCCR's date, the day after the one Odoo stores them on
     l10n_cr_date = fields.Date(
         string='BCCR Date',
         compute='_compute_l10n_cr_date',
@@ -92,56 +92,57 @@ class ResCurrencyRate(models.Model):
     )
 
     # Costa Rica also publishes a buying rate, stored and shown like Odoo's rate
-    buying_rate = fields.Float(
+    l10n_cr_buying_rate = fields.Float(
         string='Technical Buying Rate',
         digits=0,
         aggregator='avg',
         help="Buying rate, expressed like the Technical Rate.",
     )
-    buying_company_rate = fields.Float(
+    l10n_cr_buying_company_rate = fields.Float(
         string='Buying Company Rate',
         digits=0,
-        compute='_compute_buying_company_rate',
-        inverse='_inverse_buying_company_rate',
+        compute='_compute_l10n_cr_buying_company_rate',
+        inverse='_inverse_l10n_cr_buying_company_rate',
         aggregator='avg',
         help="Buying rate, expressed like Unit/Base.",
     )
-    buying_inverse_company_rate = fields.Float(
+    l10n_cr_buying_inverse_company_rate = fields.Float(
         string='Buying Inverse Company Rate',
         digits=0,
-        compute='_compute_buying_inverse_company_rate',
-        inverse='_inverse_buying_inverse_company_rate',
+        compute='_compute_l10n_cr_buying_inverse_company_rate',
+        inverse='_inverse_l10n_cr_buying_inverse_company_rate',
         aggregator='avg',
         help="Buying rate, expressed like Base/Unit.",
     )
 
-    @api.depends('buying_rate', 'name', 'currency_id', 'company_id', 'currency_id.rate_ids.buying_rate')
+    @api.depends('l10n_cr_buying_rate', 'name', 'currency_id', 'company_id',
+                 'currency_id.rate_ids.l10n_cr_buying_rate')
     @api.depends_context('company')
-    def _compute_buying_company_rate(self):
+    def _compute_l10n_cr_buying_company_rate(self):
         last_rate = self._get_last_rates_for_companies(self.company_id | self.env.company.root_id)
         for currency_rate in self:
             company = currency_rate.company_id or self.env.company.root_id
-            buying_rate = currency_rate.buying_rate or currency_rate._get_latest_rate().buying_rate
-            currency_rate.buying_company_rate = buying_rate / last_rate[company]
+            buying_rate = currency_rate.l10n_cr_buying_rate or currency_rate._get_latest_rate().l10n_cr_buying_rate
+            currency_rate.l10n_cr_buying_company_rate = buying_rate / last_rate[company]
 
-    @api.onchange('buying_company_rate')
-    def _inverse_buying_company_rate(self):
+    @api.onchange('l10n_cr_buying_company_rate')
+    def _inverse_l10n_cr_buying_company_rate(self):
         last_rate = self._get_last_rates_for_companies(self.company_id | self.env.company.root_id)
         for currency_rate in self:
             company = currency_rate.company_id or self.env.company.root_id
-            currency_rate.buying_rate = currency_rate.buying_company_rate * last_rate[company]
+            currency_rate.l10n_cr_buying_rate = currency_rate.l10n_cr_buying_company_rate * last_rate[company]
 
-    @api.depends('buying_company_rate')
-    def _compute_buying_inverse_company_rate(self):
+    @api.depends('l10n_cr_buying_company_rate')
+    def _compute_l10n_cr_buying_inverse_company_rate(self):
         for currency_rate in self:
-            buying_company_rate = currency_rate.buying_company_rate
-            currency_rate.buying_inverse_company_rate = 1 / buying_company_rate if buying_company_rate else 0
+            company_rate = currency_rate.l10n_cr_buying_company_rate
+            currency_rate.l10n_cr_buying_inverse_company_rate = 1 / company_rate if company_rate else 0
 
-    @api.onchange('buying_inverse_company_rate')
-    def _inverse_buying_inverse_company_rate(self):
+    @api.onchange('l10n_cr_buying_inverse_company_rate')
+    def _inverse_l10n_cr_buying_inverse_company_rate(self):
         for currency_rate in self:
-            buying_inverse_company_rate = currency_rate.buying_inverse_company_rate
-            currency_rate.buying_company_rate = 1 / buying_inverse_company_rate if buying_inverse_company_rate else 0
+            inverse_rate = currency_rate.l10n_cr_buying_inverse_company_rate
+            currency_rate.l10n_cr_buying_company_rate = 1 / inverse_rate if inverse_rate else 0
 
     @api.depends('name')
     def _compute_l10n_cr_date(self):
@@ -167,7 +168,7 @@ class ResCurrencyRate(models.Model):
 
     def write(self, vals):
         # A rate changed by hand is no longer the BCCR's
-        if {'rate', 'buying_rate'} & vals.keys() and 'l10n_cr_source' not in vals:
+        if {'rate', 'l10n_cr_buying_rate'} & vals.keys() and 'l10n_cr_source' not in vals:
             vals = {**vals, 'l10n_cr_source': 'manual'}
         return super().write(vals)
 
@@ -189,9 +190,9 @@ class ResCurrencyRate(models.Model):
             # Odoo rates a currency against the company's: a colón company stores dollars per colón, the inverse
             # of the colones per dollar the BCCR publishes, and a dollar company stores the BCCR's values as they are
             if company.currency_id.name == 'CRC':
-                vals = {'rate': 1 / selling, 'buying_rate': 1 / buying, 'l10n_cr_source': 'bccr'}
+                vals = {'rate': 1 / selling, 'l10n_cr_buying_rate': 1 / buying, 'l10n_cr_source': 'bccr'}
             else:
-                vals = {'rate': selling, 'buying_rate': buying, 'l10n_cr_source': 'bccr'}
+                vals = {'rate': selling, 'l10n_cr_buying_rate': buying, 'l10n_cr_source': 'bccr'}
             if rate_date in existing_rates:
                 existing_rate = existing_rates[rate_date]
                 if replace or existing_rate.l10n_cr_source == 'bccr':

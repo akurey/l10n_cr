@@ -20,13 +20,13 @@
                 <field name="currency_id" column_invisible="True"/>
             </field>
             <field name="inverse_company_rate" position="after">
-                <field name="buying_company_rate" width="140" digits="[12,12]" invisible="not l10n_cr_currency_use_rate_format"
+                <field name="l10n_cr_buying_company_rate" width="140" digits="[12,12]" invisible="not l10n_cr_currency_use_rate_format"
                        column_invisible="context.get('l10n_cr_use_rate_format') == False"/>
-                <field name="buying_inverse_company_rate" width="140" digits="[12,12]" invisible="not l10n_cr_currency_use_rate_format"
+                <field name="l10n_cr_buying_inverse_company_rate" width="140" digits="[12,12]" invisible="not l10n_cr_currency_use_rate_format"
                        column_invisible="context.get('l10n_cr_use_rate_format') == False"/>
             </field>
             <field name="rate" position="after">
-                <field name="buying_rate" digits="[12,12]" optional="hide" invisible="not l10n_cr_currency_use_rate_format"
+                <field name="l10n_cr_buying_rate" digits="[12,12]" optional="hide" invisible="not l10n_cr_currency_use_rate_format"
                        column_invisible="context.get('l10n_cr_use_rate_format') == False"/>
             </field>
             <field name="write_date" position="before">
@@ -98,15 +98,15 @@
             <xpath expr="//field[@name='rate_ids']//field[@name='inverse_company_rate']" position="after">
                 <field name="company_rate" width="140" digits="[12,12]" string="Selling Unit/Base"
                        column_invisible="not parent.l10n_cr_use_rate_format"/>
-                <field name="buying_company_rate" width="140" digits="[12,12]" string="Buying Unit/Base"
+                <field name="l10n_cr_buying_company_rate" width="140" digits="[12,12]" string="Buying Unit/Base"
                        column_invisible="not parent.l10n_cr_use_rate_format"/>
                 <field name="inverse_company_rate" width="140" digits="[12,12]" string="Selling Base/Unit"
                        column_invisible="not parent.l10n_cr_use_rate_format"/>
-                <field name="buying_inverse_company_rate" width="140" digits="[12,12]" string="Buying Base/Unit"
+                <field name="l10n_cr_buying_inverse_company_rate" width="140" digits="[12,12]" string="Buying Base/Unit"
                        column_invisible="not parent.l10n_cr_use_rate_format"/>
             </xpath>
             <xpath expr="//field[@name='rate_ids']//field[@name='write_date']" position="before">
-                <field name="buying_rate" digits="[12,12]" optional="hide" column_invisible="not parent.l10n_cr_use_rate_format"/>
+                <field name="l10n_cr_buying_rate" digits="[12,12]" optional="hide" column_invisible="not parent.l10n_cr_use_rate_format"/>
                 <field name="l10n_cr_source" optional="show" readonly="True" column_invisible="not parent.l10n_cr_use_rate_format"/>
             </xpath>
         </field>
