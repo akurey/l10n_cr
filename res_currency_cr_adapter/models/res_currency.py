@@ -152,14 +152,15 @@ class ResCurrencyRate(models.Model):
         for currency_rate in self:
             currency_rate.l10n_cr_date = currency_rate.name and currency_rate.name + RATE_DATE_OFFSET
 
-    @api.onchange('currency_id')
-    def _onchange_currency_id_l10n_cr_date(self):
-        if not self._origin and self.l10n_cr_currency_use_rate_format and self.name == fields.Date.context_today(self):
-            self.name -= RATE_DATE_OFFSET
-
     def _inverse_l10n_cr_date(self):
         for currency_rate in self.filtered('l10n_cr_date'):
             currency_rate.name = currency_rate.l10n_cr_date - RATE_DATE_OFFSET
+
+    @api.onchange('currency_id')
+    def _onchange_currency_id_l10n_cr_date(self):
+        # A new rate starts on today's BCCR date, not on the tomorrow that Odoo's default date would show
+        if not self._origin and self.l10n_cr_currency_use_rate_format and self.name == fields.Date.context_today(self):
+            self.name -= RATE_DATE_OFFSET
 
     @api.model_create_multi
     def create(self, vals_list):
