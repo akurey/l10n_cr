@@ -56,6 +56,7 @@ class ResCurrency(models.Model):
         """Odoo's rate list, in the Costa Rica rate format for the currency that uses it."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('base.act_view_currency_rates')
+        action['name'] = action['display_name'] = self.env._("Show Currency Rates")
         action['domain'] = [('currency_id', '=', self.id)]
         action['context'] = {'default_currency_id': self.id, 'l10n_cr_use_rate_format': self.l10n_cr_use_rate_format}
         return action
