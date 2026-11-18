@@ -66,14 +66,14 @@
             </xpath>
             <!-- The update's status and actions, also for accounting administrators, who can't open Settings -->
             <xpath expr="//form/div[hasclass('alert')]" position="before">
-                <header invisible="not l10n_cr_show_update" groups="account.group_account_manager,base.group_system">
+                <header invisible="not l10n_cr_rates_status" groups="account.group_account_manager,base.group_system">
                     <button name="action_l10n_cr_update_rates" type="object" string="Update Now"/>
                     <button name="action_l10n_cr_open_rate_load_wizard" type="object" string="Load Past Rates"/>
                 </header>
             </xpath>
             <xpath expr="//sheet" position="before">
                 <div class="alert alert-info mb-0" role="alert" groups="account.group_account_manager,base.group_system"
-                     invisible="not l10n_cr_show_update or l10n_cr_rates_status != 'ready'">
+                     invisible="l10n_cr_rates_status != 'ready'">
                     <div>
                         Rates updated through <field name="l10n_cr_rates_ready_until" class="oe_inline"/>
                     </div>
@@ -84,7 +84,7 @@
                     </div>
                 </div>
                 <div class="alert alert-warning mb-0" role="alert" groups="account.group_account_manager,base.group_system"
-                     invisible="not l10n_cr_show_update or l10n_cr_rates_status not in ('late', 'missing')">
+                     invisible="l10n_cr_rates_status not in ('late', 'missing')">
                     <div invisible="l10n_cr_rates_status != 'late'">Tomorrow's rate isn't loaded yet, rates updated through <field name="l10n_cr_rates_ready_until" class="oe_inline"/></div>
                     <div invisible="l10n_cr_rates_status != 'missing' or not l10n_cr_rates_ready_until">Today's rate is missing, rates updated through <field name="l10n_cr_rates_ready_until" class="oe_inline"/></div>
                     <div invisible="l10n_cr_rates_status != 'missing' or l10n_cr_rates_ready_until">No rates loaded yet, use "Update Now" to load them</div>

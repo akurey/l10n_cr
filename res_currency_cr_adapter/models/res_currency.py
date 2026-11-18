@@ -22,7 +22,6 @@ class ResCurrency(models.Model):
 
     l10n_cr_use_rate_format = fields.Boolean(compute='_compute_l10n_cr_use_rate_format')
     # The update's status, also for accounting administrators, who can't open Settings
-    l10n_cr_show_update = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_ready_until = fields.Date(compute='_compute_l10n_cr_rates_status')
     l10n_cr_last_update = fields.Char(compute='_compute_l10n_cr_rates_status')
@@ -43,7 +42,6 @@ class ResCurrency(models.Model):
         status = self.env.company.root_id.sudo()._l10n_cr_get_rates_status()
         for currency in self:
             currency_status = status if currency.l10n_cr_use_rate_format else {}
-            currency.l10n_cr_show_update = bool(currency_status)
             currency.l10n_cr_rates_status = currency_status.get('status')
             currency.l10n_cr_rates_ready_until = currency_status.get('ready_until')
             currency.l10n_cr_last_update = currency_status.get('last_update')
