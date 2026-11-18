@@ -6,8 +6,9 @@
         <field name="arch" type="xml">
             <form>
                 <group>
-                    <field name="date_from"/>
-                    <field name="date_to"/>
+                    <field name="date_from" string="Period" widget="daterange"
+                           options="{'end_date_field': 'date_to', 'always_range': True, 'max_date': 'today', 'numeric': True}"/>
+                    <field name="date_to" invisible="1"/>
                     <field name="replace"/>
                 </group>
                 <footer>

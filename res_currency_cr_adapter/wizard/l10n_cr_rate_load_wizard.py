@@ -1,6 +1,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from odoo import api, fields, models
@@ -27,12 +27,12 @@ class L10nCrRateLoadWizard(models.TransientModel):
 
     @api.constrains('date_from', 'date_to')
     def _check_dates(self):
-        tomorrow = self._get_today() + timedelta(days=1)
+        today = self._get_today()
         for wizard in self:
             if wizard.date_from > wizard.date_to:
                 raise ValidationError(self.env._("The start date must be before the end date."))
-            if wizard.date_to > tomorrow:
-                raise ValidationError(self.env._("The BCCR publishes the rates one day ahead at most."))
+            if wizard.date_to > today:
+                raise ValidationError(self.env._("Past rates can be loaded up to today."))
 
     def action_load(self):
         self.ensure_one()
