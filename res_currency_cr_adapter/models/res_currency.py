@@ -55,12 +55,12 @@ class ResCurrency(models.Model):
             if currency.l10n_cr_use_rate_format and currency.rate_date:
                 currency.rate_date += RATE_DATE_OFFSET
 
-    def action_view_rates(self):
-        """Odoo's rate list, without the buying columns for a currency that doesn't use them."""
+    def action_l10n_cr_view_rates(self):
+        """Odoo's rate list, in the Costa Rica rate format for the currency that uses it."""
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('base.act_view_currency_rates')
         action['domain'] = [('currency_id', '=', self.id)]
-        action['context'] = {'default_currency_id': self.id, 'hide_buying_rate': not self.l10n_cr_use_rate_format}
+        action['context'] = {'default_currency_id': self.id, 'l10n_cr_use_rate_format': self.l10n_cr_use_rate_format}
         return action
 
     def action_l10n_cr_update_rates(self):
