@@ -50,10 +50,9 @@ class ResCurrency(models.Model):
 
     def _compute_current_rate(self):
         super()._compute_current_rate()
-        company = self.env['res.company'].browse(self.env.context.get('company_id')) or self.env.company
-        rated_currency = company.root_id._l10n_cr_get_rated_currency()
+        # Odoo 20 stores each rate the day before it applies to documents, so show the day it applies, as the BCCR does
         for currency in self:
-            if currency._origin == rated_currency and currency.rate_date:
+            if currency.l10n_cr_use_rate_format and currency.rate_date:
                 currency.rate_date += RATE_DATE_OFFSET
 
     def action_view_rates(self):
