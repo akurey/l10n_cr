@@ -20,7 +20,7 @@ RATES_STATUSES = [
 class ResCurrency(models.Model):
     _inherit = 'res.currency'
 
-    show_buying_rate = fields.Boolean(compute='_compute_show_buying_rate')
+    l10n_cr_use_rate_format = fields.Boolean(compute='_compute_l10n_cr_use_rate_format')
     # The update's status, also for accounting administrators, who can't open Settings
     l10n_cr_show_update = fields.Boolean(compute='_compute_l10n_cr_rates_status')
     l10n_cr_rates_status = fields.Selection(selection=RATES_STATUSES, compute='_compute_l10n_cr_rates_status')
@@ -30,13 +30,13 @@ class ResCurrency(models.Model):
     l10n_cr_next_update = fields.Char(compute='_compute_l10n_cr_rates_status')
 
     @api.depends_context('company')
-    def _compute_show_buying_rate(self):
+    def _compute_l10n_cr_use_rate_format(self):
         # Rates are stored on the root company, which its branches share
         rated_currency = self.env.company.root_id._l10n_cr_get_rated_currency()
         for currency in self:
-            currency.show_buying_rate = currency._origin == rated_currency
+            currency.l10n_cr_use_rate_format = currency._origin == rated_currency
 
-    @api.depends('show_buying_rate')
+    @api.depends('l10n_cr_use_rate_format')
     @api.depends_context('company')
     def _compute_l10n_cr_rates_status(self):
         # The token is only readable by Settings administrators
@@ -47,7 +47,7 @@ class ResCurrency(models.Model):
             and company._l10n_cr_get_rates_status()
         )
         for currency in self:
-            show_update = bool(status) and currency.show_buying_rate
+            show_update = bool(status) and currency.l10n_cr_use_rate_format
             currency.l10n_cr_show_update = show_update
             currency.l10n_cr_rates_status = show_update and status['status']
             currency.l10n_cr_rates_ready_until = show_update and status['ready_until']
@@ -68,7 +68,7 @@ class ResCurrency(models.Model):
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('base.act_view_currency_rates')
         action['domain'] = [('currency_id', '=', self.id)]
-        action['context'] = {'default_currency_id': self.id, 'hide_buying_rate': not self.show_buying_rate}
+        action['context'] = {'default_currency_id': self.id, 'hide_buying_rate': not self.l10n_cr_use_rate_format}
         return action
 
     def action_l10n_cr_update_rates(self):
@@ -84,7 +84,7 @@ class ResCurrency(models.Model):
 class ResCurrencyRate(models.Model):
     _inherit = 'res.currency.rate'
 
-    currency_show_buying_rate = fields.Boolean(related='currency_id.show_buying_rate')
+    l10n_cr_currency_use_rate_format = fields.Boolean(related='currency_id.l10n_cr_use_rate_format')
     # The rated currency's rates are shown with the BCCR's date, the day after the one Odoo applies them from
     l10n_cr_date = fields.Date(
         string='BCCR Date',
@@ -159,7 +159,7 @@ class ResCurrencyRate(models.Model):
 
     @api.onchange('currency_id')
     def _onchange_currency_id_l10n_cr_date(self):
-        if not self._origin and self.currency_show_buying_rate and self.name == fields.Date.context_today(self):
+        if not self._origin and self.l10n_cr_currency_use_rate_format and self.name == fields.Date.context_today(self):
             self.name -= RATE_DATE_OFFSET
 
     def _inverse_l10n_cr_date(self):
