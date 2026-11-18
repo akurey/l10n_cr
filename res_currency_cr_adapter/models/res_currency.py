@@ -172,7 +172,7 @@ class ResCurrencyRate(models.Model):
 
     def write(self, vals):
         # A rate changed by hand is no longer the BCCR's
-        if {'rate', 'l10n_cr_buying_rate'} & vals.keys() and 'l10n_cr_source' not in vals:
+        if {'name', 'rate', 'l10n_cr_buying_rate'} & vals.keys() and 'l10n_cr_source' not in vals:
             vals = {**vals, 'l10n_cr_source': 'manual'}
         return super().write(vals)
 
