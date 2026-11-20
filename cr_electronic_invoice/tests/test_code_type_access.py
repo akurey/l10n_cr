@@ -1,3 +1,5 @@
+from lxml import etree
+
 from odoo.exceptions import AccessError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase, new_test_user
@@ -20,6 +22,17 @@ class TestCodeTypeAccess(TransactionCase):
     def test_administrator_reads_code_types(self):
         user = new_test_user(self.env, login='test_code_type_admin', groups='base.group_system')
         self.assertTrue(self.env['code.type.product'].with_user(user).search([]))
+
+    def test_other_product_users_open_and_create_products(self):
+        # A product manager outside sales, invoicing and administration (e.g.
+        # inventory or purchase) doesn't see the field, gets its default, and
+        # can still open and create products.
+        user = self._product_manager('test_code_type_stock', 'base.group_user')
+        Product = self.env['product.template'].with_user(user)
+        arch = etree.fromstring(Product.get_view(view_type='form')['arch'])
+        self.assertFalse(arch.xpath("//field[@name='code_type_id']"))
+        product = Product.create({'name': 'TEST Bien'})
+        self.assertEqual(product.sudo().code_type_id.code, '04')
 
     def test_other_users_still_cannot(self):
         user = new_test_user(self.env, login='test_code_type_employee', groups='base.group_user')

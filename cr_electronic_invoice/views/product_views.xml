@@ -11,7 +11,7 @@
                 <field name="economic_activity_id" domain="[('company_ids', 'in', allowed_company_ids)]" options='{"no_open": True, "no_create": True}' invisible="frm_ws_ambiente == 'disabled'"/>
                 <field name="non_tax_deductible" default="0"/>
                 <field name="iva_devuelto_tarjeta" invisible="frm_ws_ambiente == 'disabled'"/>
-                <field name="code_type_id" required="0"/>
+                <field name="code_type_id" required="0" groups="account.group_account_invoice,sales_team.group_sale_salesman,base.group_system"/>
                 <field name="commercial_measurement" required="0"/>
                 <field name="cabys_code" />
             </field>
