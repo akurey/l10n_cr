@@ -32,6 +32,19 @@ Módulo para Odoo que adapta la moneda USD para Costa Rica e inicia la actualiza
 .. contents::
    :local:
 
+Euro
+====
+
+If the euro (EUR) is active, the module also loads its rate in colones from the BCCR. The BCCR does not publish
+it: it publishes the euro in US dollars (indicator 333, one value, on business days, the same day), so the module
+derives it as that value times the selling dollar (318), and keeps no buying rate for the euro (a buying euro would be
+a figure nobody publishes; Hacienda also converts with the selling rate).
+
+The dollar of a day is published the evening before and the euro on the day itself, in the morning, so the euro runs
+in its own cron at 19:00 Costa Rica time (01:00 UTC): each day takes the euro the BCCR published that day, and a day
+without one (weekend, holiday) takes the last one published. Until that run, documents of the day use the previous
+day's euro rate.
+
 Changelog
 =========
 
