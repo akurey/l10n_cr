@@ -65,6 +65,13 @@ msgid "Currency CRC Rate Update"
 msgstr "Actualización de tipo de cambio de moneda CRC"
 
 #. module: res_currency_cr_adapter
+#: model:ir.actions.server,name:res_currency_cr_adapter.currency_eur_rate_cron_ir_actions_server
+#: model:ir.cron,cron_name:res_currency_cr_adapter.currency_eur_rate_cron
+#: model:ir.cron,name:res_currency_cr_adapter.currency_eur_rate_cron
+msgid "Currency EUR Rate Update"
+msgstr "Actualización de tipo de cambio de moneda EUR"
+
+#. module: res_currency_cr_adapter
 #: model:ir.model,name:res_currency_cr_adapter.model_res_currency_rate
 msgid "Currency Rate"
 msgstr "Tasa monetaria"
