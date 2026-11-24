@@ -19,7 +19,7 @@ BCCR_BUYING_INDICATOR = '317'  # Tipo cambio compra
 # The BCCR publishes the euro against the US dollar (USD per EUR), on business days, the same day. The euro in
 # colones is not published: it is derived as that rate times the dollar's selling rate (EUR → USD → CRC).
 BCCR_EUR_USD_INDICATOR = '333'
-# The euro update runs in the evening (see currency_data.xml), when the day's euro is already published
+# The euro update runs twice a day (see currency_data.xml): in the evening, for tomorrow, and in the morning, for today
 COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 BCCR_TIMEOUT = 60
 
@@ -337,11 +337,12 @@ class ResCurrencyRate(models.Model):
 
     @api.model
     def _cron_update_euro(self, first_date=False, last_date=False):
-        """Load the euro in colones for each day of the range (today in Costa Rica by default): the euro the BCCR
-        published that day (333, USD per EUR) times that day's selling dollar (318). The BCCR publishes the dollar of
-        a day the evening before and its euro on the day itself, in the morning, so this runs in the evening: a day
-        without a euro by then (weekend, holiday) takes the last one published. Run by hand earlier in the day, it
-        would take yesterday's euro for today."""
+        """Load the euro in colones for each day of the range (today and tomorrow in Costa Rica by default). Each
+        day takes the last euro the BCCR had published up to that day (333, USD per EUR) times that day's selling
+        dollar (318), which is what is in force at any hour of that day: the euro of a day is published on that day
+        in the morning, the dollar of a day the evening before. Run in the evening it leaves tomorrow's rate ready
+        before midnight (today's euro times tomorrow's dollar); run in the morning, after the euro is out, it
+        replaces today's rate with the new euro. A day without a euro (weekend, holiday) keeps the last one."""
         euro = self.env.ref('base.EUR')
         params = self.env['ir.config_parameter'].sudo()
         # EUR is activated for the whole database, not per company
@@ -353,7 +354,7 @@ class ResCurrencyRate(models.Model):
             return False
 
         first_date = _as_date(first_date) or datetime.now(COSTA_RICA_TZ).date()
-        last_date = _as_date(last_date) or first_date
+        last_date = _as_date(last_date) or first_date + timedelta(days=1)
         selling_rates = self._bccr_get_series(BCCR_SELLING_INDICATOR, first_date, last_date, token)
         # A week earlier covers a range that starts on a day without a euro
         euro_in_dollars = self._bccr_get_series(
