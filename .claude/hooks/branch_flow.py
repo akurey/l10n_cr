@@ -45,7 +45,7 @@ def pair_error(head, base):
 def current_branch(cwd):
     try:
         return subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607 (git from PATH, as the user runs it)
             cwd=cwd, capture_output=True, text=True, timeout=5,
         ).stdout.strip()
     except (OSError, subprocess.SubprocessError):
@@ -143,7 +143,7 @@ def main():
         else:
             error = None
         if error:
-            print(error, file=sys.stderr)
+            sys.stderr.write(error + "\n")
             return 2
     return 0
 
