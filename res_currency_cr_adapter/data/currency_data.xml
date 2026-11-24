@@ -14,7 +14,8 @@
         <field name="interval_type">days</field>
         <field name="nextcall" eval="(datetime.today() + timedelta(days=1)).strftime('%Y-%m-%d 13:00:00')"></field>
     </record>
-    <!-- 19:00 in Costa Rica (01:00 UTC): after the BCCR has published the day's euro (about 08:00) -->
+    <!-- 19:00 in Costa Rica (01:00 UTC): the BCCR has published tomorrow's dollar (about 17:15), so tomorrow's rate is
+         ready before midnight, with the last euro published -->
     <record id="currency_eur_rate_cron" model="ir.cron">
         <field name="name">Currency EUR Rate Update</field>
         <field name="model_id" ref="model_res_currency_rate"/>
@@ -23,6 +24,17 @@
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
         <field name="nextcall" eval="(datetime.today() + timedelta(days=1)).strftime('%Y-%m-%d 01:00:00')"></field>
+    </record>
+    <!-- 08:15 in Costa Rica (14:15 UTC): the BCCR publishes the day's euro between 07:50 and 08:00, today's rate is
+         recalculated with it -->
+    <record id="currency_eur_rate_morning_cron" model="ir.cron">
+        <field name="name">Currency EUR Rate Update (morning)</field>
+        <field name="model_id" ref="model_res_currency_rate"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_update_euro()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(datetime.today() + timedelta(days=1)).strftime('%Y-%m-%d 14:15:00')"></field>
     </record>
     <record id="create_missing_exchange_rate_cron" model="ir.cron">
         <field name="name">Create Missing Exchange Rate</field>
