@@ -5,6 +5,7 @@ from odoo import api, fields, models
 from datetime import timedelta, datetime, date as date_type
 import logging
 import requests
+from zoneinfo import ZoneInfo
 
 _logger = logging.getLogger(__name__)
 
@@ -15,6 +16,11 @@ _logger = logging.getLogger(__name__)
 BCCR_API_BASE = 'https://apim.bccr.fi.cr/SDDE/api/Bccr.GE.SDDE.Publico.Indicadores.API'
 BCCR_SELLING_INDICATOR = '318'  # Tipo cambio venta
 BCCR_BUYING_INDICATOR = '317'  # Tipo cambio compra
+# The BCCR publishes the euro against the US dollar (USD per EUR), on business days, the same day. The euro in
+# colones is not published: it is derived as that rate times the dollar's selling rate (EUR → USD → CRC).
+BCCR_EUR_USD_INDICATOR = '333'
+# The euro update runs twice a day (see currency_data.xml): in the evening, for tomorrow, and in the morning, for today
+COSTA_RICA_TZ = ZoneInfo('America/Costa_Rica')
 BCCR_TIMEOUT = 60
 
 # The API gateway answers 403 to the default user agent of the requests
@@ -30,6 +36,15 @@ BCCR_HTTP_ERRORS = {
     429: "too many requests, lower the frequency of the cron",
     500: "BCCR internal error, or the token was rejected",
 }
+
+
+def _as_date(value):
+    """A date, a datetime or a 'YYYY-MM-DD' string as a date (falsy stays falsy)."""
+    if isinstance(value, str):
+        return datetime.strptime(value, '%Y-%m-%d').date()
+    if isinstance(value, datetime):
+        return value.date()
+    return value
 
 
 class ResCurrency(models.Model):
@@ -160,14 +175,8 @@ class ResCurrencyRate(models.Model):
         _logger.info("=========================================================")
         _logger.info("Executing exchange rate update from 1 CRC = X USD")
 
-        if isinstance(first_date, str):
-            first_date = datetime.strptime(first_date, '%Y-%m-%d').date()
-        elif isinstance(first_date, datetime):
-            first_date = first_date.date()
-        if isinstance(last_date, str):
-            last_date = datetime.strptime(last_date, '%Y-%m-%d').date()
-        elif isinstance(last_date, datetime):
-            last_date = last_date.date()
+        first_date = _as_date(first_date)
+        last_date = _as_date(last_date)
 
         exchange_source = self.env['ir.config_parameter'].sudo().get_param('exchange_source')
         if exchange_source == 'bccr':
@@ -202,42 +211,8 @@ class ResCurrencyRate(models.Model):
                               "match for %s", ', '.join(sorted(incomplete_dates)))
 
             for current_date_str in sorted(set(selling_rates) & set(buying_rates)):
-                selling_original_rate = selling_rates[current_date_str]
-                buying_original_rate = buying_rates[current_date_str]
-
-                # Odoo uses the value of 1 unit of the base currency divided between the exchage rate
-                selling_rate = 1 / selling_original_rate
-                buying_rate = 1 / buying_original_rate
-
-                # Get the rate for this date to know it is already registered
-                rates_ids = self.env['res.currency.rate'].search([
-                    ('name', '=', current_date_str),
-                    ('currency_id', '=', currency_id.id),
-                ], limit=1)
-
-                if len(rates_ids) > 0:
-                    rates_ids.write(
-                        {'rate': selling_rate,
-                         'original_rate': selling_original_rate,
-                         'rate_2': buying_rate,
-                         'original_rate_2': buying_original_rate,
-                         'currency_id': currency_id.id}
-                        )
-                else:
-                    self.create(
-                        {'name': current_date_str,
-                         'rate': selling_rate,
-                         'original_rate': selling_original_rate,
-                         'rate_2': buying_rate,
-                         'original_rate_2': buying_original_rate,
-                         'currency_id': currency_id.id})
-
-                _logger.info({'name': current_date_str,
-                              'rate': selling_rate,
-                              'original_rate': selling_original_rate,
-                              'rate_2': buying_rate,
-                              'original_rate_2': buying_original_rate,
-                              'currency_id': currency_id.id})
+                self._cr_set_rate(currency_id, current_date_str, selling_rates[current_date_str],
+                                  buying_rates[current_date_str])
 
         if exchange_source == 'hacienda':
             _logger.info("Getting exchange rates from HACIENDA")
@@ -342,6 +317,54 @@ class ResCurrencyRate(models.Model):
                 _logger.info(vals)
 
         _logger.info("=========================================================")
+
+    def _cr_set_rate(self, currency, date, selling_crc, buying_crc=None):
+        """Create or update `currency`'s rate on `date` from its price in colones. The buying price is only for
+        currencies the BCCR publishes one for (the dollar); without it the buying rate is left empty."""
+        vals = {
+            # Odoo uses the value of 1 unit of the base currency divided by the exchange rate
+            'rate': 1 / selling_crc,
+            'original_rate': selling_crc,
+            'rate_2': 1 / buying_crc if buying_crc else 0.0,
+            'original_rate_2': buying_crc or 0.0,
+        }
+        rate = self.search([('name', '=', date), ('currency_id', '=', currency.id)], limit=1)
+        if rate:
+            rate.write(vals)
+        else:
+            self.create(dict(vals, name=date, currency_id=currency.id))
+        _logger.info("%s rate on %s: %s", currency.name, date, vals)
+
+    @api.model
+    def _cron_update_euro(self, first_date=False, last_date=False):
+        """Load the euro in colones for each day of the range (today and tomorrow in Costa Rica by default). Each
+        day takes the last euro the BCCR had published up to that day (333, USD per EUR) times that day's selling
+        dollar (318), which is what is in force at any hour of that day: the euro of a day is published on that day
+        in the morning, the dollar of a day the evening before. Run in the evening it leaves tomorrow's rate ready
+        before midnight (today's euro times tomorrow's dollar); run in the morning, after the euro is out, it
+        replaces today's rate with the new euro. A day without a euro (weekend, holiday) keeps the last one."""
+        euro = self.env.ref('base.EUR')
+        params = self.env['ir.config_parameter'].sudo()
+        # EUR is activated for the whole database, not per company
+        if not euro.active or params.get_param('exchange_source') != 'bccr':
+            return False
+        token = params.get_param('bccr_token')
+        if not token:
+            _logger.error("No BCCR token configured, the euro rate was not updated")
+            return False
+
+        first_date = _as_date(first_date) or datetime.now(COSTA_RICA_TZ).date()
+        last_date = _as_date(last_date) or first_date + timedelta(days=1)
+        selling_rates = self._bccr_get_series(BCCR_SELLING_INDICATOR, first_date, last_date, token)
+        # A week earlier covers a range that starts on a day without a euro
+        euro_in_dollars = self._bccr_get_series(
+            BCCR_EUR_USD_INDICATOR, first_date - timedelta(days=7), last_date, token)
+        published = sorted(euro_in_dollars)
+        for day, selling_crc in sorted(selling_rates.items()):
+            known = [published_day for published_day in published if published_day <= day]
+            if known:
+                self._cr_set_rate(euro, day, euro_in_dollars[known[-1]] * selling_crc)
+        return True
 
     def _create_the_latest_exchange_rate_to_date(self, currency, date=None):
         name = date or datetime.now()
