@@ -41,9 +41,13 @@ derives it as that value times the selling dollar (318), and keeps no buying rat
 a figure nobody publishes; Hacienda also converts with the selling rate).
 
 The dollar of a day is published the evening before and the euro on the day itself, in the morning, so the euro runs
-in its own cron at 19:00 Costa Rica time (01:00 UTC): each day takes the euro the BCCR published that day, and a day
-without one (weekend, holiday) takes the last one published. Until that run, documents of the day use the previous
-day's euro rate.
+twice a day (Costa Rica time). Each day takes the last euro the BCCR had published up to that day, times that day's
+selling dollar (a day without a published euro, such as a weekend or holiday, takes the last one):
+
+* 19:00 (01:00 UTC): leaves tomorrow's rate ready before midnight, so documents dated tomorrow already have one.
+* 08:15 (14:15 UTC): replaces today's rate with the euro published that morning.
+
+From midnight until the morning run, documents of the day use the previous euro times the day's dollar.
 
 Changelog
 =========
