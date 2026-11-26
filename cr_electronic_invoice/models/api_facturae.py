@@ -435,6 +435,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('<Tipo>' + issuing_company.identification_id.code + '</Tipo>')
     sb.append('<Numero>' + issuing_company.vat + '</Numero>')
     sb.append('</Identificacion>')
+    append_registro_fiscal_8707(sb, inv)
     if issuing_company.commercial_name:
         sb.append('<NombreComercial>' + escape(str(issuing_company.commercial_name)) + '</NombreComercial>')
     if inv.tipo_documento != 'FEC':
@@ -725,6 +726,17 @@ def append_barrio(sb, neighborhood):
     name = (neighborhood.name or '').strip()
     if 5 <= len(name) <= 50:
         sb.append('<Barrio>' + escape(name) + '</Barrio>')
+
+
+def append_registro_fiscal_8707(sb, inv):
+    """<Registrofiscal8707>, in <Emisor> right after <Identificacion>: the company's alcoholic
+    beverages register (Law 8707), required by Hacienda when the document invoices CABYS codes of
+    alcoholic beverages. A branch without its own register uses its main company's. On an FEC the issuer
+    is the supplier, so the company's register does not apply."""
+    company = inv.company_id
+    register = (company.registro_fiscal_8707 or company.root_id.registro_fiscal_8707 or '').strip()
+    if register and inv.tipo_documento != 'FEC':
+        sb.append('<Registrofiscal8707>' + escape(register) + '</Registrofiscal8707>')
 
 
 def otras_senas(street, max_length):

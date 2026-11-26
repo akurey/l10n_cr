@@ -2581,3 +2581,22 @@ msgid ""
 msgstr ""
 "Contacto que recibe los correos de la cotización y de la orden además del "
 "cliente. Se copia a las facturas creadas desde esta orden."
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__registro_fiscal_8707
+msgid "Alcoholic Beverages Fiscal Register (Law 8707)"
+msgstr "Registro fiscal de bebidas alcohólicas (Ley 8707)"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__registro_fiscal_8707
+msgid ""
+"Number of the alcoholic beverages register issued by the Dirección General "
+"de Aduanas. Sent as Registrofiscal8707 in the issuer of the company's "
+"electronic documents; Hacienda requires it when a document invoices CABYS "
+"codes of alcoholic beverages. Renewed yearly."
+msgstr ""
+"Número del registro de bebidas alcohólicas que emite la Dirección General "
+"de Aduanas. Se envía como Registrofiscal8707 en el emisor de los "
+"comprobantes electrónicos de la compañía; Hacienda lo exige cuando el "
+"comprobante factura códigos CABYS de bebidas alcohólicas. Se renueva cada "
+"año."
