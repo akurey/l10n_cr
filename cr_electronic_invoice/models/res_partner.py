@@ -108,7 +108,7 @@ class PartnerElectronic(models.Model):
                         raise UserError(_('La identificación tipo DIMEX debe contener 11 o 12 ' +
                                           'dígitos, sin ceros al inicio y sin guiones.'))
                 elif self.identification_id.code == '04' and self.vat.isdigit():
-                    if self.vat.isdigit() and len(self.vat) != 9:
+                    if self.vat.isdigit() and len(self.vat) != 10:
                         raise UserError(_('La identificación tipo NITE debe contener 10 dígitos, ' +
                                           'sin ceros al inicio y sin guiones.'))
 
@@ -119,33 +119,14 @@ class PartnerElectronic(models.Model):
             json_response = api_facturae.get_economic_activities(self)
             _logger.debug('E-INV CR  - Economic Activities: %s', json_response)
             if json_response["status"] == 200:
-                EconomicActivity = self.env['economic.activity'].with_context(active_test=False)
-                activity_ids = []
-                a_codes = []
-                for activity in (json_response["activities"] or []):
-                    if activity.get("estado") != "A":
-                        continue
-                    a_codes.append(activity["codigo"])
-                    record = EconomicActivity.search([('code', '=', activity["codigo"])], limit=1)
-                    if not record:
-                        record = EconomicActivity.create({
-                            'code': activity["codigo"],
-                            'name': activity.get("descripcion", ""),
-                            'description': activity.get("descripcion", ""),
-                            'sale_type': 'services' if activity.get("tipo") == "S" else 'goods',
-                        })
-                    activity_ids.append(record.id)
-
-                _logger.info('E-INV CR - activities from Hacienda for %s: %s', self.vat, a_codes)
-
-                economic_activities = EconomicActivity.browse(activity_ids)
-                economic_activities.filtered(lambda a: not a.active).write({'active': True})
-
-                self.economic_activities_ids = [(6, 0, activity_ids)] if activity_ids else False
+                economic_activities = self.env['economic.activity']._from_hacienda(json_response["activities"])
+                _logger.info('E-INV CR - activities from Hacienda for %s: %s', self.vat,
+                             economic_activities.mapped('code'))
+                self.economic_activities_ids = [(6, 0, economic_activities.ids)] if economic_activities else False
 
                 self.name = json_response["name"]
 
-                if len(a_codes) >= 1:
+                if economic_activities:
                     self.activity_id = economic_activities[0]
             else:
                 alert = {
