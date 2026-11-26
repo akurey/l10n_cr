@@ -2,12 +2,13 @@
 """Claude Code PreToolUse hook: keep Bash git/gh commands inside the Git Flow branch workflow.
 
 Flow (see "Branch & PR workflow" in CLAUDE.md):
-    feature/* | bugfix/*  -> develop -> qa -> 19.0
-    hotfix/*  -> 19.0, then back-merges 19.0 -> qa -> develop
+    feature/* | bugfix/*  -> develop -> 19.0   (no QA stage; the qa branch is retired)
+    hotfix/*  -> 19.0, then back-merge 19.0 -> develop
 
 Blocks (exit 2, reason on stderr, which Claude reads):
 - new branches without a feature/, bugfix/ or hotfix/ prefix;
-- direct pushes to develop, qa or 19.0;
+- direct pushes to develop or 19.0;
+- PRs into the retired qa branch;
 - `gh pr create` with a head/base pair outside the flow (no --base means the repo
   default, 19.0, so feature work must pass --base develop).
 The same pairs are enforced on GitHub by .github/workflows/branch-flow.yml.
@@ -19,7 +20,8 @@ import shlex
 import subprocess
 import sys
 
-PROTECTED = ("develop", "qa", "19.0")
+PROTECTED = ("develop", "19.0")
+RETIRED = ("qa",)
 WORK_BRANCH = re.compile(r"^(feature|bugfix|hotfix)/[A-Za-z0-9._-]+$")
 SEPARATORS = {"&&", "||", ";", "|", "&", "\n"}
 DOC = "See 'Branch & PR workflow' in CLAUDE.md."
@@ -28,17 +30,15 @@ DOC = "See 'Branch & PR workflow' in CLAUDE.md."
 def pair_error(head, base):
     """Return why head -> base breaks the flow, or None when it is allowed."""
     if base == "develop":
-        if re.match(r"^(feature|bugfix)/", head) or head == "qa":
+        if re.match(r"^(feature|bugfix)/", head) or head == "19.0":
             return None
-        return "into develop only feature/<ticket>-<name>, bugfix/<ticket>-<name> or the qa back-merge"
-    if base == "qa":
-        if head in ("develop", "19.0"):
-            return None
-        return "into qa only develop (promotion) or 19.0 (hotfix back-merge)"
+        return "into develop only feature/<ticket>-<name>, bugfix/<ticket>-<name> or the 19.0 hotfix back-merge"
+    if base in RETIRED:
+        return "the qa stage is retired; release with a develop -> 19.0 PR"
     if base == "19.0":
-        if head == "qa" or head.startswith("hotfix/"):
+        if head == "develop" or head.startswith("hotfix/"):
             return None
-        return "into 19.0 only qa (release) or hotfix/<ticket>-<name>; feature work goes to --base develop"
+        return "into 19.0 only develop (release) or hotfix/<ticket>-<name>; feature work goes to --base develop"
     return None
 
 
@@ -117,7 +117,7 @@ def check_gh(args, cwd):
     base = option_value(rest, "--base", "-B") or "19.0"
     head = option_value(rest, "--head", "-H") or current_branch(cwd)
     head = head.split(":", 1)[-1]
-    if base not in PROTECTED:
+    if base not in PROTECTED + RETIRED:
         return None
     reason = pair_error(head, base)
     if reason:
