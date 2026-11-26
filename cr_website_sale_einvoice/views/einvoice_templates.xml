@@ -101,6 +101,15 @@
         </xpath>
     </template>
 
+    <!-- website_sale's checkout address form is a primary copy of portal's that sets its own t-if on the same node
+         (display_b2b_fields), which would show the fields again. -->
+    <template id="shop_address_form_without_vat" inherit_id="website_sale.address_form_fields"
+              name="No tax ID in the checkout address form">
+        <xpath expr="//t[@name='b2b_fields']" position="attributes">
+            <attribute name="t-if">False</attribute>
+        </xpath>
+    </template>
+
     <template id="checkout_einvoice" inherit_id="website_sale.checkout" name="Electronic invoice at checkout">
         <xpath expr="//div[@id='shop_checkout']" position="inside">
             <div id="cr_einvoice" class="o_cr_einvoice mb-4 pt-2">

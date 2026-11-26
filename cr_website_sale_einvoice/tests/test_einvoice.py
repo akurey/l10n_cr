@@ -246,6 +246,13 @@ class TestPortalEinvoice(TransactionCase):
             EinvoicePortal().portal_einvoice(identification_type='01', vat='112340567')
         self.assertEqual(user.partner_id.vat, '112340567')
 
+    def test_address_forms_have_no_tax_id_input(self):
+        """The ID is given with its type in the electronic invoice section; checked in /my/account's form and in the
+        checkout's (/shop/address), a primary copy that sets its own condition on the same node."""
+        for xmlid in ('portal.address_form_fields', 'website_sale.address_form_fields'):
+            nodes = self.env.ref(xmlid)._get_combined_arch().xpath("//t[@name='b2b_fields']")
+            self.assertEqual([node.get('t-if') for node in nodes], ['False'], xmlid)
+
 
 @tagged('post_install', '-at_install')
 class TestCostaRicaPhone(TransactionCase):
