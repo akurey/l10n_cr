@@ -1,9 +1,9 @@
 name: Branch flow
 
-# Git Flow with a QA stage (see "Branch & PR workflow" in CLAUDE.md):
-#   feature/* | bugfix/*  -> develop -> qa -> 19.0
-#   hotfix/*  -> 19.0, then back-merges 19.0 -> qa -> develop
-# Fails any PR into develop, qa or 19.0 whose head/base pair is not part of that flow.
+# Git Flow without a QA stage (see "Branch & PR workflow" in CLAUDE.md):
+#   feature/* | bugfix/*  -> develop -> 19.0
+#   hotfix/*  -> 19.0, then back-merge 19.0 -> develop
+# Fails any PR into develop, 19.0 or the retired qa branch whose head/base pair is not part of that flow.
 on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
@@ -21,14 +21,13 @@ jobs:
           ok=1
           case "$BASE_REF" in
             develop)
-              [[ "$HEAD_REF" =~ ^(feature|bugfix)/$name$ || "$HEAD_REF" == qa ]] \
-                || { ok=0; hint="into develop only feature/<ticket>-<name>, bugfix/<ticket>-<name> or the qa back-merge"; } ;;
+              [[ "$HEAD_REF" =~ ^(feature|bugfix)/$name$ || "$HEAD_REF" == 19.0 ]] \
+                || { ok=0; hint="into develop only feature/<ticket>-<name>, bugfix/<ticket>-<name> or the 19.0 hotfix back-merge"; } ;;
             qa)
-              [[ "$HEAD_REF" == develop || "$HEAD_REF" == 19.0 ]] \
-                || { ok=0; hint="into qa only develop (promotion) or 19.0 (hotfix back-merge)"; } ;;
+              ok=0; hint="the qa stage is retired; release with a develop -> 19.0 PR" ;;
             19.0)
-              [[ "$HEAD_REF" == qa || "$HEAD_REF" =~ ^hotfix/$name$ ]] \
-                || { ok=0; hint="into 19.0 only qa (release) or hotfix/<ticket>-<name>"; } ;;
+              [[ "$HEAD_REF" == develop || "$HEAD_REF" =~ ^hotfix/$name$ ]] \
+                || { ok=0; hint="into 19.0 only develop (release) or hotfix/<ticket>-<name>"; } ;;
             *)
               echo "Base '$BASE_REF' is not a flow branch; nothing to check."; exit 0 ;;
           esac

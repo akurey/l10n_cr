@@ -6,7 +6,9 @@ class ProductElectronic(models.Model):
 
     @api.model
     def _default_code_type_id(self):
-        code_type_id = self.env['code.type.product'].search(
+        # sudo: the default applies to whoever creates the product, also users
+        # who can't read code types (the field is hidden from them).
+        code_type_id = self.env['code.type.product'].sudo().search(
             [('code', '=', '04')], limit=1)
         return code_type_id or False
 
