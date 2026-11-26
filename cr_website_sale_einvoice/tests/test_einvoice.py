@@ -4,6 +4,7 @@ import requests
 
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
+from odoo.tools import mute_logger
 
 from odoo.addons.cr_website_sale_einvoice.controllers.main import (
     ERROR_KEY,
@@ -14,13 +15,15 @@ from odoo.addons.cr_website_sale_einvoice.controllers.main import (
 )
 from odoo.addons.website_sale.tests.common import MockRequest
 
-LOOKUP = 'odoo.addons.cr_website_sale_einvoice.models.res_partner.requests.get'
+API = 'odoo.addons.cr_electronic_invoice.models.api_facturae'
+LOOKUP = f'{API}.requests.get'
 
 
 class FakeResponse:
 
     def __init__(self, status_code=200, data=None):
         self.status_code = status_code
+        self.reason = 'Not Found'
         self._data = data or {}
 
     def json(self):
@@ -92,6 +95,7 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertNotIn(PENDING_KEY, session)
         self.assertTrue(self.cart.cr_einvoice_requested)
 
+    @mute_logger(API)  # Hacienda failing is the point of this test.
     def test_hacienda_down_saves_unverified(self):
         with patch(LOOKUP, side_effect=requests.exceptions.Timeout()):
             self._submit(requested='1', identification_type='01', vat='112340567')
@@ -101,7 +105,8 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertFalse(self.cart.cr_einvoice_verified, "the sales team sees it needs checking")
 
     def test_company_ids_and_bad_numbers_are_refused(self):
-        for id_code, number in (('02', '3101123456'), ('01', '12345'), ('01', '012345678'), ('03', '123')):
+        for id_code, number in (('02', '3101123456'), ('01', '12345'), ('01', '012345678'), ('03', '123'),
+                                ('04', '123456789')):
             with self.subTest(id_code=id_code, number=number), patch(LOOKUP) as lookup:
                 session = self._submit(requested='1', identification_type=id_code, vat=number)
                 self.assertTrue(session.get(ERROR_KEY))
@@ -115,6 +120,7 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertIn('another identification type', session[ERROR_KEY])
         self.assertFalse(self.customer.vat)
 
+    @mute_logger(API)  # Hacienda failing is the point of this test.
     def test_lookups_are_limited(self):
         with patch(LOOKUP, return_value=FakeResponse(404)) as lookup:
             session = {}
@@ -146,11 +152,49 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertTrue(self.cart.cr_einvoice_requested)
         self.assertEqual(self.cart._prepare_invoice()['tipo_documento'], 'FE')
 
-    def test_backend_and_export_orders_keep_the_module_choice(self):
+    def test_backend_orders_keep_the_module_choice_and_export_is_fee(self):
         backend = self.cart.copy({'website_id': False})
         self.assertNotIn('tipo_documento', backend._prepare_invoice())
         self.customer.export = True
-        self.assertNotIn('tipo_documento', self.cart._prepare_invoice())
+        self.assertEqual(self.cart._prepare_invoice()['tipo_documento'], 'FEE')
+
+    def test_nite_has_ten_digits(self):
+        with patch(LOOKUP, return_value=hacienda(id_code='04', activities=['523101'])):
+            session = self._submit(requested='1', identification_type='04', vat='1234567890')
+        self.assertFalse(session.get(ERROR_KEY))
+        self.assertEqual(self.customer.vat, '1234567890')
+
+    def test_switching_off_forgets_a_pending_activity_choice(self):
+        with patch(LOOKUP, return_value=hacienda(activities=['523101', '552001'])):
+            session = self._submit(requested='1', identification_type='01', vat='112340567')
+        self.assertIn(PENDING_KEY, session)
+        session = self._submit(session=session)
+        self.assertNotIn(PENDING_KEY, session)
+        self.assertFalse(self.cart.cr_einvoice_requested)
+
+    def test_a_new_billing_address_keeps_the_choice(self):
+        with patch(LOOKUP, return_value=hacienda(activities=['523101'])):
+            self._submit(requested='1', identification_type='01', vat='112340567')
+        self._submit()
+        other = self.env['res.partner'].create({'name': 'Oficina', 'type': 'invoice', 'parent_id': self.customer.id})
+        self.cart.partner_invoice_id = other
+        self.assertFalse(self.cart.cr_einvoice_requested, "the customer said no electronic invoice")
+
+    def test_einvoice_goes_to_the_customer_not_to_an_invoice_address(self):
+        with patch(LOOKUP, return_value=hacienda(activities=['523101'])):
+            self._submit(requested='1', identification_type='01', vat='112340567')
+        address = self.env['res.partner'].create({'name': 'Oficina', 'type': 'invoice', 'parent_id': self.customer.id})
+        self.cart.partner_invoice_id = address
+        self.assertFalse(address.identification_id, "an address shares the number but not the type")
+        invoice_vals = self.cart._prepare_invoice()
+        self.assertEqual(invoice_vals['tipo_documento'], 'FE')
+        self.assertEqual(invoice_vals['partner_id'], self.customer.id)
+
+    def test_checked_data_is_remembered_for_the_next_order(self):
+        with patch(LOOKUP, return_value=hacienda(activities=['523101'])):
+            self._submit(requested='1', identification_type='01', vat='112340567')
+        next_cart = self.cart.copy()
+        self.assertTrue(next_cart.cr_einvoice_requested and next_cart.cr_einvoice_verified)
 
 
 @tagged('post_install', '-at_install')

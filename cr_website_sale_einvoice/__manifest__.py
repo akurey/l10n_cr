@@ -14,6 +14,7 @@
     'assets': {
         'web.assets_frontend': [
             'cr_website_sale_einvoice/static/src/scss/einvoice.scss',
+            'cr_website_sale_einvoice/static/src/interactions/einvoice_toggle.js',
         ],
     },
     'installable': True,

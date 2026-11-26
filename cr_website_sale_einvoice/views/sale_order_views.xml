@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_invoice_id']" position="after">
                 <field name="cr_einvoice_requested" widget="boolean_toggle"/>
-                <field name="cr_einvoice_verified" invisible="not cr_einvoice_requested" readonly="1"/>
+                <field name="cr_einvoice_verified" invisible="not cr_einvoice_requested"/>
             </xpath>
         </field>
     </record>
