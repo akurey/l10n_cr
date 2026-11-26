@@ -28,6 +28,11 @@ class CompanyElectronic(models.Model):
     _inherit = ['res.company', 'mail.thread', ]
 
     commercial_name = fields.Char()
+    registro_fiscal_8707 = fields.Char(
+        string="Alcoholic Beverages Fiscal Register (Law 8707)", size=12,
+        help="Number of the alcoholic beverages register issued by the Dirección General de Aduanas. "
+             "Sent as Registrofiscal8707 in the issuer of the company's electronic documents; Hacienda "
+             "requires it when a document invoices CABYS codes of alcoholic beverages. Renewed yearly.")
     legal_name = fields.Char(string="Nombre Legal")
     activity_id = fields.Many2one("economic.activity",
                                   string="Default economic activity",
