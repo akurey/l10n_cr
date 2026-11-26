@@ -1240,7 +1240,8 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
         if inv.move_type in ['in_invoice', 'in_refund']:
             email_template = self.env.ref('cr_electronic_invoice.email_template_invoice_vendor', False)
         else:
-            email_template = self.env.ref('account.email_template_edi_invoice', False)
+            # The template the database uses for this document (invoice or credit note, or a localization's own)
+            email_template = inv._get_mail_template()
 
         attachments = get_invoice_attachments(inv, inv.id)
 

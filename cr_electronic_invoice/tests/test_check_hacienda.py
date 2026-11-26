@@ -34,8 +34,10 @@ class TestCheckHacienda(TransactionCase):
         """Runs the button's check (Hacienda answers 'aceptado' unless told otherwise); returns the attachment
         names of each e-mail sent."""
         sent = []
+        self.templates = self.env['mail.template']
 
         def send_mail(template, res_id, **kwargs):
+            self.templates |= template
             ids = [command[1] for command in kwargs.get('email_values', {}).get('attachment_ids', [])]
             sent.append(sorted(self.env['ir.attachment'].browse(ids).mapped('name')))
             return 1
@@ -76,6 +78,13 @@ class TestCheckHacienda(TransactionCase):
         self.assertEqual(self._check_hacienda({'status': 503}), [])
         self.assertEqual(self.invoice.state_tributacion, 'aceptado')
         self.assertEqual(self._check_hacienda(), [], "not mailed a second time")
+
+    def test_the_template_of_the_document_is_used(self):
+        """The template _get_mail_template gives (a database may set its own), not always Odoo's invoice one."""
+        own = self.env.ref('account.email_template_edi_invoice').copy({'name': 'Own invoice template'})
+        with patch.object(type(self.invoice), '_get_mail_template', lambda moves: own):
+            self.assertEqual(len(self._check_hacienda()), 1)
+        self.assertEqual(self.templates, own)
 
     def test_the_shared_template_is_left_untouched(self):
         template = self.env.ref('account.email_template_edi_invoice')
