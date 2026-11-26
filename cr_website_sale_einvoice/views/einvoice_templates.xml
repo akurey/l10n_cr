@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- The customer's electronic invoice data. Expects: einvoice_partner (commercial partner, sudo),
+         action (form URL), toggle (show the "I want an electronic invoice" switch) and requested. -->
+    <template id="einvoice_form" name="Electronic invoice form">
+        <t t-set="einvoice_error" t-value="request.session.pop('cr_einvoice_error', None)"/>
+        <t t-set="pending" t-value="request.session.get('cr_einvoice_pending') or {}"/>
+        <t t-set="id_types" t-value="einvoice_partner.env['identification.type'].sudo().search([('code', 'in', ('01', '03', '04'))], order='code')"/>
+        <t t-set="current_type" t-value="pending.get('id_code') or einvoice_partner.identification_id.code or '01'"/>
+        <t t-set="current_vat" t-value="pending.get('number') or einvoice_partner.vat or ''"/>
+        <form t-att-action="action" method="post" class="o_cr_einvoice_form">
+            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+            <div t-if="einvoice_error" class="alert alert-danger" role="alert" t-out="einvoice_error"/>
+            <div t-if="toggle" class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" role="switch" id="cr_einvoice_requested"
+                       name="requested" value="1" t-att-checked="requested or bool(pending)"/>
+                <label class="form-check-label" for="cr_einvoice_requested">I want an electronic invoice in my name</label>
+            </div>
+            <p t-if="toggle" class="small text-muted o_cr_einvoice_ticket_note">Without it, an electronic ticket is issued.</p>
+            <div class="o_cr_einvoice_fields">
+                <t t-if="einvoice_partner.is_company">
+                    <p class="mb-1">Issued to <strong t-out="einvoice_partner.name"/>
+                        <t t-if="einvoice_partner.vat">(<t t-out="einvoice_partner.identification_id.sudo().name"/> <t t-out="einvoice_partner.vat"/>)</t>.</p>
+                    <p class="small text-muted mb-2">A company's billing data is updated by our sales team.</p>
+                </t>
+                <t t-else="">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <label class="form-label" for="cr_einvoice_type">Identification type</label>
+                            <select class="form-select" id="cr_einvoice_type" name="identification_type">
+                                <t t-foreach="id_types" t-as="id_type">
+                                    <option t-att-value="id_type.code" t-att-selected="id_type.code == current_type" t-out="id_type.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label" for="cr_einvoice_vat">Identification number</label>
+                            <input class="form-control" id="cr_einvoice_vat" name="vat" inputmode="numeric"
+                                   autocomplete="off" t-att-value="current_vat" placeholder="112340567"/>
+                        </div>
+                    </div>
+                    <div t-if="pending.get('lookup')" class="mt-2">
+                        <p class="mb-1">Name in Hacienda: <strong t-out="pending['lookup']['name']"/></p>
+                        <label class="form-label" for="cr_einvoice_activity">Economic activity</label>
+                        <select class="form-select" id="cr_einvoice_activity" name="activity" required="required">
+                            <option value="">Choose the activity for the invoice</option>
+                            <t t-foreach="pending['lookup']['activities']" t-as="activity">
+                                <option t-att-value="activity[0]" t-out="'%s - %s' % (activity[0], activity[1])"/>
+                            </t>
+                        </select>
+                    </div>
+                    <p t-elif="einvoice_partner.vat and einvoice_partner.identification_id" class="small mt-2 mb-0">
+                        Issued to <strong t-out="einvoice_partner.name"/>
+                        <t t-if="einvoice_partner.activity_id"> · activity <t t-out="einvoice_partner.activity_id.sudo().code"/></t>.
+                    </p>
+                    <p class="small text-muted mt-2 mb-2">
+                        The name and economic activity are taken from Hacienda's registry. Sent to
+                        <strong t-out="einvoice_partner.email or request.env.user.email"/>.
+                        For an invoice in a company's name, contact our sales team.
+                    </p>
+                </t>
+            </div>
+            <button type="submit" class="btn btn-outline-primary btn-sm">Save</button>
+        </form>
+    </template>
+
+    <!-- The ID number is given in the electronic invoice section, with its type (required by Hacienda);
+         Odoo's generic company name / tax ID inputs would store a number without a type. -->
+    <template id="address_form_without_vat" inherit_id="portal.address_form_fields" name="No tax ID in address forms">
+        <xpath expr="//t[@name='b2b_fields']" position="replace"/>
+    </template>
+
+    <template id="checkout_einvoice" inherit_id="website_sale.checkout" name="Electronic invoice at checkout">
+        <xpath expr="//div[@id='shop_checkout']" position="inside">
+            <div id="cr_einvoice" class="o_cr_einvoice mb-4 pt-2">
+                <p class="h5 mb-2">Electronic invoice</p>
+                <t t-call="cr_website_sale_einvoice.einvoice_form">
+                    <t t-set="einvoice_partner" t-value="order.partner_invoice_id.commercial_partner_id.sudo()"/>
+                    <t t-set="action" t-valuef="/shop/einvoice"/>
+                    <t t-set="toggle" t-value="True"/>
+                    <t t-set="requested" t-value="order.cr_einvoice_requested"/>
+                </t>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="portal_einvoice_page" name="Electronic invoice data">
+        <t t-call="portal.portal_layout">
+            <t t-set="additional_title">Electronic invoice</t>
+            <div class="o_cr_einvoice o_cr_einvoice_portal">
+                <h3 class="mb-3">Electronic invoice</h3>
+                <div t-if="einvoice_saved" class="alert alert-success" role="status">Your billing data was saved.</div>
+                <p class="text-muted">Orders where you ask for an electronic invoice are billed with this data.</p>
+                <t t-call="cr_website_sale_einvoice.einvoice_form">
+                    <t t-set="action" t-valuef="/my/einvoice"/>
+                    <t t-set="toggle" t-value="False"/>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <template id="portal_my_home_einvoice" inherit_id="portal.portal_my_home" name="Electronic invoice card">
+        <xpath expr="//div[@id='portal_common_category']" position="inside">
+            <t t-call="portal.portal_docs_entry">
+                <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>
+                <t t-set="title">Electronic invoice</t>
+                <t t-set="text">Your data for electronic invoices</t>
+                <t t-set="url" t-value="'/my/einvoice'"/>
+                <t t-set="config_card" t-value="True"/>
+            </t>
+        </xpath>
+    </template>
+</odoo>
