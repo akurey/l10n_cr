@@ -1148,14 +1148,22 @@ def consulta_clave(clave, token, tipo_ambiente):
     return response_json
 
 
-def get_economic_activities(company):
-    endpoint = "https://api.hacienda.go.cr/fe/ae?identificacion=" + company.vat
+# Seconds to wait for Hacienda's taxpayer registry: a customer may be waiting on the page.
+HACIENDA_LOOKUP_TIMEOUT = 10
+
+
+def get_economic_activities(company, vat=None, timeout=HACIENDA_LOOKUP_TIMEOUT):
+    """Hacienda's public taxpayer registry: name, identification type and economic activities.
+
+    :param company: record whose `vat` is looked up, unless `vat` is given.
+    """
+    endpoint = "https://api.hacienda.go.cr/fe/ae?identificacion=" + (vat or company.vat)
 
     headers = {'Cache-Control': 'no-cache',
             'Content-Type': 'application/x-www-form-urlencoded'}
 
     try:
-        response = requests.get(endpoint, headers=headers)
+        response = requests.get(endpoint, headers=headers, timeout=timeout)
     except requests.exceptions.RequestException as e:
         _logger.error('Exception %s', e)
         return {'status': -1, 'text': 'Excepcion %s' % e}
@@ -1164,7 +1172,8 @@ def get_economic_activities(company):
         _logger.debug('FECR - get_economic_activities response: %s', (response.json()))
         response_json = {'status': 200,
                         'activities': response.json().get('actividades'),
-                        'name': response.json().get('nombre')}
+                        'name': response.json().get('nombre'),
+                        'id_type': response.json().get('tipoIdentificacion')}
     # elif 400 <= response.status_code <= 499:
     #    response_json = {'status': 400, 'ind-estado': 'error'}
     else:
