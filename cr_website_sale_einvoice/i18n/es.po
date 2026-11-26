@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 19.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-15 13:36+0000\n"
-"PO-Revision-Date: 2026-11-15 13:36+0000\n"
+"POT-Creation-Date: 2026-11-15 14:18+0000\n"
+"PO-Revision-Date: 2026-11-15 14:18+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -24,15 +24,6 @@ msgstr " o "
 
 #. module: cr_website_sale_einvoice
 #: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
-msgid ""
-".\n"
-"                        For an invoice in a company's name, contact our sales team."
-msgstr ""
-".\n"
-"                        Para facturar a nombre de una empresa, contactar al equipo de ventas."
-
-#. module: cr_website_sale_einvoice
-#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
 msgid "<option value=\"\">Choose the activity for the invoice</option>"
 msgstr "<option value=\"\">Elegir la actividad para la factura</option>"
 
@@ -41,6 +32,23 @@ msgstr "<option value=\"\">Elegir la actividad para la factura</option>"
 msgid "A company's billing data is updated by our sales team."
 msgstr ""
 "Los datos de facturación de una empresa los actualiza el equipo de ventas."
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/models/res_partner.py:0
+msgid ""
+"A cédula jurídica has 10 characters without dashes, for example 3101123456."
+msgstr ""
+"Una cédula jurídica tiene 10 caracteres sin guiones, por ejemplo 3101123456."
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_partner_id
+msgid ""
+"A third party (another person or a company) the customer asked to invoice. "
+"Empty: the customer."
+msgstr ""
+"Un tercero (otra persona o una empresa) a cuyo nombre el cliente pidió la "
+"factura. Vacío: el cliente."
 
 #. module: cr_website_sale_einvoice
 #: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__cr_einvoice_verified
@@ -93,6 +101,12 @@ msgid "Electronic Invoice"
 msgstr "Factura electrónica"
 
 #. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_partner__cr_einvoice_requested_by_id
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_res_users__cr_einvoice_requested_by_id
+msgid "Electronic Invoice Requested By"
+msgstr "Factura electrónica solicitada por"
+
+#. module: cr_website_sale_einvoice
 #: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.view_sales_order_filter_einvoice
 msgid "Electronic Invoice to Check"
 msgstr "Factura electrónica por verificar"
@@ -134,6 +148,16 @@ msgstr "Número de identificación"
 #: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
 msgid "Identification type"
 msgstr "Tipo de identificación"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "In the name of a third party (another person or a company)"
+msgstr "A nombre de un tercero (otra persona o una empresa)"
+
+#. module: cr_website_sale_einvoice
+#: model:ir.model.fields,field_description:cr_website_sale_einvoice.field_sale_order__cr_einvoice_partner_id
+msgid "Invoice in the Name of"
+msgstr "Factura a nombre de"
 
 #. module: cr_website_sale_einvoice
 #: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
@@ -190,11 +214,11 @@ msgstr ""
 #. module: cr_website_sale_einvoice
 #: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_requested
 msgid ""
-"The customer asked for an electronic invoice (FE) in their name. Otherwise "
-"the order is invoiced with an electronic ticket (TE)."
+"The customer asked for an electronic invoice (FE), in their name or a third "
+"party's. Otherwise the order is invoiced with an electronic ticket (TE)."
 msgstr ""
-"El cliente pidió factura electrónica (FE) a su nombre. Si no, el pedido se "
-"factura con tiquete electrónico (TE)."
+"El cliente pidió factura electrónica (FE), a su nombre o de un tercero. Si "
+"no, el pedido se factura con tiquete electrónico (TE)."
 
 #. module: cr_website_sale_einvoice
 #: model:ir.model.fields,help:cr_website_sale_einvoice.field_sale_order__cr_einvoice_verified
@@ -232,6 +256,31 @@ msgid "The phone number must have 8 digits."
 msgstr "El número de teléfono debe tener 8 dígitos."
 
 #. module: cr_website_sale_einvoice
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_res_partner__cr_einvoice_requested_by_id
+#: model:ir.model.fields,help:cr_website_sale_einvoice.field_res_users__cr_einvoice_requested_by_id
+msgid ""
+"The website customer who asked for electronic invoices in this partner's "
+"name (a third party)."
+msgstr ""
+"El cliente del sitio que pidió facturas electrónicas a nombre de este "
+"contacto (un tercero)."
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Third party's e-mail to receive the invoice"
+msgstr "Correo del tercero para recibir la factura"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Third party's identification number"
+msgstr "Número de identificación del tercero"
+
+#. module: cr_website_sale_einvoice
+#: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
+msgid "Third party's identification type"
+msgstr "Tipo de identificación del tercero"
+
+#. module: cr_website_sale_einvoice
 #. odoo-python
 #: code:addons/cr_website_sale_einvoice/controllers/main.py:0
 msgid "Too many identification lookups. Try again in an hour."
@@ -242,6 +291,12 @@ msgstr ""
 #: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.einvoice_form
 msgid "Without it, an electronic ticket is issued."
 msgstr "Sin ella, se emite un tiquete electrónico."
+
+#. module: cr_website_sale_einvoice
+#. odoo-python
+#: code:addons/cr_website_sale_einvoice/controllers/main.py:0
+msgid "Write the e-mail address where the third party receives the invoice."
+msgstr "Escribir el correo donde el tercero recibe la factura."
 
 #. module: cr_website_sale_einvoice
 #: model_terms:ir.ui.view,arch_db:cr_website_sale_einvoice.portal_einvoice_page

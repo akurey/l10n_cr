@@ -4,7 +4,7 @@ from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 from odoo.addons.cr_electronic_invoice.models import api_facturae
-from odoo.addons.cr_electronic_invoice.models.identification import clean_identification
+from odoo.addons.cr_electronic_invoice.models.identification import LEGAL_ID_CODE, clean_identification, is_legal_id
 
 _logger = logging.getLogger(__name__)
 
@@ -13,6 +13,8 @@ HACIENDA_TIMEOUT = 5
 # A customer asks for an electronic invoice in their own name: cédula física, DIMEX or NITE. Invoices to a
 # company (cédula jurídica) are set up by the sales team, who link the customer to that company.
 OWN_NAME_ID_TYPES = ('01', '03', '04')
+# An invoice in a third party's name (another person or a company) may also go to a cédula jurídica.
+THIRD_PARTY_ID_TYPES = ('01', LEGAL_ID_CODE, '03', '04')
 # As cr_electronic_invoice checks them when posting the invoice.
 ID_LENGTHS = {'01': (9,), '03': (11, 12), '04': (10,)}
 
@@ -20,6 +22,9 @@ ID_LENGTHS = {'01': (9,), '03': (11, 12), '04': (10,)}
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
+    cr_einvoice_requested_by_id = fields.Many2one(
+        'res.partner', string="Electronic Invoice Requested By", copy=False, index='btree_not_null',
+        help="The website customer who asked for electronic invoices in this partner's name (a third party).")
     cr_einvoice_checked = fields.Boolean(
         string="Billing Data Checked with Hacienda", copy=False,
         help="Set when the customer saved their electronic invoice data on the website and Hacienda's registry "
@@ -31,11 +36,15 @@ class ResPartner(models.Model):
         commercial = self.commercial_partner_id
         return bool(commercial.vat and commercial.identification_id)
 
-    def _cr_check_own_identification(self, id_code, number):
-        """Validate an identification typed by a customer and return it cleaned (digits only)."""
-        if id_code not in OWN_NAME_ID_TYPES:
+    def _cr_check_own_identification(self, id_code, number, third_party=False):
+        """Validate an identification typed by a customer and return it cleaned."""
+        if id_code not in (THIRD_PARTY_ID_TYPES if third_party else OWN_NAME_ID_TYPES):
             raise UserError(_("Choose a personal identification type: cédula física, DIMEX or NITE."))
         number = clean_identification(number, id_code)
+        if id_code == LEGAL_ID_CODE:
+            if not is_legal_id(number):
+                raise UserError(_("A cédula jurídica has 10 characters without dashes, for example 3101123456."))
+            return number
         if not number.isdigit() or number.startswith('0') or len(number) not in ID_LENGTHS[id_code]:
             lengths = _(" or ").join(str(length) for length in ID_LENGTHS[id_code])
             raise UserError(_("The identification number must have %(lengths)s digits, with no leading zero, "
@@ -82,3 +91,20 @@ class ResPartner(models.Model):
             if lookup['name']:
                 vals['name'] = lookup['name']
         self.write(vals)
+
+    def _cr_third_party_receptor(self, id_code, number, email, lookup=None, activity_code=None):
+        """The partner an electronic invoice is issued to on behalf of this customer: the one this customer
+        already registered with that identification, or a new one. Existing partners of other customers are
+        never reused or changed from the website."""
+        self.ensure_one()
+        receptor = self.search([('cr_einvoice_requested_by_id', '=', self.id), ('vat', '=', number)], limit=1)
+        if not receptor:
+            receptor = self.create({
+                'name': (lookup or {}).get('name') or number,
+                'is_company': id_code == LEGAL_ID_CODE,
+                'cr_einvoice_requested_by_id': self.id,
+                'country_id': self.env.ref('base.cr').id,
+            })
+        receptor.email = email
+        receptor._cr_set_einvoice_data(id_code, number, lookup=lookup, activity_code=activity_code)
+        return receptor
