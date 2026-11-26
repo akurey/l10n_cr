@@ -835,7 +835,9 @@ class AccountInvoiceElectronic(models.Model):
                                                       'mimetype': 'text/xml'})
 
                     if i.tipo_documento != 'FEC' and i.partner_id and i.partner_id.email:
-                        email_template = self.env.ref('account.email_template_edi_invoice', False)
+                        # The template the database uses for this document (invoice or credit note, or a
+                        # localization's own), not always Odoo's invoice one
+                        email_template = i._get_mail_template()
                         domain = [('res_model', '=', i._name),
                                   ('res_id', '=', i.id),
                                   ('res_field', '=', 'xml_comprobante'),
@@ -855,13 +857,10 @@ class AccountInvoiceElectronic(models.Model):
 
                                 attach_copy = attachment.copy()
                                 attach_resp_copy = attachment_resp.copy()
-                                email_template.attachment_ids = [(6, 0, [attach_copy.id, attach_resp_copy.id])]
-
-                                email_template.with_context(type='binary',
-                                                            default_type='binary').send_mail(i.id,
-                                                                                             raise_exception=False,
-                                                                                             force_send=True)
-                                email_template.attachment_ids = [(5, 0, 0)]
+                                # The XMLs go with this e-mail only: the template is shared, so it is left untouched
+                                email_template.with_context(type='binary', default_type='binary').send_mail(
+                                    i.id, raise_exception=False, force_send=True,
+                                    email_values={'attachment_ids': [(4, attach_copy.id), (4, attach_resp_copy.id)]})
 
                 elif estado_m_h in ('firma_invalida'):
                     if i.error_count > 10:
