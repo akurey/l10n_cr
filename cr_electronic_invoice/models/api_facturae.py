@@ -1172,16 +1172,22 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
     response_json = consulta_clave(clave, token_m_h, env)
     _logger.debug(response_json)
     estado_m_h = response_json.get('ind-estado')
+    if not estado_m_h:
+        # No answer (Hacienda down, timeout): keep the state; clearing it made the next check mail the
+        # customer again.
+        _logger.warning('E-INV CR - Hacienda gave no state for %s: %s', clave, response_json.get('status'))
+        return
 
     # Siempre sin importar el estado se actualiza la fecha de acuerdo a la devuelta por Hacienda y
     # se carga el xml devuelto por Hacienda
+    # The state before this check decides below whether the acceptance e-mail goes out: reading it again after
+    # the update (as this block used to) made it always the new state, so no e-mail was ever sent from here.
     last_state = inv.state_tributacion
     inv.state_tributacion = estado_m_h
     if inv.move_type in ['out_invoice', 'out_refund']:
-        # Se actualiza el estado con el que devuelve Hacienda
-        last_state = inv.state_tributacion
-        inv.state_tributacion = estado_m_h
-        inv.date_issuance = date_cr
+        # The "check Hacienda" button passes no date: keep the issue date the document was sent with.
+        if date_cr:
+            inv.date_issuance = date_cr
         if xml_firmado:
             inv.fname_xml_comprobante = inv.tipo_documento + inv.number_electronic + '.xml'
 
@@ -1223,7 +1229,13 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
                                           'mimetype': 'text/xml'})
 
     # Si fue aceptado por Hacienda y es un factura de cliente o nota de crédito, se envía el correo con los documentos
-    if inv.tipo_documento != 'FEC' and estado_m_h == 'aceptado' and (not last_state or last_state == 'procesando'):
+    # Customer documents: mailed once, on the check that turns them 'aceptado' from any other state (as the cron
+    # does), and only to a customer with an e-mail address.
+    if inv.move_type in ['out_invoice', 'out_refund']:
+        first_acceptance = last_state != 'aceptado' and bool(inv.partner_id.email)
+    else:
+        first_acceptance = not last_state or last_state == 'procesando'
+    if inv.tipo_documento != 'FEC' and estado_m_h == 'aceptado' and first_acceptance:
         # if not inv.partner_id.opt_out:
         if inv.move_type in ['in_invoice', 'in_refund']:
             email_template = self.env.ref('cr_electronic_invoice.email_template_invoice_vendor', False)
@@ -1233,17 +1245,13 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
         attachments = get_invoice_attachments(inv, inv.id)
 
         if len(attachments) == 2:
-            email_template.attachment_ids = [(6, 0, attachments)]
-
+            # The XMLs go with this e-mail only: the template is shared, so it is left untouched
             try:
-                email_template.with_context(type='binary', default_type='binary').send_mail(inv.id,
-                                                                                            raise_exception=False,
-                                                                                            force_send=True)
+                email_template.with_context(type='binary', default_type='binary').send_mail(
+                    inv.id, raise_exception=False, force_send=True,
+                    email_values={'attachment_ids': [(4, attachment) for attachment in attachments]})
             except Exception:
                 _logger.exception('FECR - consulta documento error al enviar correo: %s', inv.number_electronic)
-
-            # limpia el template de los attachments
-            email_template.attachment_ids = [(5, 0, 0)]
 
 
 def send_message(inv, date_cr, xml, token, env):
