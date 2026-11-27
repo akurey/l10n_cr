@@ -158,7 +158,8 @@ class TestExoneration(TransactionCase):
         self.assertIn("the invoice it reverses", problems[0])
         self.assertTrue(self._refund([(self.delivery, half)], invoice)._cr_exoneration_problems(),
                         "a CABYS the invoice did not exonerate")
-        for taxes, why in ((self.iva, "the full IVA"), (self.env['account.tax'], "no IVA")):
+        for taxes, why in ((self.iva, "the full IVA"), (self.env['account.tax'], "no IVA"),
+                           (half | self.iva, "the full IVA on top of the exoneration")):
             problems = self._refund([(self.wine, taxes)], invoice).with_context(lang='en_US')._cr_exoneration_problems()
             self.assertEqual(len(problems), 1, f"{why} where the invoice exonerated it")
             self.assertIn("must use the same tax", problems[0])

@@ -320,19 +320,24 @@ class AccountInvoiceElectronic(models.Model):
 
     def _cr_reversal_exoneration_problems(self):
         """A credit note keeps the exoneration of the invoice it reverses (the authorization may have changed since):
-        a CABYS the invoice exonerated is exonerated with one of the same taxes (not with the full IVA, nor without
-        IVA), and a CABYS the invoice did not exonerate is not exonerated either."""
+        a CABYS the invoice exonerated carries the same IVA taxes as one of its lines (not the full IVA instead or on
+        top of the exoneration, nor no IVA), and a CABYS the invoice did not exonerate is not exonerated either."""
         self.ensure_one()
         invoice = self.reversed_entry_id
-        given = {}
+
+        def iva_of(line):
+            return line.tax_ids.filtered(lambda t: t.has_exoneration or t.tax_code == '01')
+
+        given = {}  # CABYS -> the IVA taxes of each of the invoice's lines with it
         for line in invoice.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
-            given.setdefault(line._cr_cabys_code(), self.env['account.tax'])
-            given[line._cr_cabys_code()] |= line.tax_ids.filtered('has_exoneration')
+            given.setdefault(line._cr_cabys_code(), []).append(iva_of(line))
         problems = []
         for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
-            expected = given.get(line._cr_cabys_code()) or self.env['account.tax']
-            exonerated = line.tax_ids.filtered('has_exoneration')
-            if expected and not (exonerated and exonerated <= expected):
+            options = given.get(line._cr_cabys_code(), [])
+            expected = self.env['account.tax'].union(*options).filtered('has_exoneration')
+            iva = iva_of(line)
+            exonerated = iva.filtered('has_exoneration')
+            if expected and iva not in options:
                 problems.append(_('«%(line)s»: the invoice it reverses, %(invoice)s, exonerated it with %(tax)s: the '
                                   'credit note must use the same tax.', line=line.name, invoice=invoice.name,
                                   tax=', '.join(expected.mapped('name'))))
