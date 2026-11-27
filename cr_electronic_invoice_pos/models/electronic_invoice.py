@@ -209,6 +209,19 @@ class PosOrder(models.Model):
 
         return super().action_pos_order_paid()
 
+    def _prepare_invoice_vals(self):
+        return self._cr_refund_reference(super()._prepare_invoice_vals())
+
+    def _cr_refund_reference(self, vals):
+        """Odoo invoices the refund of an invoiced order as a credit note that only links the invoice it reverses
+        (reversed_entry_id): it also needs the reference Hacienda reads (InformacionReferencia), or it is rejected.
+        The order's own reference code when it has one, else 06 «Devolución de mercancía», a return of goods."""
+        reversed_move = self.env['account.move'].browse(vals.get('reversed_entry_id'))
+        if not reversed_move:
+            return vals
+        code = self[:1].reference_code_id or self.env.ref('cr_electronic_invoice.ReferenceCode_6')
+        return {**vals, **reversed_move._cr_reversal_reference_vals(code), 'tipo_documento': 'NC'}
+
     def refund(self):
         """Create a copy of order  for refund order"""
         pos_order = self.env['pos.order']

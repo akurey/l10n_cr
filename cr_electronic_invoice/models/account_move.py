@@ -1648,6 +1648,25 @@ class AccountInvoiceElectronic(models.Model):
             inv.write(vals)
             inv.generate_and_send_invoice()
 
+    def _cr_reversal_reference_vals(self, reference_code):
+        """Values that make a note refer to this document (the invoice or ticket it reverses), with
+        `reference_code`: what Hacienda reads in InformacionReferencia. For paths that reverse without the
+        reversal wizard, such as a Point of Sale refund."""
+        self.ensure_one()
+        document = self.env['reference.document'].search(
+            [('code', '=', REFERENCE_DOCUMENT_CODES.get(self.tipo_documento))], limit=1)
+        return {'invoice_id': self.id, 'reference_code_id': reference_code.id,
+                'reference_document_id': document.id}
+
+    def _cr_refer_to_reversed_entry(self):
+        """A customer credit note made outside the reversal wizard only knows the document it reverses
+        (reversed_entry_id): it refers to it too, so missing reference data stops it at posting («Incomplete
+        reference data for credit note») instead of going to Hacienda without InformacionReferencia, which
+        Hacienda rejects."""
+        for move in self.filtered(lambda m: m.move_type == 'out_refund' and m.reversed_entry_id
+                                  and not m.invoice_id):
+            move.invoice_id = move.reversed_entry_id
+
     def get_invoice_sequence(self):
         tipo_documento = self.tipo_documento
         sequence = False
@@ -1745,6 +1764,7 @@ class AccountInvoiceElectronic(models.Model):
 
             currency = inv.currency_id
             sequence = False
+            inv._cr_refer_to_reversed_entry()
             inv._check_reference_other()
             if (inv.invoice_id) and not (inv.reference_code_id and inv.reference_document_id):
                 raise UserError(_('Incomplete reference data for credit note'))
