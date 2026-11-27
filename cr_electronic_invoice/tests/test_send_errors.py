@@ -68,7 +68,7 @@ class TestSendErrors(TransactionCase):
 
     def test_the_supplier_acceptance_message_does_not_wait_forever(self):
         """Sending the acceptance of a supplier's document has a time limit, like every other call to Hacienda."""
-        with patch.object(api_facturae, 'clean_identification', return_value='3101123456'), \
+        with patch.object(api_facturae, 'clean_identification', return_value='ID-DE-PRUEBA'), \
                 patch.object(api_facturae.requests, 'post',
                              side_effect=api_facturae.requests.exceptions.Timeout('no answer')) as post:
             result = api_facturae.send_message(self.invoice, '2026-11-27T10:00:00-06:00', b'<MensajeReceptor/>',
