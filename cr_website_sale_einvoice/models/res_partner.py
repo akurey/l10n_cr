@@ -92,10 +92,12 @@ class ResPartner(models.Model):
                 vals['name'] = lookup['name']
         self.write(vals)
 
-    def _cr_third_party_receptor(self, id_code, number, email, lookup=None, activity_code=None):
+    def _cr_third_party_receptor(self, id_code, number, email, lookup=None, activity_code=None, lang=None):
         """The partner an electronic invoice is issued to on behalf of this customer: the one this customer
         already registered with that identification, or a new one. Existing partners of other customers are
-        never reused or changed from the website."""
+        never reused or changed from the website.
+
+        `lang` is the language the customer is buying in: the invoice e-mails go out in it."""
         self.ensure_one()
         receptor = self.search([('cr_einvoice_requested_by_id', '=', self.id), ('vat', '=', number)], limit=1)
         if not receptor:
@@ -106,5 +108,7 @@ class ResPartner(models.Model):
                 'country_id': self.env.ref('base.cr').id,
             })
         receptor.email = email
+        if lang:
+            receptor.lang = lang
         receptor._cr_set_einvoice_data(id_code, number, lookup=lookup, activity_code=activity_code)
         return receptor

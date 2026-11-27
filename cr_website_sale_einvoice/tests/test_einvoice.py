@@ -177,6 +177,22 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertEqual(self.cart.cr_einvoice_partner_id, first, "the same third party is not duplicated")
         self.assertEqual(first.email, 'c@d.cr')
 
+    def test_third_party_gets_the_language_of_the_purchase(self):
+        self.env['res.lang']._activate_lang('es_CR')
+
+        def submit(lang, email):
+            with patch(LOOKUP, return_value=hacienda(name='TERCERA', id_code='02', activities=['5610.0'])), \
+                    MockRequest(self.env(user=self.user), website=self.website.with_user(self.user),
+                                sale_order_id=self.cart.id, context={'lang': lang}):
+                EinvoiceWebsiteSale().shop_einvoice(requested='1', third_party='1', third_type='02',
+                                                    third_vat='3101123456', third_email=email)
+            return self.cart.cr_einvoice_partner_id
+
+        receptor = submit('es_CR', 'a@b.cr')
+        self.assertEqual(receptor.lang, 'es_CR', "a new third party gets the language of the purchase")
+        self.assertEqual(submit('en_US', 'c@d.cr'), receptor)
+        self.assertEqual(receptor.lang, 'en_US', "a reused third party follows the latest purchase")
+
     def test_taxpayers_get_the_einvoice_by_default(self):
         with patch(LOOKUP, return_value=hacienda(activities=[])):
             self._submit(requested='1', identification_type='01', vat='112340567')
