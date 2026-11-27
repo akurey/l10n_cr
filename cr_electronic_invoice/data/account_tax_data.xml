@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+<odoo noupdate="1">
+    <!-- noupdate: module updates must not write taxes that open POS sessions use, nor undo an
+         accountant's changes. Changing or removing a tax that is already here does not reach
+         existing databases: ship it with a migration that writes or archives it explicitly. -->
     
     <!-- Account Tax Group -->
     <record id="tax_group_IVA0" model="account.tax.group">

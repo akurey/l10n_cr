@@ -77,7 +77,7 @@ def save_einvoice_data(partner_sudo, id_code, number, activity_code=None, third_
     request.session.pop(PENDING_KEY, None)
     if third_party:
         receptor = partner_sudo._cr_third_party_receptor(id_code, number, email, lookup=lookup,
-                                                         activity_code=activity_code)
+                                                         activity_code=activity_code, lang=request.lang.code)
     else:
         receptor = partner_sudo
         partner_sudo._cr_set_einvoice_data(id_code, number, lookup=lookup, activity_code=activity_code)
