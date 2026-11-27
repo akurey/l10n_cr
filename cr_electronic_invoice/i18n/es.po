@@ -3947,3 +3947,35 @@ msgid ""
 msgstr ""
 "«%(line)s»: la factura que revierte, %(invoice)s, la exoneró con %(tax)s: la"
 " nota de crédito debe usar el mismo impuesto."
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__exoneration_free_trade_zone
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__exoneration_free_trade_zone
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_partner__exoneration_free_trade_zone
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_users__exoneration_free_trade_zone
+msgid "Free Trade Zone Exoneration"
+msgstr "Exoneración de Zona Franca"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__exoneration_free_trade_zone
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_move__exoneration_free_trade_zone
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_partner__exoneration_free_trade_zone
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_users__exoneration_free_trade_zone
+msgid ""
+"A Free Trade Zone exoneration (authorization type 08) is granted by law: it "
+"has no expiration date and is always 100 %. It still covers only the goods "
+"and services of the company's activity: list their CABYS codes."
+msgstr ""
+"Una exoneración de Zona Franca (tipo de autorización 08) la otorga la ley: no "
+"tiene fecha de vencimiento y siempre es del 100 %. Aun así cubre solo los "
+"bienes y servicios de la actividad de la empresa: anote sus códigos CABYS."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"A Free Trade Zone exoneration (authorization type 08) is always 100 %: set "
+"the customer's percentage of VAT exoneration to 100."
+msgstr ""
+"Una exoneración de Zona Franca (tipo de autorización 08) siempre es del 100 "
+"%: ponga en 100 el porcentaje de exoneración del IVA del cliente."
