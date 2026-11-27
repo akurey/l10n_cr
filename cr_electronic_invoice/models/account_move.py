@@ -24,6 +24,9 @@ _logger = logging.getLogger(__name__)
 DEFAULT_DISCOUNT_CODE = '07'
 
 EXONERATION_FISCAL_POSITION = "Exonerado 13%"
+# Authorization types whose exoneration cites the article and clause of the law (Articulo and Inciso in the XML,
+# see api_facturae.gen_xml_v4_4)
+EXONERATION_LAW_REFERENCE_TYPES = ('02', '03', '08')
 # States that need someone to act: the company is alerted when a document enters one of them.
 EINVOICE_PROBLEM_STATES = ('error', 'rechazado')
 # Sends that fail because Hacienda is unavailable before the document is left in 'error'.
@@ -336,9 +339,10 @@ class AccountInvoiceElectronic(models.Model):
     def _cr_exoneration_missing_fields(self):
         """The customer's authorization fields this exonerated document still lacks (their labels). A Free Trade Zone
         exoneration is granted by law and has no expiration date; it still lists the CABYS codes of the company's
-        activity, the only ones it covers."""
+        activity, the only ones it covers. Types 02, 03 and 08 also cite the article and clause of the law."""
         self.ensure_one()
         partner = self.partner_id
+        cites_the_law = partner.type_exoneration.code in EXONERATION_LAW_REFERENCE_TYPES
         required = [
             (partner.exoneration_number, _("Exoneration Number")),
             (partner.type_exoneration, _("Authorization Type")),
@@ -347,6 +351,8 @@ class AccountInvoiceElectronic(models.Model):
             (partner.date_issue, _("Issue Date")),
             (partner.date_expiration or partner.exoneration_free_trade_zone, _("Expiration Date")),
             (partner._cr_exoneration_cabys() or self.reversed_entry_id, _("Authorized CABYS Codes")),
+            (partner.exoneration_article or not cites_the_law, _("Exoneration Article")),
+            (partner.exoneration_clause or not cites_the_law, _("Exoneration Clause")),
         ]
         return [label for value, label in required if not value]
 

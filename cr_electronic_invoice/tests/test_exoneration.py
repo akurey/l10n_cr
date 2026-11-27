@@ -177,7 +177,7 @@ class TestExoneration(TransactionCase):
             'name': "Empresa de zona franca de prueba", 'percentage_exoneration': 100,
             'type_exoneration': self.env.ref('cr_electronic_invoice.AutEx_8').id, 'exoneration_number': 'ZF-0001',
             'exoneration_issuer': self.env['issuer.ex'].search([], limit=1).id, 'date_issue': '2026-01-15',
-            'exoneration_cabys_codes': LAPTOP, **vals})
+            'exoneration_cabys_codes': LAPTOP, 'exoneration_article': '20', 'exoneration_clause': '1', **vals})
 
     def test_a_free_trade_zone_exoneration_needs_no_expiration_date(self):
         free_zone = self._free_trade_zone()
@@ -215,5 +215,22 @@ class TestExoneration(TransactionCase):
             'exoneration_issuer': self.env['issuer.ex'].search([], limit=1).id, 'date_issue': '2026-01-15'})
         self.assertFalse(self.customer.exoneration_free_trade_zone)
         invoice = self.env['account.move'].new({'move_type': 'out_invoice', 'partner_id': self.customer.id})
-        self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(), ["Expiration Date"])
+        self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(), ["Expiration Date"],
+                         "a type 01 cites no article or clause")
+
+    def test_types_02_03_and_08_need_the_article_and_clause_of_the_law(self):
+        """The XML cites them for these types: without them the document cannot be built."""
+        for xmlid in ('AutEx_2', 'AutEx_3', 'AutEx_8'):
+            customer = self._free_trade_zone(
+                type_exoneration=self.env.ref(f'cr_electronic_invoice.{xmlid}').id, date_expiration='2027-12-31',
+                exoneration_article=False, exoneration_clause=False)
+            invoice = self.env['account.move'].new({'move_type': 'out_invoice', 'partner_id': customer.id})
+            self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(),
+                             ["Exoneration Article", "Exoneration Clause"], xmlid)
+            self.assertEqual(invoice.with_context(lang='es_CR')._cr_exoneration_missing_fields(),
+                             ["Artículo de la exoneración", "Inciso de la exoneración"],
+                             "the customer reads it in Spanish")
+            customer.exoneration_article = '20'
+            self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(),
+                             ["Exoneration Clause"], xmlid)
 
