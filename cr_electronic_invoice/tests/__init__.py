@@ -15,3 +15,4 @@ from . import test_code_type_access
 from . import test_registro_fiscal_8707
 from . import test_check_hacienda
 from . import test_exoneration
+from . import test_tax_noupdate
