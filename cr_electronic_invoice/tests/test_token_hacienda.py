@@ -36,6 +36,8 @@ class TestTokenHacienda(TransactionCase):
         super().setUp()
         # Module-level cache: start from no token for this company.
         api_facturae.last_tokens.pop(self.env.company.id, None)
+        # A database whose company has no sales journal yet cannot even build a new invoice.
+        self.env['account.journal'].create({'name': 'Ventas token', 'type': 'sale', 'code': 'TTKN'})
         self.invoice = self.env['account.move'].new({'move_type': 'out_invoice'})
 
     def _token(self, response):
@@ -53,7 +55,11 @@ class TestTokenHacienda(TransactionCase):
                                            'error_description': 'Invalid user credentials'}))
 
     def test_rejected_with_a_non_json_answer(self):
-        with self.assertRaisesRegex(UserError, r'HTTP 503: -'):
+        with self.assertRaisesRegex(UserError, r'HTTP 400: -'):
+            self._token(FakeResponse(400, None))
+
+    def test_server_error_is_transient(self):
+        with self.assertRaisesRegex(api_facturae.HaciendaUnavailable, r'HTTP 503'):
             self._token(FakeResponse(503, None))
 
     def test_button_logs_environment_and_expiration(self):
@@ -79,5 +85,5 @@ class TestTokenHacienda(TransactionCase):
 
     def test_connection_error(self):
         with patch.object(api_facturae.requests, 'request', side_effect=requests.exceptions.ConnectionError('down')):
-            with self.assertRaisesRegex(UserError, 'Error Obteniendo el Token'):
+            with self.assertRaisesRegex(api_facturae.HaciendaUnavailable, 'could not be reached'):
                 api_facturae.get_token_hacienda(self.invoice, 'api-prod')
