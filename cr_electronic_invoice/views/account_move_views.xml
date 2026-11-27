@@ -11,6 +11,29 @@
                     <div class="alert alert-danger" role="alert" invisible="state_tributacion != False or state in ('draft', 'cancel')">
                         The document has not yet been issued, it will be sent automatically in 5 minutes, if you need to send it manually press
                         <button class="btn btn-primary" name="generate_and_send_invoice" type="object" string="Send Document"/>
+                        <div invisible="not einvoice_error_detail" class="mt-2">
+                            <field name="einvoice_error_detail" readonly="1"/>
+                        </div>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state_tributacion != 'error' or state in ('draft', 'cancel')">
+                        <strong>The document was not sent to Hacienda.</strong>
+                        Fix what failed and press
+                        <button class="btn btn-primary" name="action_cr_einvoice_retry" type="object" string="Retry Sending"/>
+                        <div class="mt-2"><field name="einvoice_error_detail" readonly="1"/></div>
+                    </div>
+                    <div class="alert alert-danger" role="alert" invisible="state_tributacion != 'rechazado' or state in ('draft', 'cancel')">
+                        <strong>Hacienda rejected the document.</strong>
+                        Fix the data and press
+                        <button class="btn btn-primary" name="action_cr_einvoice_replace" type="object" string="Issue Replacement"
+                                confirm="The document gets a new consecutive and electronic key, refers to the rejected one (code 16) and is sent to Hacienda again. The rejected XMLs stay in the chatter. Continue?"/>
+                        <div class="mt-2"><field name="einvoice_error_detail" readonly="1"/></div>
+                    </div>
+                </div>
+                <div invisible="tipo_documento != 'FEC' or state_tributacion not in ('error', 'rechazado') or frm_ws_ambiente == 'disabled'">
+                    <div class="alert alert-danger" role="alert">
+                        <strong>Hacienda did not accept the FEC.</strong>
+                        Fix what failed and press "Send FEC".
+                        <div class="mt-2"><field name="einvoice_error_detail" readonly="1"/></div>
                     </div>
                 </div>
                 <div invisible="move_type == 'entry' or frm_ws_ambiente == 'disabled'">
@@ -132,6 +155,7 @@
                                 <field name="xml_respuesta_tributacion" filename="fname_xml_respuesta_tributacion"/>
                                 <field name="state_tributacion" readonly="0"/>
                                 <field name="electronic_invoice_return_message" readonly="1"/>
+                                <field name="einvoice_error_detail" readonly="1" invisible="not einvoice_error_detail"/>
                             </group>
                         </group>
 
@@ -214,6 +238,10 @@
         <field name="inherit_id" ref="account.view_account_invoice_filter"/>
         <field name="arch" type="xml">
             <field name="name" string="Invoice" filter_domain="['|', '|', '|' , '|', '|', ('name', 'ilike', self), ('invoice_origin', 'ilike', self), ('ref', 'ilike', self), ('invoice_payment_ref', 'ilike', self), ('partner_id', 'child_of', self), ('reference', 'ilike', self)]"/>
+            <xpath expr="//filter[@name='posted']" position="after">
+                <filter name="einvoice_problems" string="Electronic Documents with Problems"
+                        domain="[('state_tributacion', 'in', ('error', 'rechazado'))]"/>
+            </xpath>
         </field>
     </record>
 </odoo>
