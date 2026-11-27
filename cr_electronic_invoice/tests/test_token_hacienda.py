@@ -12,6 +12,7 @@ from cryptography.x509.oid import NameOID
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
+from odoo.tools import mute_logger
 
 from ..models import api_facturae
 
@@ -49,11 +50,13 @@ class TestTokenHacienda(TransactionCase):
                                                'refresh_expires_in': 600}))
         self.assertEqual(token, 'abc')
 
+    @mute_logger('odoo.addons.cr_electronic_invoice.models.api_facturae')  # "token_hacienda failed", on purpose
     def test_rejected_credentials(self):
         with self.assertRaisesRegex(UserError, r'HTTP 401: Invalid user credentials.*ambiente Pruebas'):
             self._token(FakeResponse(401, {'error': 'invalid_grant',
                                            'error_description': 'Invalid user credentials'}))
 
+    @mute_logger('odoo.addons.cr_electronic_invoice.models.api_facturae')  # "token_hacienda failed", on purpose
     def test_rejected_with_a_non_json_answer(self):
         with self.assertRaisesRegex(UserError, r'HTTP 400: -'):
             self._token(FakeResponse(400, None))

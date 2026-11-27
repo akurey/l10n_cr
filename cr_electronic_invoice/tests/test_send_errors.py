@@ -5,6 +5,7 @@ from odoo import fields
 from odoo.exceptions import UserError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
+from odoo.tools import mute_logger
 
 from ..models import api_facturae
 
@@ -30,8 +31,11 @@ class TestSendErrors(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        # The messages are checked in English: a database created in Spanish may not even have it active
+        cls.env['res.lang']._activate_lang('en_US')
+        cls.env = cls.env(context=dict(cls.env.context, lang='en_US'))
         cls.responsible = cls.env['res.users'].create({
-            'name': 'Responsable FE', 'login': 'fe_issues', 'email': 'responsable@example.com',
+            'name': 'Responsable FE', 'login': 'fe_issues', 'email': 'responsable@example.com', 'lang': 'en_US',
             'group_ids': [(6, 0, cls.env.ref('account.group_account_invoice').ids)],
         })
         cls.company = cls.env.company
@@ -152,6 +156,7 @@ class TestSendErrors(TransactionCase):
         self.assertEqual(self.invoice.einvoice_error_detail, 'Receptor no existe')
         self.assertIn('Receptor no existe', self._alert_mails().body_html)
 
+    @mute_logger('odoo.addons.cr_electronic_invoice.models.account_move')  # "Invoice not found ... error", on purpose
     def test_an_error_answer_is_checked_again_without_alerting(self):
         self.env.cr.execute("UPDATE account_move SET state = 'posted', state_tributacion = 'procesando' WHERE id = %s",
                             (self.invoice.id,))
@@ -168,6 +173,7 @@ class TestSendErrors(TransactionCase):
         self.assertEqual(self.invoice.state_tributacion, 'error')
         self.assertEqual(len(self._alert_mails()), 1)
 
+    @mute_logger('odoo.addons.cr_electronic_invoice.models.account_move')  # "could not alert the company", on purpose
     def test_a_failing_alert_keeps_the_state(self):
         with patch.object(type(self.invoice), '_cr_einvoice_alert', side_effect=ValueError('no access')):
             self.invoice._cr_einvoice_fail('CABYS missing')
