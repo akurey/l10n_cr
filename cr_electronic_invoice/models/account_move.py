@@ -24,6 +24,13 @@ _logger = logging.getLogger(__name__)
 DEFAULT_DISCOUNT_CODE = '07'
 
 EXONERATION_FISCAL_POSITION = "Exonerado 13%"
+# States that need someone to act: the company is alerted when a document enters one of them.
+EINVOICE_PROBLEM_STATES = ('error', 'rechazado')
+# Sends that fail because Hacienda is unavailable before the document is left in 'error'.
+MAX_SEND_ATTEMPTS = 10
+EINVOICE_ISSUE_ACTIVITY = 'cr_electronic_invoice.mail_activity_einvoice_issue'
+# Reference document type (reference.document code) of each electronic document type.
+REFERENCE_DOCUMENT_CODES = {'FE': '01', 'ND': '02', 'NC': '03', 'TE': '04', 'FEE': '19'}
 
 
 class InvoiceLineElectronic(models.Model):
@@ -180,6 +187,10 @@ class AccountInvoiceElectronic(models.Model):
     ignore_total_difference = fields.Boolean(string="Ignore Difference in Totals", default=False)
 
     error_count = fields.Integer(string="Number of errors", default="0", copy=False)
+    einvoice_error_detail = fields.Text(
+        string="Error Detail", readonly=True, copy=False,
+        help="Why the electronic document is not accepted yet: what failed, and whether it is retried "
+             "automatically or someone has to fix it.")
 
     # Activity of whoever issues the voucher: the company on sales, the vendor on purchases (FEC).
     # akcr's IVA report reads it to classify lines as goods or services.
@@ -792,13 +803,17 @@ class AccountInvoiceElectronic(models.Model):
                     return
 
                 if not i.xml_comprobante:
-                    i.state_tributacion = 'error'
+                    if i.state_tributacion != 'error':
+                        i._cr_einvoice_fail(_('The document has no signed XML. Press "Retry Sending" to '
+                                              'build it again.'))
                     _logger.warning('E-INV CR - Document: %s has no XML document. Status %s',
                                     i.number_electronic, 'error')
                     continue
 
                 if not i.number_electronic or len(i.number_electronic) != 50:
-                    i.state_tributacion = 'error'
+                    if i.state_tributacion != 'error':
+                        i._cr_einvoice_fail(_('The electronic key "%s" does not have 50 digits.',
+                                              i.number_electronic or ''))
                     _logger.warning('E-INV CR - Document: %s does not comply with the electronic number format. Status: %s',
                                     i.number, 'error')
                     continue
@@ -821,7 +836,10 @@ class AccountInvoiceElectronic(models.Model):
                     _logger.error('E-INV CR - Unexpected error in query Hacienda - Aborting')
                     return
 
-                i.state_tributacion = estado_m_h
+                if estado_m_h not in ('rechazado', 'error'):
+                    # A rejection is written below with Hacienda's detail, so the alert carries it; an "error" answer
+                    # is retried below and only becomes 'error' when it keeps failing.
+                    i.state_tributacion = estado_m_h
 
                 if estado_m_h == 'aceptado':
                     i.fname_xml_respuesta_tributacion = 'AHC_' + i.number_electronic + '.xml'
@@ -881,7 +899,6 @@ class AccountInvoiceElectronic(models.Model):
 
                 elif estado_m_h == 'rechazado':
                     i.state_email = 'fe_error'
-                    i.state_tributacion = estado_m_h
                     i.fname_xml_respuesta_tributacion = 'AHC_' + i.number_electronic + '.xml'
                     self.env['ir.attachment'].create({'name': i.fname_xml_respuesta_tributacion,
                                                       'type': 'binary',
@@ -891,12 +908,15 @@ class AccountInvoiceElectronic(models.Model):
                                                       'res_field': 'xml_respuesta_tributacion',
                                                       'res_name': i.fname_xml_respuesta_tributacion,
                                                       'mimetype': 'text/xml'})
-                    decoded_xml = base64.b64decode(response_json.get('respuesta-xml')).decode('utf-8')
-                    xml_errors = decoded_xml.partition('<DetalleMensaje>')[2].partition('</DetalleMensaje>')[0]
+                    xml_errors = api_facturae.rejection_detail(response_json.get('respuesta-xml'))
+                    i.write({'state_tributacion': 'rechazado',
+                             'einvoice_error_detail': xml_errors or _(
+                                 'Hacienda rejected the document without a detail. See its answer XML.')})
                     i.message_post(subject='Error', body=xml_errors)
                 else:
-                    if i.error_count > 10:
-                        i.state_tributacion = 'error'
+                    if i.error_count >= MAX_SEND_ATTEMPTS:
+                        i._cr_einvoice_fail(_('Hacienda keeps answering "%(state)s" for the document after '
+                                              '%(count)s checks.', state=estado_m_h, count=i.error_count))
                     elif i.error_count < 4:
                         i.error_count += 1
                         i.state_tributacion = 'procesando'
@@ -906,10 +926,12 @@ class AccountInvoiceElectronic(models.Model):
                     # doc.state_tributacion = 'no_encontrado'
                     _logger.error('E-INV CR - Query Hacienda - Invoice not found: %s  -  '
                                   'Hacienda Status: %s', i.number_electronic, estado_m_h)
+            except api_facturae.HaciendaUnavailable as error:
+                # Hacienda is down: the documents keep their state and are checked on the next run.
+                _logger.warning('E-INV CR - Consult Hacienda - HALTED - %s', error)
+                return
             except Exception as error:
-                i.state_tributacion = 'error'
-                i.message_post(subject=_('Error'),
-                               body=_('Warning!.\n Error in _check_hacienda_for_invoices: ') + str(error))
+                i._cr_einvoice_fail(_('Warning!.\n Error in _check_hacienda_for_invoices: ') + str(error))
                 continue
 
     def action_check_hacienda(self):
@@ -976,7 +998,7 @@ class AccountInvoiceElectronic(models.Model):
                         message_type='notification',
                         parent_id=False,
                     )
-                    inv.state_tributacion = 'error'
+                    inv.write({'einvoice_error_detail': message, 'state_tributacion': 'error'})
         _logger.info('E-INV CR - _send_invoices_to_hacienda - Completed Successfully')
 
     def generate_and_send_invoice(self):
@@ -1086,7 +1108,7 @@ class AccountInvoiceElectronic(models.Model):
                         tipo_documento_referencia = inv.reference_document_id.code
                         codigo_referencia = inv.reference_code_id.code
                         razon_referencia = inv.reference_code_id.name
-                    if not inv.invoice_id and inv.reference_code_id:
+                    if not inv.invoice_id and not inv.not_loaded_invoice and inv.reference_code_id:
                         tipo_documento_referencia = inv.reference_document_id.code
                         fecha_emision_referencia = inv.invoice_date.strftime("%Y-%m-%d") + "T12:00:00-06:00"
                         numero_documento_referencia = inv.ref
@@ -1330,23 +1352,18 @@ class AccountInvoiceElectronic(models.Model):
                         inv.invoice_origin = inv.invoice_id.display_name
 
                     if cabys_error_msg and inv.tipo_documento != 'NC':  # CAByS is not required for financial NCs
-                        inv.state_tributacion = 'error'
-                        inv.message_post(subject=_('Error'), body=cabys_error_msg)
+                        inv._cr_einvoice_fail(cabys_error_msg)
                         continue
 
                     if _old_rate_exoneration:
-                        inv.state_tributacion = 'error'
-                        inv.message_post(subject=_('Error'),
-                                            body=_('Review definition of tax with exemption, ' +
+                        inv._cr_einvoice_fail(_('Review definition of tax with exemption, '
                                                 'is in base 100 and must be base 13.'))
                         continue
 
                     if abs(base_subtotal + total_impuestos +
                             total_otros_cargos - total_iva_devuelto - inv.amount_total) > 0.5:
-                        inv.state_tributacion = 'error'
-                        inv.message_post(
-                            subject=_('Error'),
-                            body=_('Invoice amount does not match amount for XML. '
+                        inv._cr_einvoice_fail(
+                            _('Invoice amount does not match amount for XML. '
                                     'Invoice: %s XML:%s base:%s VAT:%s otros_cargos:%s iva_devuelto:%s') % (
                                         inv.amount_total, (base_subtotal + total_impuestos +
                                                             total_otros_cargos - total_iva_devuelto),
@@ -1417,10 +1434,7 @@ class AccountInvoiceElectronic(models.Model):
                 response_text = response_json.get('text')
 
                 if 200 <= response_status <= 299:
-                    if inv.tipo_documento == 'FEC':
-                        inv.state_tributacion = 'procesando'
-                    else:
-                        inv.state_tributacion = 'procesando'
+                    inv.write({'state_tributacion': 'procesando', 'einvoice_error_detail': False})
                     inv.electronic_invoice_return_message = response_text
                 else:
                     if response_text.find('ya fue recibido anteriormente') != -1:
@@ -1430,10 +1444,10 @@ class AccountInvoiceElectronic(models.Model):
                             inv.state_tributacion = 'procesando'
                         inv.message_post(subject=_('Error'),
                                             body=_('Already received previously, it is passed to consult'))
-                    elif inv.error_count > 10:
-                        inv.message_post(subject=_('Error'), body=response_text)
+                    elif inv.error_count >= MAX_SEND_ATTEMPTS:
                         inv.electronic_invoice_return_message = response_text
-                        inv.state_tributacion = 'error'
+                        inv._cr_einvoice_fail(response_text or _('Hacienda refused the document (HTTP %s).',
+                                                                 response_status))
                         _logger.error('E-INV CR  - Invoice: %s Status: %s Error sending XML: %s',
                                       inv.number_electronic, response_status, response_text)
                     else:
@@ -1445,11 +1459,194 @@ class AccountInvoiceElectronic(models.Model):
                         inv.message_post(subject=_('Error'), body=response_text)
                         _logger.error('E-INV CR  - Invoice: %s  Status: %s Error sending XML: %s',
                                       inv.number_electronic, response_status, response_text)
-            except Exception as error:
-                inv.state_tributacion = 'error'
-                inv.message_post(subject=_('Error'),
-                                 body=_('Warning!.\n Error in generate_and_send_invoice: ') + str(error))
+            except api_facturae.HaciendaUnavailable as error:
+                inv._cr_einvoice_hacienda_unavailable(error)
                 continue
+            except Exception as error:
+                inv._cr_einvoice_fail(_('Warning!.\n Error in generate_and_send_invoice: ') + str(error))
+                continue
+
+    # ------------------------------------------------------------------ problems: detail, alerts, actions
+
+    def write(self, vals):
+        previous = {move.id: move.state_tributacion for move in self} if 'state_tributacion' in vals else None
+        result = super().write(vals)
+        if previous is not None:
+            self._cr_einvoice_state_changed(previous)
+        return result
+
+    def _cr_einvoice_alerts_apply(self):
+        """Documents the company issues: invoices, tickets, notes and FEC (not received vendor bills)."""
+        self.ensure_one()
+        return self.move_type in ('out_invoice', 'out_refund') or self.tipo_documento == 'FEC'
+
+    def _cr_einvoice_state_changed(self, previous):
+        for move in self.filtered(lambda m: m._cr_einvoice_alerts_apply()):
+            state = move.state_tributacion
+            try:
+                with self.env.cr.savepoint():
+                    if state in EINVOICE_PROBLEM_STATES and previous.get(move.id) != state:
+                        move._cr_einvoice_alert()
+                    elif state == 'aceptado':
+                        move.activity_feedback([EINVOICE_ISSUE_ACTIVITY], feedback=_('Accepted by Hacienda.'))
+            except Exception:
+                # The document keeps its new state; only the alert is lost, and the log says so.
+                _logger.exception('E-INV CR - could not alert the company about %s', move.number_electronic)
+            if state == 'aceptado' and move.einvoice_error_detail:
+                move.einvoice_error_detail = False
+
+    def _cr_einvoice_fail(self, detail, state='error'):
+        """Leave the document in a state that needs someone (the company is alerted), saying why."""
+        for move in self:
+            move.write({'einvoice_error_detail': detail, 'state_tributacion': state})
+            move.message_post(subject=_('Error'), body=detail)
+
+    def _cr_einvoice_hacienda_unavailable(self, error):
+        """Hacienda could not be reached: back to the send queue, unless it has failed too many times."""
+        self.ensure_one()
+        self.error_count += 1
+        if self.tipo_documento == 'FEC':
+            self._cr_einvoice_fail(_('Hacienda did not answer (%s). Press "Send FEC" again later.', error))
+        elif self.error_count >= MAX_SEND_ATTEMPTS:
+            self._cr_einvoice_fail(_('Hacienda did not answer after %(count)s attempts: %(error)s',
+                                     count=self.error_count, error=error))
+        else:
+            self.write({'state_tributacion': False, 'einvoice_error_detail': _(
+                'Hacienda did not answer (%s). The document is sent again automatically.', error)})
+            _logger.warning('E-INV CR - %s back to the send queue: %s', self.number_electronic, error)
+
+    def _cr_einvoice_alert_lang(self):
+        company = self.company_id
+        return company.einvoice_issue_user_id.lang or company.partner_id.lang or self.env.lang
+
+    def _cr_einvoice_alert_texts(self):
+        """Texts of the problem alert, in the language of this recordset's context."""
+        self.ensure_one()
+        number = self.number_electronic or self.name
+        if self.state_tributacion == 'rechazado':
+            subject = _('URGENT: Hacienda rejected the electronic document %s', number)
+            todo = _('Fix the data and press "Issue Replacement" on the document: it gets a new number and '
+                     'refers to the rejected one.')
+        else:
+            subject = _('URGENT: the electronic document %s could not be sent to Hacienda', number)
+            todo = _('Fix the cause and press "Retry Sending" on the document.')
+        if self.tipo_documento == 'FEC':
+            todo = _('Fix the cause and press "Send FEC" on the document.')
+        return {
+            'subject': subject,
+            'todo': todo,
+            'detail': self.einvoice_error_detail or self.electronic_invoice_return_message or
+            _('See the messages of the document.'),
+            'detail_label': _('Detail:'),
+            'customer': _('Customer: %(customer)s. Amount: %(amount)s.',
+                          customer=self.partner_id.display_name or '-', amount=self.amount_total),
+            'open': _('Open the document'),
+        }
+
+    def _cr_einvoice_alert(self):
+        """Tell the company a document needs attention: an activity for the responsible user (one at a
+        time per document) and an urgent e-mail to the company's address for these problems."""
+        self.ensure_one()
+        company = self.company_id
+        # The alert goes out in the language of whoever handles these problems.
+        text = self.with_context(lang=self._cr_einvoice_alert_lang())._cr_einvoice_alert_texts()
+        user = company.einvoice_issue_user_id
+        activity_type = self.env.ref(EINVOICE_ISSUE_ACTIVITY, raise_if_not_found=False)
+        if user and activity_type and not self.activity_ids.filtered(lambda a: a.activity_type_id == activity_type):
+            self.activity_schedule(EINVOICE_ISSUE_ACTIVITY, summary=text['subject'],
+                                   note=Markup('<p>%s</p><p>%s</p>') % (text['detail'], text['todo']),
+                                   user_id=user.id)
+        if company.einvoice_issue_email:
+            url = '%s/odoo/account.move/%s' % (self.get_base_url(), self.id)
+            body = Markup('<p>%s</p><p><b>%s</b> %s</p><p>%s</p><p><a href="%s">%s</a></p>') % (
+                text['customer'], text['detail_label'], text['detail'], text['todo'], url, text['open'])
+            self.env['mail.mail'].sudo().create({
+                'subject': text['subject'],
+                'body_html': body,
+                'email_to': company.einvoice_issue_email,
+                'email_from': company.email_formatted or self.env.user.email_formatted,
+                'model': self._name,
+                'res_id': self.id,
+                'auto_delete': True,
+            })
+            self.env.ref('mail.ir_cron_mail_scheduler_action')._trigger()
+
+    def _cr_einvoice_archive_xmls(self, note):
+        """Keep the document's XMLs in its chatter and clear them, so a new XML can be built."""
+        self.ensure_one()
+        attachments = []
+        for field, fname in (('xml_comprobante', 'fname_xml_comprobante'),
+                             ('xml_respuesta_tributacion', 'fname_xml_respuesta_tributacion')):
+            if self[field]:
+                attachments.append((self[fname] or field + '.xml', base64.b64decode(self[field])))
+        self.message_post(body=note, attachments=attachments)
+        self.write({'xml_comprobante': False, 'fname_xml_comprobante': False,
+                    'xml_respuesta_tributacion': False, 'fname_xml_respuesta_tributacion': False})
+
+    def action_cr_einvoice_retry(self):
+        """Retry Sending, for a document in 'error' once its cause is fixed."""
+        for inv in self.filtered(lambda m: m.state_tributacion == 'error'):
+            if inv.xml_comprobante and inv.number_electronic:
+                # Raises (and tells the user) when Hacienda cannot be reached: nothing changes then.
+                token = api_facturae.get_token_hacienda(inv, inv.company_id.frm_ws_ambiente)
+                answer = api_facturae.consulta_clave(inv.number_electronic, token, inv.company_id.frm_ws_ambiente)
+                if answer.get('status') == 200:
+                    # Hacienda already has it: take its answer instead of sending it again.
+                    inv.write({'state_tributacion': 'procesando', 'error_count': 0, 'einvoice_error_detail': False})
+                    inv.message_post(body=_('Hacienda already has this document: its answer is checked '
+                                            'automatically in a few minutes.'))
+                    continue
+                if answer.get('status') != 400:
+                    raise UserError(_('Hacienda could not be queried right now. Try again in a few minutes.'))
+                # Never received: build the XML again from the current data, with the same key.
+                inv._cr_einvoice_archive_xmls(_('Sending again. The XML Hacienda did not receive:'))
+            inv.write({'state_tributacion': False, 'error_count': 0, 'einvoice_error_detail': False})
+            inv.generate_and_send_invoice()
+
+    def _cr_einvoice_issue_date(self):
+        """Date the document was issued to Hacienda: from date_issuance, else from its key (ddmmyy)."""
+        self.ensure_one()
+        if self.date_issuance:
+            try:
+                return fields.Date.to_date(self.date_issuance[:10])
+            except ValueError:
+                pass
+        key = self.number_electronic or ''
+        if len(key) == 50 and key[3:9].isdigit():
+            return datetime.date(2000 + int(key[7:9]), int(key[5:7]), int(key[3:5]))
+        return self.invoice_date or fields.Date.context_today(self)
+
+    def action_cr_einvoice_replace(self):
+        """Issue Replacement, for a document Hacienda rejected: the same document gets a new consecutive and
+        key, refers to the rejected key with code 16 ("Sustituye comprobante electrónico rechazado") and is
+        sent again. The rejected XMLs stay in the chatter."""
+        reference_code = self.env.ref('cr_electronic_invoice.ReferenceCode_16')
+        for inv in self.filtered(lambda m: m.state_tributacion == 'rechazado'
+                                 and m.move_type in ('out_invoice', 'out_refund')):
+            old_key = inv.number_electronic
+            old_type = inv.tipo_documento
+            old_date = inv._cr_einvoice_issue_date()
+            tipo_documento, sequence = inv.get_invoice_sequence()
+            if not sequence:
+                raise UserError(_('The journal has no electronic sequence for %s.', tipo_documento))
+            key = api_facturae.get_clave_hacienda(inv, tipo_documento, sequence,
+                                                  inv.journal_id.sucursal or inv.company_id.sucursal_MR,
+                                                  inv.journal_id.terminal or inv.company_id.terminal_MR)
+            inv._cr_einvoice_archive_xmls(_('Replaced: Hacienda rejected the document %s. Its XMLs:', old_key))
+            vals = {'tipo_documento': tipo_documento, 'number_electronic': key.get('clave'),
+                    'sequence': key.get('consecutivo'), 'name': key.get('consecutivo'),
+                    'state_tributacion': False, 'error_count': 0, 'einvoice_error_detail': False,
+                    'state_email': False, 'electronic_invoice_return_message': False}
+            reference_document = self.env['reference.document'].search(
+                [('code', '=', REFERENCE_DOCUMENT_CODES.get(old_type))], limit=1)
+            # A credit or debit note keeps its reference to the document it corrects; anything that already
+            # refers to another document keeps that reference too.
+            if not inv.invoice_id and reference_document and \
+                    (not inv.reference_code_id or inv.reference_code_id == reference_code):
+                vals.update(reference_code_id=reference_code.id, reference_document_id=reference_document.id,
+                            not_loaded_invoice=old_key, not_loaded_invoice_date=old_date)
+            inv.write(vals)
+            inv.generate_and_send_invoice()
 
     def get_invoice_sequence(self):
         tipo_documento = self.tipo_documento
@@ -1471,6 +1668,7 @@ class AccountInvoiceElectronic(models.Model):
                 sequence = self.journal_id.FEE_sequence_id.next_by_id()
             elif self.tipo_documento == 'ND':
                 sequence = self.journal_id.ND_sequence_id.next_by_id()
+            tipo_documento = self.tipo_documento
 
         # Credit Note
         elif self.move_type == 'out_refund':
