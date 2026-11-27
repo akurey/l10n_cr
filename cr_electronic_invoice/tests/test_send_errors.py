@@ -66,6 +66,16 @@ class TestSendErrors(TransactionCase):
         })
         self.invoice.invalidate_recordset(['xml_comprobante'])
 
+    def test_the_supplier_acceptance_message_does_not_wait_forever(self):
+        """Sending the acceptance of a supplier's document has a time limit, like every other call to Hacienda."""
+        with patch.object(api_facturae, 'clean_identification', return_value='3101123456'), \
+                patch.object(api_facturae.requests, 'post',
+                             side_effect=api_facturae.requests.exceptions.Timeout('no answer')) as post:
+            result = api_facturae.send_message(self.invoice, '2026-11-27T10:00:00-06:00', b'<MensajeReceptor/>',
+                                               'token', 'api-stag')
+        self.assertEqual(post.call_args.kwargs.get('timeout'), api_facturae.HACIENDA_TIMEOUT)
+        self.assertEqual(result['status'], 400)
+
     def _alert_mails(self):
         return self.env['mail.mail'].search([('email_to', '=', ISSUE_EMAIL), ('res_id', '=', self.invoice.id)])
 

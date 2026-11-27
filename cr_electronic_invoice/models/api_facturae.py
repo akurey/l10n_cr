@@ -1333,7 +1333,8 @@ def send_message(inv, date_cr, xml, token, env):
 
     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(token)}
     try:
-        response = requests.post(endpoint, data=json.dumps(comprobante), headers=headers)
+        response = requests.post(endpoint, data=json.dumps(comprobante), headers=headers,
+                                 timeout=HACIENDA_TIMEOUT)
 
     except requests.exceptions.RequestException as e:
         _logger.info('Exception %s', e)
