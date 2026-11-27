@@ -52,6 +52,9 @@
                         <field name="exoneration_article"/>
                         <field name="exoneration_clause"/>
                     </group>
+                    <group>
+                        <field name="exoneration_cabys_codes" placeholder="2421200000100"/>
+                    </group>
                 </page>
             </xpath>
         </field>
