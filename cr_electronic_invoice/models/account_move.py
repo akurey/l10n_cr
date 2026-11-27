@@ -914,7 +914,7 @@ class AccountInvoiceElectronic(models.Model):
                                  'Hacienda rejected the document without a detail. See its answer XML.')})
                     i.message_post(subject='Error', body=xml_errors)
                 else:
-                    if i.error_count > MAX_SEND_ATTEMPTS:
+                    if i.error_count >= MAX_SEND_ATTEMPTS:
                         i._cr_einvoice_fail(_('Hacienda keeps answering "%(state)s" for the document after '
                                               '%(count)s checks.', state=estado_m_h, count=i.error_count))
                     elif i.error_count < 4:
@@ -1444,7 +1444,7 @@ class AccountInvoiceElectronic(models.Model):
                             inv.state_tributacion = 'procesando'
                         inv.message_post(subject=_('Error'),
                                             body=_('Already received previously, it is passed to consult'))
-                    elif inv.error_count > MAX_SEND_ATTEMPTS:
+                    elif inv.error_count >= MAX_SEND_ATTEMPTS:
                         inv.electronic_invoice_return_message = response_text
                         inv._cr_einvoice_fail(response_text or _('Hacienda refused the document (HTTP %s).',
                                                                  response_status))

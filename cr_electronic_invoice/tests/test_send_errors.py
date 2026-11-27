@@ -179,7 +179,7 @@ class TestSendErrors(TransactionCase):
             self.env['account.move']._check_hacienda_for_invoices_company(self.company)
         self.assertEqual(self.invoice.state_tributacion, 'procesando')
         self.assertFalse(self._alert_mails())
-        self.invoice.error_count = 11
+        self.invoice.error_count = MAX_SEND_ATTEMPTS
         with patch.object(api_facturae, 'get_token_hacienda', return_value='token'), \
                 patch.object(api_facturae, 'consulta_clave', return_value={'status': 200, 'ind-estado': 'error'}):
             self.env['account.move']._check_hacienda_for_invoices_company(self.company)
