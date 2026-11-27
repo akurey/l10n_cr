@@ -6,6 +6,7 @@ from ..models.account_move import EXONERATION_FISCAL_POSITION
 
 WINE = '2421200000100'  # CABYS: wine of fresh grapes
 DELIVERY = '6803000000000'  # CABYS: local delivery services
+LAPTOP = '4524100000100'  # CABYS of the test laptop (a test value)
 
 
 @tagged('post_install', '-at_install')
@@ -169,3 +170,50 @@ class TestExoneration(TransactionCase):
             lang='en_US')._cr_exoneration_problems()
         self.assertEqual(len(problems), 1)
         self.assertIn(DELIVERY, problems[0], "a CABYS the authorization does not cover")
+
+    def _free_trade_zone(self, **vals):
+        """A Free Trade Zone company (authorization type 08) whose activity needs the products of LAPTOP only."""
+        return self.env['res.partner'].create({
+            'name': "Empresa de zona franca de prueba", 'percentage_exoneration': 100,
+            'type_exoneration': self.env.ref('cr_electronic_invoice.AutEx_8').id, 'exoneration_number': 'ZF-0001',
+            'exoneration_issuer': self.env['issuer.ex'].search([], limit=1).id, 'date_issue': '2026-01-15',
+            'exoneration_cabys_codes': LAPTOP, **vals})
+
+    def test_a_free_trade_zone_exoneration_needs_no_expiration_date(self):
+        free_zone = self._free_trade_zone()
+        self.assertTrue(free_zone.exoneration_free_trade_zone)
+        invoice = self.env['account.move'].new({'move_type': 'out_invoice', 'partner_id': free_zone.id})
+        self.assertEqual(invoice._cr_exoneration_missing_fields(), [])
+        invoice.partner_id = self._free_trade_zone(exoneration_cabys_codes=False)
+        self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(),
+                         ["Authorized CABYS Codes"], "it covers only the goods and services of its activity")
+
+    def test_a_free_trade_zone_exoneration_covers_only_its_activity(self):
+        """A company that needs laptops for its activity: the laptop is exonerated, a wine keeps the full IVA."""
+        free_zone = self._free_trade_zone()
+        self.assertEqual(self._exonerated(LAPTOP, free_zone).amount, 0)
+        self.assertEqual(self._exonerated(WINE, free_zone), self.iva)
+
+    def test_a_free_trade_zone_exoneration_is_always_100(self):
+        laptop = self.env['product.product'].create(
+            {'name': "Portátil de prueba", 'cabys_code': LAPTOP, 'taxes_id': [Command.set(self.iva.ids)]})
+        free_zone = self._free_trade_zone()
+        invoice = self.env['account.move'].new({
+            'move_type': 'out_invoice', 'partner_id': free_zone.id, 'fiscal_position_id': self.position.id,
+            'invoice_line_ids': [Command.create({'product_id': laptop.id, 'name': "Portátil",
+                                                 'tax_ids': [Command.set(self._exonerated(LAPTOP, free_zone).ids)]})],
+        })
+        self.assertEqual(invoice._cr_exoneration_problems(), [])
+        free_zone.percentage_exoneration = 50
+        problems = invoice.with_context(lang='en_US')._cr_exoneration_problems()
+        self.assertEqual(len(problems), 1)
+        self.assertIn("always 100", problems[0])
+
+    def test_other_authorizations_still_need_an_expiration_date(self):
+        self.customer.write({
+            'type_exoneration': self.env.ref('cr_electronic_invoice.AutEx_1').id, 'exoneration_number': 'AL-0001',
+            'exoneration_issuer': self.env['issuer.ex'].search([], limit=1).id, 'date_issue': '2026-01-15'})
+        self.assertFalse(self.customer.exoneration_free_trade_zone)
+        invoice = self.env['account.move'].new({'move_type': 'out_invoice', 'partner_id': self.customer.id})
+        self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(), ["Expiration Date"])
+

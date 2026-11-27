@@ -171,7 +171,8 @@
                         <field name="exoneration_issuer" required="show_exoneration"/>
                         <field name="percentage_exoneration" required="show_exoneration"/>
                         <field name="date_issue" required="show_exoneration"/>
-                        <field name="date_expiration" required="show_exoneration"/>
+                        <field name="exoneration_free_trade_zone" invisible="1"/>
+                        <field name="date_expiration" required="show_exoneration and not exoneration_free_trade_zone"/>
                         <field name="exoneration_article"/>
                         <field name="exoneration_clause"/>
                     </group>
