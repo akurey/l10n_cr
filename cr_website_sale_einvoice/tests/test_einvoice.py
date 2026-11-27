@@ -171,11 +171,13 @@ class TestCheckoutEinvoice(TransactionCase):
         self.assertIn('e-mail', session[ERROR_KEY])
         lookup.assert_not_called()
         with patch(LOOKUP, return_value=hacienda(name='TERCERA', id_code='02', activities=['5610.0'])):
-            self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456', third_email='a@b.cr')
+            self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456',
+                         third_email='tercero-a@example.com')
             first = self.cart.cr_einvoice_partner_id
-            self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456', third_email='c@d.cr')
+            self._submit(requested='1', third_party='1', third_type='02', third_vat='3101123456',
+                         third_email='tercero-c@example.com')
         self.assertEqual(self.cart.cr_einvoice_partner_id, first, "the same third party is not duplicated")
-        self.assertEqual(first.email, 'c@d.cr')
+        self.assertEqual(first.email, 'tercero-c@example.com')
 
     def test_third_party_gets_the_language_of_the_purchase(self):
         self.env['res.lang']._activate_lang('es_CR')
@@ -188,9 +190,9 @@ class TestCheckoutEinvoice(TransactionCase):
                                                     third_vat='3101123456', third_email=email)
             return self.cart.cr_einvoice_partner_id
 
-        receptor = submit('es_CR', 'a@b.cr')
+        receptor = submit('es_CR', 'tercero-a@example.com')
         self.assertEqual(receptor.lang, 'es_CR', "a new third party gets the language of the purchase")
-        self.assertEqual(submit('en_US', 'c@d.cr'), receptor)
+        self.assertEqual(submit('en_US', 'tercero-c@example.com'), receptor)
         self.assertEqual(receptor.lang, 'en_US', "a reused third party follows the latest purchase")
 
     def test_taxpayers_get_the_einvoice_by_default(self):
