@@ -21,6 +21,12 @@ class TestTaxNoupdate(TransactionCase):
     """A module update leaves the taxes alone: point_of_sale refuses to change a tax used in an open
     session, and an accountant's changes to a tax are kept."""
 
+    def setUp(self):
+        super().setUp()
+        if not self.env.ref('cr_electronic_invoice.iva_tax_13', raise_if_not_found=False):
+            # Odoo deletes the module's taxes when the database's first chart of accounts is not Costa Rica's
+            self.skipTest("the module's taxes are not in this database (its first chart is not CR's)")
+
     def _xmlids(self):
         return self.env['ir.model.data'].search([('module', '=', 'cr_electronic_invoice'),
                                                  ('model', 'in', TAX_MODELS)])

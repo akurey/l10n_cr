@@ -181,6 +181,7 @@ class TestCheckoutEinvoice(TransactionCase):
 
     def test_third_party_gets_the_language_of_the_purchase(self):
         self.env['res.lang']._activate_lang('es_CR')
+        self.env['res.lang']._activate_lang('en_US')  # a database created in Spanish may not have it active
 
         def submit(lang, email):
             with patch(LOOKUP, return_value=hacienda(name='TERCERA', id_code='02', activities=['5610.0'])), \
