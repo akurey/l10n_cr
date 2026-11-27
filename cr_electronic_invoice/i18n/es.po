@@ -255,8 +255,12 @@ msgstr "Contacto adicional"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__einvoice_issue_email
-msgid "Address (for example a group) that gets an urgent e-mail for every electronic document Hacienda rejects or that could not be sent."
-msgstr "Dirección (por ejemplo un grupo) que recibe un correo urgente por cada comprobante electrónico que Hacienda rechaza o que no se pudo enviar."
+msgid ""
+"Address (for example a group) that gets an urgent e-mail for every "
+"electronic document Hacienda rejects or that could not be sent."
+msgstr ""
+"Dirección (por ejemplo un grupo) que recibe un correo urgente por cada "
+"comprobante electrónico que Hacienda rechaza o que no se pudo enviar."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__registro_fiscal_8707
@@ -282,13 +286,16 @@ msgstr "Hacienda ya lo había recibido; se pasa a consulta"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__invoice_amount_text
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__invoice_amount_text
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__invoice_amount_text
 msgid "Amount in Letters"
 msgstr "Monto en letras"
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Another FEC is being sent because the previous one was rejected by Hacienda. "
+msgid ""
+"Another FEC is being sent because the previous one was rejected by Hacienda."
+" "
 msgstr "Se envía otra FEC porque Hacienda rechazó la anterior. "
 
 #. module: cr_electronic_invoice
@@ -411,19 +418,23 @@ msgstr "Compañía"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__company_vat
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__company_vat
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__company_vat
 msgid "Company Tax ID"
 msgstr "Identificación de la compañía"
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_partner.py:0
+#: code:addons/cr_electronic_invoice/models/res_company.py:0
 msgid "Company VAT is invalid"
 msgstr "El IVA de la compañía no es válido"
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_company.py:0
-msgid "Conexión correcta con Hacienda (%(environment)s). La llave criptográfica vence el %(date)s."
+msgid ""
+"Conexión correcta con Hacienda (%(environment)s). La llave criptográfica "
+"vence el %(date)s."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -441,6 +452,7 @@ msgstr "Consecutivo"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__consecutive_number_receiver
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__consecutive_number_receiver
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__consecutive_number_receiver
 msgid "Consecutive Receiver Number"
 msgstr "Número consecutivo del Receptor"
 
@@ -475,8 +487,12 @@ msgstr "Contacto que recibe los correos de la factura además del cliente."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_sale_order__additional_contact_id
-msgid "Contact that receives the quotation and order emails in addition to the customer. It is carried over to the invoices created from this order."
-msgstr "Contacto que recibe los correos de la cotización y de la orden además del cliente. Se copia a las facturas creadas desde esta orden."
+msgid ""
+"Contact that receives the quotation and order emails in addition to the "
+"customer. It is carried over to the invoices created from this order."
+msgstr ""
+"Contacto que recibe los correos de la cotización y de la orden además del "
+"cliente. Se copia a las facturas creadas desde esta orden."
 
 #. module: cr_electronic_invoice
 #: model:product.template,name:cr_electronic_invoice.product_parafiscal
@@ -570,6 +586,7 @@ msgstr "Resolución de fecha"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__date_issuance
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__date_issuance
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__date_issuance
 msgid "Date of issue"
 msgstr "Fecha de emisión"
 
@@ -605,24 +622,34 @@ msgstr "Cuenta de gastos predeterminada al cargar datos desde XML"
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_account_journal_inherit_form
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
 msgid "Default account for expenses when importing electronic invoice"
 msgstr "Cuenta predeterminada para gastos al importar factura electrónica"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
 msgid "Default account used for expenses when importing electronic invoice"
-msgstr "Cuenta predeterminada utilizada para gastos al importar factura electrónica"
+msgstr ""
+"Cuenta predeterminada utilizada para gastos al importar factura electrónica"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_account_journal_inherit_form
-msgid "Default analytic account for expenses when importing electronic invoice"
-msgstr "Cuenta analítica predeterminada para gastos al importar factura electrónica"
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid ""
+"Default analytic account for expenses when importing electronic invoice"
+msgstr ""
+"Cuenta analítica predeterminada para gastos al importar factura electrónica"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
-msgid "Default analytic account used for expenses when importing electronic invoice"
-msgstr "Cuenta analítica predeterminada utilizada para gastos al importar factura electrónica"
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid ""
+"Default analytic account used for expenses when importing electronic invoice"
+msgstr ""
+"Cuenta analítica predeterminada utilizada para gastos al importar factura "
+"electrónica"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__activity_id
@@ -632,6 +659,7 @@ msgstr "Actividad económica por defecto"
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_account_journal_inherit_form
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
 msgid "Default product for expenses when importing electronic invoice"
 msgstr "Producto por defecto para gastos al importar factura electrónica"
 
@@ -643,8 +671,11 @@ msgstr "Producto por defecto para gastos al cargar datos desde XML"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
 msgid "Default product used for expenses when importing electronic invoice"
-msgstr "Producto predeterminado utilizado para gastos al importar factura electrónica"
+msgstr ""
+"Producto predeterminado utilizado para gastos al importar factura "
+"electrónica"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_economic_activity__description
@@ -711,6 +742,7 @@ msgstr "Nota de descuento"
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_sale_order__display_name
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_uom_uom__display_name
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_validate_account_move__display_name
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_invoice_send__display_name
 msgid "Display Name"
 msgstr "Mostrar nombre"
 
@@ -744,7 +776,8 @@ msgstr "E-INV CR - Consulta a Hacienda - Comprobante %s / %s  -  número:%s"
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "E-INV CR - Unexpected error in Send Acceptance File - Aborting"
-msgstr "E-INV CR - Error inesperado al enviar el mensaje de aceptación - Se detiene"
+msgstr ""
+"E-INV CR - Error inesperado al enviar el mensaje de aceptación - Se detiene"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_company_form_inherit
@@ -768,6 +801,7 @@ msgstr "Actividad Económica"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__economic_activities_ids
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__economic_activities_ids
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__economic_activities_ids
 msgid "Economic activities"
 msgstr "Actividades Económicas"
 
@@ -801,7 +835,8 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_partner.py:0
-msgid "El código de exoneración no concuerda con la cédula del socio de negocio."
+msgid ""
+"El código de exoneración no concuerda con la cédula del socio de negocio."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -819,7 +854,9 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "El receptor no corresponde con la compañía actual con identificación . Por favor active la compañía correcta."
+msgid ""
+"El receptor no corresponde con la compañía actual con identificación . Por "
+"favor active la compañía correcta."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -905,6 +942,7 @@ msgstr "Usuario factura electrónica"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__number_electronic
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__number_electronic
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__number_electronic
 msgid "Electronic number"
 msgstr "Número electrónico"
 
@@ -925,11 +963,15 @@ msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.actions.server,name:cr_electronic_invoice.ir_cron_send_expiration_notice_ir_actions_server
+#: model:ir.cron,cron_name:cr_electronic_invoice.ir_cron_send_expiration_notice
+#: model:ir.cron,name:cr_electronic_invoice.ir_cron_send_expiration_notice
 msgid "Enviar Aviso de Expiración de Llave Criptográfica"
 msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.actions.server,name:cr_electronic_invoice.ir_cron_mr_hacienda_invoice_ir_actions_server
+#: model:ir.cron,cron_name:cr_electronic_invoice.ir_cron_mr_hacienda_invoice
+#: model:ir.cron,name:cr_electronic_invoice.ir_cron_mr_hacienda_invoice
 msgid "Envio Mensaje Receptor"
 msgstr ""
 
@@ -979,7 +1021,10 @@ msgstr ""
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_move_line__frm_ws_ambiente
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_move_reversal__frm_ws_ambiente
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__frm_ws_ambiente
-msgid "Es el ambiente en al cual se le está actualizando el certificado. Para el ambiente de calidad (stag), para el ambiente de producción (prod). Requerido."
+msgid ""
+"Es el ambiente en al cual se le está actualizando el certificado. Para el "
+"ambiente de calidad (stag), para el ambiente de producción (prod). "
+"Requerido."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -990,12 +1035,14 @@ msgstr ""
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__state_tributacion
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__state_tributacion
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__state_tributacion
 msgid "Estado FE"
 msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__state_send_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__state_send_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__state_send_invoice
 msgid "Estado FE Proveedor"
 msgstr ""
 
@@ -1012,6 +1059,7 @@ msgstr ""
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__state_email
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__state_email
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__state_email
 msgid "Estado email"
 msgstr ""
 
@@ -1093,26 +1141,36 @@ msgstr "Tasa de impuesto a la exportación"
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "FEC invoices require that the supplier has defined the economic activity"
-msgstr "Las FEC requieren que el proveedor tenga definida la actividad económica"
+msgid ""
+"FEC invoices require that the supplier has defined the economic activity"
+msgstr ""
+"Las FEC requieren que el proveedor tenga definida la actividad económica"
 
 #. module: cr_electronic_invoice
 #: model:ir.actions.server,name:cr_electronic_invoice.ir_cron_vat_exoneration_expired_ir_actions_server
+#: model:ir.cron,cron_name:cr_electronic_invoice.ir_cron_vat_exoneration_expired
+#: model:ir.cron,name:cr_electronic_invoice.ir_cron_vat_exoneration_expired
 msgid "FECR: Check clients VAT exoneration expiration"
 msgstr "FECR: Consultar vencimiento de exoneración de IVA de clientes"
 
 #. module: cr_electronic_invoice
 #: model:ir.actions.server,name:cr_electronic_invoice.ir_cron_FECR_Consulta_ir_actions_server
+#: model:ir.cron,cron_name:cr_electronic_invoice.ir_cron_FECR_Consulta
+#: model:ir.cron,name:cr_electronic_invoice.ir_cron_FECR_Consulta
 msgid "FECR: Consulta Estado de Facturas"
 msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.actions.server,name:cr_electronic_invoice.ir_cron_FECR_Envia_ir_actions_server
+#: model:ir.cron,cron_name:cr_electronic_invoice.ir_cron_FECR_Envia
+#: model:ir.cron,name:cr_electronic_invoice.ir_cron_FECR_Envia
 msgid "FECR: Envía Facturas a Hacienda"
 msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.actions.server,name:cr_electronic_invoice.ir_cron_FECR_MR_ir_actions_server
+#: model:ir.cron,cron_name:cr_electronic_invoice.ir_cron_FECR_MR
+#: model:ir.cron,name:cr_electronic_invoice.ir_cron_FECR_MR
 msgid "FECR: Envía Mensajes de Aceptación de Facturas"
 msgstr ""
 
@@ -1149,6 +1207,7 @@ msgstr "Nombre del archivo XML"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__fname_xml_comprobante
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__fname_xml_comprobante
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__fname_xml_comprobante
 msgid "File name XML voucher"
 msgstr "Nombre del Comprobante XML"
 
@@ -1174,8 +1233,12 @@ msgstr "Corrija la causa y presione «Enviar FEC» en el documento."
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Fix the data and press \"Issue Replacement\" on the document: it gets a new number and refers to the rejected one."
-msgstr "Corrija los datos y presione «Emitir comprobante de reemplazo» en el comprobante: recibe un número nuevo y hace referencia al rechazado."
+msgid ""
+"Fix the data and press \"Issue Replacement\" on the document: it gets a new "
+"number and refers to the rejected one."
+msgstr ""
+"Corrija los datos y presione «Emitir comprobante de reemplazo» en el "
+"comprobante: recibe un número nuevo y hace referencia al rechazado."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__message_follower_ids
@@ -1195,8 +1258,12 @@ msgstr "Documentos generados"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__einvoice_issue_user_id
-msgid "Gets an activity on every electronic document Hacienda rejects or that could not be sent."
-msgstr "Recibe una actividad por cada comprobante electrónico que Hacienda rechaza o que no se pudo enviar."
+msgid ""
+"Gets an activity on every electronic document Hacienda rejects or that could"
+" not be sent."
+msgstr ""
+"Recibe una actividad por cada comprobante electrónico que Hacienda rechaza o"
+" que no se pudo enviar."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields.selection,name:cr_electronic_invoice.selection__economic_activity__sale_type__goods
@@ -1212,12 +1279,17 @@ msgstr "La API de Hacienda está deshabilitada en la compañía"
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Hacienda already has this document: its answer is checked automatically in a few minutes."
-msgstr "Hacienda ya tiene este comprobante: su respuesta se consulta automáticamente en unos minutos."
+msgid ""
+"Hacienda already has this document: its answer is checked automatically in a"
+" few minutes."
+msgstr ""
+"Hacienda ya tiene este comprobante: su respuesta se consulta automáticamente"
+" en unos minutos."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__electronic_invoice_return_message
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__electronic_invoice_return_message
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__electronic_invoice_return_message
 msgid "Hacienda answer"
 msgstr "Respuesta de Hacienda"
 
@@ -1225,7 +1297,9 @@ msgstr "Respuesta de Hacienda"
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "Hacienda could not be queried right now. Try again in a few minutes."
-msgstr "No se pudo consultar a Hacienda en este momento. Intente de nuevo en unos minutos."
+msgstr ""
+"No se pudo consultar a Hacienda en este momento. Intente de nuevo en unos "
+"minutos."
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -1248,8 +1322,11 @@ msgstr "Hacienda no respondió (%s). Presione «Enviar FEC» de nuevo más tarde
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Hacienda did not answer (%s). The document is sent again automatically."
-msgstr "Hacienda no respondió (%s). El comprobante se vuelve a enviar automáticamente."
+msgid ""
+"Hacienda did not answer (%s). The document is sent again automatically."
+msgstr ""
+"Hacienda no respondió (%s). El comprobante se vuelve a enviar "
+"automáticamente."
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -1266,13 +1343,23 @@ msgstr "Hacienda no respondió la solicitud del token (HTTP %s)."
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Hacienda keeps answering \"%(state)s\" for the document after %(count)s checks."
-msgstr "Hacienda sigue respondiendo «%(state)s» para el comprobante después de %(count)s consultas."
+msgid ""
+"Hacienda keeps answering \"%(state)s\" for the document after %(count)s "
+"checks."
+msgstr ""
+"Hacienda sigue respondiendo «%(state)s» para el comprobante después de "
+"%(count)s consultas."
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "Hacienda rechazó la solicitud del token (HTTP %(status)s: %(detail)s). Revise que el usuario, la contraseña y el ambiente de la compañía correspondan: un usuario de pruebas (...@stag.comprobanteselectronicos.go.cr) solo funciona con el ambiente Pruebas, y uno de producción (...@prod.comprobanteselectronicos.go.cr) con Producción."
+msgid ""
+"Hacienda rechazó la solicitud del token (HTTP %(status)s: %(detail)s). "
+"Revise que el usuario, la contraseña y el ambiente de la compañía "
+"correspondan: un usuario de pruebas "
+"(...@stag.comprobanteselectronicos.go.cr) solo funciona con el ambiente "
+"Pruebas, y uno de producción (...@prod.comprobanteselectronicos.go.cr) con "
+"Producción."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -1286,7 +1373,8 @@ msgstr "Hacienda no aceptó el envío del comprobante (HTTP %s)."
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
 msgid "Hacienda rejected the document without a detail. See its answer XML."
-msgstr "Hacienda rechazó el comprobante sin dar detalle. Revise su XML de respuesta."
+msgstr ""
+"Hacienda rechazó el comprobante sin dar detalle. Revise su XML de respuesta."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_tax__has_exoneration
@@ -1336,6 +1424,7 @@ msgstr "Tiene mensaje"
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_uom_uom__id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_validate_account_move__id
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_economic_activity_filter
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_invoice_send__id
 msgid "ID"
 msgstr "Identificación"
 
@@ -1527,6 +1616,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__amount_total_iva_devuelto
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__amount_total_iva_devuelto
 #: model:product.template,name:cr_electronic_invoice.product_iva_devuelto
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__amount_total_iva_devuelto
 msgid "IVA Devuelto"
 msgstr ""
 
@@ -1602,6 +1692,7 @@ msgstr "Tipo de Identificación"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__message_needaction
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__message_unread
 msgid "If checked, new messages require your attention."
 msgstr "Si está marcada, los mensajes nuevos requieren su atención."
 
@@ -1614,6 +1705,7 @@ msgstr "Si está marcado, algunos mensajes tienen un error de entrega."
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__ignore_total_difference
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__ignore_total_difference
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__ignore_total_difference
 msgid "Ignore Difference in Totals"
 msgstr "Ignorar la diferencia en los totales"
 
@@ -1630,7 +1722,9 @@ msgstr ""
 #: model:account.tax,name:cr_electronic_invoice.iva_tax_22
 #: model_terms:account.tax,description:cr_electronic_invoice.iva_tax_21
 #: model_terms:account.tax,description:cr_electronic_invoice.iva_tax_22
-msgid "Impuesto Específico sobre las bebidas envasadas sin contenido alcohólico y jabones de tocador"
+msgid ""
+"Impuesto Específico sobre las bebidas envasadas sin contenido alcohólico y "
+"jabones de tocador"
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -1701,13 +1795,19 @@ msgstr "Faltan datos de referencia en la nota de crédito"
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "Incomplete reference data for credit note not uploaded"
-msgstr "Faltan datos de referencia en la nota de crédito de un comprobante no cargado"
+msgstr ""
+"Faltan datos de referencia en la nota de crédito de un comprobante no "
+"cargado"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_journal__load_lines
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_config_settings__load_lines
-msgid "Indicates if invoice lines should be load when loading a Costa Rican Digital Invoice"
-msgstr "Indica si se deben cargar líneas de factura al cargar una Factura Digital Costarricense"
+msgid ""
+"Indicates if invoice lines should be load when loading a Costa Rican Digital"
+" Invoice"
+msgstr ""
+"Indica si se deben cargar líneas de factura al cargar una Factura Digital "
+"Costarricense"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move_line__non_tax_deductible
@@ -1728,8 +1828,13 @@ msgstr "Indica si este impuesto no es deducible por Renta e IVA "
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__tipo_documento
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_move__tipo_documento
-msgid "Indicates the type of document according to the classification of the Ministerio de Hacienda"
-msgstr "Indica el tipo de documento según la clasificación del Ministerio de Hacienda"
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_payment__tipo_documento
+msgid ""
+"Indicates the type of document according to the classification of the "
+"Ministerio de Hacienda"
+msgstr ""
+"Indica el tipo de documento según la clasificación del Ministerio de "
+"Hacienda"
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -1775,8 +1880,12 @@ msgstr "URL del Documento"
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Invoice amount does not match amount for XML. Invoice: %s XML:%s base:%s VAT:%s otros_cargos:%s iva_devuelto:%s"
-msgstr "El monto del comprobante no coincide con el del XML. Comprobante: %s XML:%s base:%s IVA:%s otros_cargos:%s iva_devuelto:%s"
+msgid ""
+"Invoice amount does not match amount for XML. Invoice: %s XML:%s base:%s "
+"VAT:%s otros_cargos:%s iva_devuelto:%s"
+msgstr ""
+"El monto del comprobante no coincide con el del XML. Comprobante: %s XML:%s "
+"base:%s IVA:%s otros_cargos:%s iva_devuelto:%s"
 
 #. module: cr_electronic_invoice
 #: model:mail.template,name:cr_electronic_invoice.email_template_invoice_vendor
@@ -1812,6 +1921,7 @@ msgstr "Emitir comprobante de reemplazo"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__economic_activity_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__economic_activity_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__economic_activity_id
 msgid "Issuer Economic Activity"
 msgstr "Actividad Económica del Emisor"
 
@@ -1856,7 +1966,9 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "La Cédula Jurídica del emisor debe de tener 10 caracteres: 4 dígitos y un consecutivo de 6 dígitos o letras"
+msgid ""
+"La Cédula Jurídica del emisor debe de tener 10 caracteres: 4 dígitos y un "
+"consecutivo de 6 dígitos o letras"
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -1873,7 +1985,9 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "La clave del consecutivo para el mensaje receptor es inválida. Debe contener al menos 50 digitos"
+msgid ""
+"La clave del consecutivo para el mensaje receptor es inválida. Debe contener"
+" al menos 50 digitos"
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -1909,25 +2023,34 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_partner.py:0
-msgid "La identificación tipo Cédula física debe de contener 9 dígitos, sin cero al inicio y sin guiones."
+msgid ""
+"La identificación tipo Cédula física debe de contener 9 dígitos, sin cero al"
+" inicio y sin guiones."
 msgstr ""
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_partner.py:0
-msgid "La identificación tipo Cédula jurídica debe contener 10 caracteres sin guiones: 4 dígitos y un consecutivo de 6 dígitos o letras (por ejemplo 3101123456 o 3101A00001)."
+msgid ""
+"La identificación tipo Cédula jurídica debe contener 10 caracteres sin "
+"guiones: 4 dígitos y un consecutivo de 6 dígitos o letras (por ejemplo "
+"3101123456 o 3101A00001)."
 msgstr ""
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_partner.py:0
-msgid "La identificación tipo DIMEX debe contener 11 o 12 dígitos, sin ceros al inicio y sin guiones."
+msgid ""
+"La identificación tipo DIMEX debe contener 11 o 12 dígitos, sin ceros al "
+"inicio y sin guiones."
 msgstr ""
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/res_partner.py:0
-msgid "La identificación tipo NITE debe contener 10 dígitos, sin ceros al inicio y sin guiones."
+msgid ""
+"La identificación tipo NITE debe contener 10 dígitos, sin ceros al inicio y "
+"sin guiones."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -1944,7 +2067,8 @@ msgstr "Última respuesta API EXONET"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__ultima_respuesta_exo
 msgid "Last API EXONET Response, this allows debugging errors if they exist"
-msgstr "Última respuesta API EXONET, esto permite errores de depuración si existen"
+msgstr ""
+"Última respuesta API EXONET, esto permite errores de depuración si existen"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_aut_ex__write_uid
@@ -1987,6 +2111,7 @@ msgstr "Última fecha de notificación"
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form_inherit
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_account_journal_inherit_form
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
 msgid "Load invoice lines?"
 msgstr "¿Cargar líneas de factura?"
 
@@ -2081,7 +2206,11 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "No se pudo abrir la llave criptográfica de la compañía: el PIN no corresponde al archivo .p12, o el archivo no es una llave válida. Revise el PIN y la llave en la configuración de factura electrónica de la compañía; ambos deben ser del mismo ambiente (pruebas o producción)."
+msgid ""
+"No se pudo abrir la llave criptográfica de la compañía: el PIN no "
+"corresponde al archivo .p12, o el archivo no es una llave válida. Revise el "
+"PIN y la llave en la configuración de factura electrónica de la compañía; "
+"ambos deben ser del mismo ambiente (pruebas o producción)."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -2115,6 +2244,7 @@ msgstr "Número de acciones"
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__error_count
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__error_count
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__message_has_error_counter
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__error_count
 msgid "Number of errors"
 msgstr "Número de errores"
 
@@ -2130,8 +2260,16 @@ msgstr "Número de mensajes con error de entrega"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__registro_fiscal_8707
-msgid "Number of the alcoholic beverages register issued by the Dirección General de Aduanas. Sent as Registrofiscal8707 in the issuer of the company's electronic documents; Hacienda requires it when a document invoices CABYS codes of alcoholic beverages. Renewed yearly."
-msgstr "Número del registro de bebidas alcohólicas que emite la Dirección General de Aduanas. Se envía como Registrofiscal8707 en el emisor de los comprobantes electrónicos de la compañía; Hacienda lo exige cuando el comprobante factura códigos CABYS de bebidas alcohólicas. Se renueva cada año."
+msgid ""
+"Number of the alcoholic beverages register issued by the Dirección General "
+"de Aduanas. Sent as Registrofiscal8707 in the issuer of the company's "
+"electronic documents; Hacienda requires it when a document invoices CABYS "
+"codes of alcoholic beverages. Renewed yearly."
+msgstr ""
+"Número del registro de bebidas alcohólicas que emite la Dirección General de"
+" Aduanas. Se envía como Registrofiscal8707 en el emisor de los comprobantes "
+"electrónicos de la compañía; Hacienda lo exige cuando el comprobante factura"
+" códigos CABYS de bebidas alcohólicas. Se renueva cada año."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__exoneration_article
@@ -2164,12 +2302,14 @@ msgstr "Abrir el comprobante"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__not_loaded_invoice_date
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__not_loaded_invoice_date
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__not_loaded_invoice_date
 msgid "Original Invoice Date not loaded"
 msgstr "Fecha de la factura original no cargada"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__not_loaded_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__not_loaded_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__not_loaded_invoice
 msgid "Original Invoice Number not loaded"
 msgstr "Número de factura original no cargado"
 
@@ -2234,6 +2374,7 @@ msgstr "Socio de Negocio"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__partner_vat
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__partner_vat
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__partner_vat
 msgid "Partner Tax ID"
 msgstr "Identificación de Socio de Negocio"
 
@@ -2265,6 +2406,7 @@ msgstr "Plazos de pago"
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__payment_methods_id
 #: model:ir.ui.menu,name:cr_electronic_invoice.menu_payment_methods
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_payment_methods_tree
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__payment_methods_id
 msgid "Payment methods"
 msgstr "Métodos de pagos"
 
@@ -2334,6 +2476,7 @@ msgstr ""
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__qr_image
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__qr_image
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__qr_image
 msgid "QR Code"
 msgstr "Código QR"
 
@@ -2351,12 +2494,14 @@ msgstr "Valoraciones"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__receiver_economic_activity_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__receiver_economic_activity_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__receiver_economic_activity_id
 msgid "Receiver Economic Activity"
 msgstr "Actividad Económica del Receptor"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__receiver_economic_activities_ids
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__receiver_economic_activities_ids
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__receiver_economic_activities_ids
 msgid "Receiver economic activities"
 msgstr "Actividades Económicas del Receptor"
 
@@ -2387,6 +2532,7 @@ msgstr "Documento de referencia"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__reference_document_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__reference_document_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__reference_document_id
 msgid "Reference Document Type"
 msgstr "Tipo de Documento de Referencia"
 
@@ -2396,6 +2542,7 @@ msgstr "Tipo de Documento de Referencia"
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__reference_code_id
 #: model:ir.ui.menu,name:cr_electronic_invoice.menu_reference_code
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_reference_code_tree
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__reference_code_id
 msgid "Reference code"
 msgstr "Código de Referencia"
 
@@ -2403,11 +2550,13 @@ msgstr "Código de Referencia"
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "Reference code 99 \"Otros\" requires \"%s\" (5 to 100 characters)."
-msgstr "El código de referencia 99 «Otros» requiere «%s» (de 5 a 100 caracteres)."
+msgstr ""
+"El código de referencia 99 «Otros» requiere «%s» (de 5 a 100 caracteres)."
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__invoice_id
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__invoice_id
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__invoice_id
 msgid "Reference document"
 msgstr "Documento de Referencia"
 
@@ -2457,6 +2606,7 @@ msgstr "Responsable de los comprobantes con problemas"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__state_invoice_partner
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__state_invoice_partner
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__state_invoice_partner
 msgid "Respuesta del Cliente"
 msgstr ""
 
@@ -2468,8 +2618,11 @@ msgstr "Reintentar envío"
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "Review definition of tax with exemption, is in base 100 and must be base 13."
-msgstr "Revise la definición del impuesto con exoneración: está en base 100 y debe estar en base 13."
+msgid ""
+"Review definition of tax with exemption, is in base 100 and must be base 13."
+msgstr ""
+"Revise la definición del impuesto con exoneración: está en base 100 y debe "
+"estar en base 13."
 
 #. module: cr_electronic_invoice
 #: model:account.tax.group,name:cr_electronic_invoice.tax_group_SC
@@ -2531,17 +2684,23 @@ msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__CCE_sequence_id
-msgid "Secuencia de confirmacion de aceptación de comprobante electrónico. Dejar en blanco y el sistema automaticamente se lo creará."
+msgid ""
+"Secuencia de confirmacion de aceptación de comprobante electrónico. Dejar en"
+" blanco y el sistema automaticamente se lo creará."
 msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__CPCE_sequence_id
-msgid "Secuencia de confirmación de aceptación parcial de comprobante electrónico. Dejar en blanco y el sistema automáticamente se lo creará."
+msgid ""
+"Secuencia de confirmación de aceptación parcial de comprobante electrónico. "
+"Dejar en blanco y el sistema automáticamente se lo creará."
 msgstr ""
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__RCE_sequence_id
-msgid "Secuencia de confirmación de rechazo de comprobante electrónico. Dejar en blanco y el sistema automáticamente se lo creará."
+msgid ""
+"Secuencia de confirmación de rechazo de comprobante electrónico. Dejar en "
+"blanco y el sistema automáticamente se lo creará."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -2553,7 +2712,8 @@ msgstr "Revise los mensajes del comprobante."
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "Seleccione el tipo de identificación del emisor en el pérfil de la compañía"
+msgid ""
+"Seleccione el tipo de identificación del emisor en el pérfil de la compañía"
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -2566,7 +2726,8 @@ msgstr "Seleccione el tipo de identificación en la ficha del cliente"
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "Select the type of issuer identification in the company profile"
-msgstr "Seleccione el tipo de identificación del emisor en la ficha de la compañía"
+msgstr ""
+"Seleccione el tipo de identificación del emisor en la ficha de la compañía"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_move_form_inherit
@@ -2616,6 +2777,7 @@ msgstr "Secuencia de facturas de exportación electrónicas"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields.selection,name:cr_electronic_invoice.selection__economic_activity__sale_type__services
+#: model:uom.category,name:cr_electronic_invoice.product_uom_categ_service
 msgid "Services"
 msgstr "Servicios"
 
@@ -2648,7 +2810,9 @@ msgstr "Mostrar exoneración"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_product_product__iva_devuelto_tarjeta
 #: model:ir.model.fields,help:cr_electronic_invoice.field_product_template__iva_devuelto_tarjeta
-msgid "Si está activo, el IVA de este producto/servicio se devuelve automáticamente cuando el pago es con tarjeta."
+msgid ""
+"Si está activo, el IVA de este producto/servicio se devuelve automáticamente"
+" cuando el pago es con tarjeta."
 msgstr ""
 
 #. module: cr_electronic_invoice
@@ -2716,8 +2880,12 @@ msgstr "Probar a obtener token"
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "The Legal ID of the recipient must have 10 characters: 4 digits and a consecutive of 6 digits or letters"
-msgstr "La cédula jurídica del receptor debe tener 10 caracteres: 4 dígitos y un consecutivo de 6 dígitos o letras"
+msgid ""
+"The Legal ID of the recipient must have 10 characters: 4 digits and a "
+"consecutive of 6 digits or letters"
+msgstr ""
+"La cédula jurídica del receptor debe tener 10 caracteres: 4 dígitos y un "
+"consecutivo de 6 dígitos o letras"
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -2728,6 +2896,7 @@ msgstr "El NITE del receptor debe tener 10 dígitos"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__partner_vat
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_move__partner_vat
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_payment__partner_vat
 msgid "The Parnter Tax Identification Number."
 msgstr "El número de identificación fiscal del socio de negocio."
 
@@ -2735,41 +2904,63 @@ msgstr "El número de identificación fiscal del socio de negocio."
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "The Total amount of the Invoice for the Message Receiver is invalid"
-msgstr "El monto total de la factura para el receptor del mensaje no es válido"
+msgstr ""
+"El monto total de la factura para el receptor del mensaje no es válido"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_journal__expense_analytic_account_id
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_config_settings__expense_analytic_account_id
 msgid "The analytic account used when loading Costa Rican digital invoice"
-msgstr "La cuenta analítica utilizada al cargar la factura digital costarricense"
+msgstr ""
+"La cuenta analítica utilizada al cargar la factura digital costarricense"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_journal__expense_product_id
 #: model:ir.model.fields,help:cr_electronic_invoice.field_res_config_settings__expense_product_id
 msgid "The default product used when loading Costa Rican digital invoice"
-msgstr "El producto predeterminado utilizado al cargar la factura digital costarricense"
+msgstr ""
+"El producto predeterminado utilizado al cargar la factura digital "
+"costarricense"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_move_form_inherit
-msgid "The document gets a new consecutive and electronic key, refers to the rejected one (code 16) and is sent to Hacienda again. The rejected XMLs stay in the chatter. Continue?"
-msgstr "El comprobante recibe un consecutivo y una clave nuevos, hace referencia al rechazado (código 16) y se envía de nuevo a Hacienda. Los XML rechazados quedan en el historial. ¿Continuar?"
+msgid ""
+"The document gets a new consecutive and electronic key, refers to the "
+"rejected one (code 16) and is sent to Hacienda again. The rejected XMLs stay"
+" in the chatter. Continue?"
+msgstr ""
+"El comprobante recibe un consecutivo y una clave nuevos, hace referencia al "
+"rechazado (código 16) y se envía de nuevo a Hacienda. Los XML rechazados "
+"quedan en el historial. ¿Continuar?"
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "The document has no signed XML. Press \"Retry Sending\" to build it again."
-msgstr "El comprobante no tiene XML firmado. Presione «Reintentar envío» para generarlo de nuevo."
+msgstr ""
+"El comprobante no tiene XML firmado. Presione «Reintentar envío» para "
+"generarlo de nuevo."
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_move_form_inherit
-msgid "The document has not yet been issued, it will be sent automatically in 5 minutes, if you need to send it manually press"
-msgstr "El documento aún no ha sido emitido, se enviará automáticamente en 5 minutos, si necesita enviarlo manualmente presione"
+msgid ""
+"The document has not yet been issued, it will be sent automatically in 5 "
+"minutes, if you need to send it manually press"
+msgstr ""
+"El documento aún no ha sido emitido, se enviará automáticamente en 5 "
+"minutos, si necesita enviarlo manualmente presione"
 
 #. module: cr_electronic_invoice
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_account_payment_form_inherit
 #: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.view_move_form_inherit
-msgid "The document was issued successfully, however we still do not have the answer, it will be consulted in 10 minutes, if you wish to consult it manually press"
-msgstr "El documento fue emitido exitosamente, sin embargo aún no tenemos la respuesta, será consultado en 10 minutos, si desea consultarlo manualmente presione"
+msgid ""
+"The document was issued successfully, however we still do not have the "
+"answer, it will be consulted in 10 minutes, if you wish to consult it "
+"manually press"
+msgstr ""
+"El documento fue emitido exitosamente, sin embargo aún no tenemos la "
+"respuesta, será consultado en 10 minutos, si desea consultarlo manualmente "
+"presione"
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -2808,7 +2999,9 @@ msgstr "El diario no tiene secuencia electrónica para %s."
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
-msgid "The provider in the invoice does not exists. I tried to created without success. Please review it."
+msgid ""
+"The provider in the invoice does not exists. I tried to created without "
+"success. Please review it."
 msgstr "El proveedor de la factura no existe y no se pudo crear. Revíselo."
 
 #. module: cr_electronic_invoice
@@ -2826,8 +3019,12 @@ msgstr "La cédula física del receptor debe tener 9 dígitos"
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "There is no \"Non tax deductible\" tax with the tax percentage of this product"
-msgstr "No hay ningún impuesto \"no deducible de impuestos\" con el porcentaje de impuestos de este producto"
+msgid ""
+"There is no \"Non tax deductible\" tax with the tax percentage of this "
+"product"
+msgstr ""
+"No hay ningún impuesto \"no deducible de impuestos\" con el porcentaje de "
+"impuestos de este producto"
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -2877,12 +3074,14 @@ msgstr ""
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__amount_total_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__amount_total_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__amount_total_electronic_invoice
 msgid "Total FE"
 msgstr "Total FE"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__amount_tax_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__amount_tax_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__amount_tax_electronic_invoice
 msgid "Total FE taxes"
 msgstr "Total Impuestos FE"
 
@@ -2952,18 +3151,21 @@ msgstr "Proveedor"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__xml_supplier_approval
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__xml_supplier_approval
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__xml_supplier_approval
 msgid "Vendor XML"
 msgstr "XML Proveedor"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__fname_xml_supplier_approval
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__fname_xml_supplier_approval
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__fname_xml_supplier_approval
 msgid "Vendor XML voucher file name"
 msgstr "Nombre de XML Proveedor"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__tipo_documento
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__tipo_documento
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__tipo_documento
 msgid "Voucher Type"
 msgstr "Tipo de Comprobante"
 
@@ -3070,8 +3272,12 @@ msgstr "Historial de Comunicación del Sitio Web"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__einvoice_error_detail
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_move__einvoice_error_detail
-msgid "Why the electronic document is not accepted yet: what failed, and whether it is retried automatically or someone has to fix it."
-msgstr "Por qué el comprobante electrónico aún no está aceptado: qué falló, y si se reintenta solo o alguien debe corregirlo."
+msgid ""
+"Why the electronic document is not accepted yet: what failed, and whether it"
+" is retried automatically or someone has to fix it."
+msgstr ""
+"Por qué el comprobante electrónico aún no está aceptado: qué falló, y si se "
+"reintenta solo o alguien debe corregirlo."
 
 #. module: cr_electronic_invoice
 #. odoo-python
@@ -3101,18 +3307,23 @@ msgstr "XML Respuesta Tributación"
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__xml_comprobante
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__xml_comprobante
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment__xml_comprobante
 msgid "XML voucher"
 msgstr "Comprobante XML"
 
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
-msgid "You must select the aceptance state: Accepted, Parcial Accepted or Rejected"
-msgstr "Debe seleccionar el estado de aceptación: Aceptado, Aceptado parcialmente o Rechazado"
+msgid ""
+"You must select the aceptance state: Accepted, Parcial Accepted or Rejected"
+msgstr ""
+"Debe seleccionar el estado de aceptación: Aceptado, Aceptado parcialmente o "
+"Rechazado"
 
 #. module: cr_electronic_invoice
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_bank_statement_line__company_vat
 #: model:ir.model.fields,help:cr_electronic_invoice.field_account_move__company_vat
+#: model:ir.model.fields,help:cr_electronic_invoice.field_account_payment__company_vat
 msgid "Your Company Tax Identification Number."
 msgstr "Número de identificación fiscal de su empresa."
 
@@ -3198,7 +3409,8 @@ msgstr ""
 #. module: cr_electronic_invoice
 #: model:mail.template,subject:cr_electronic_invoice.email_template_invoice_vendor
 msgid "{{ object.company_id.name }} Invoice (Ref {{ object.name or 'n/a' }})"
-msgstr "{{ object.company_id.name }} Comprobante (Ref {{ object.name or 'n/a' }})"
+msgstr ""
+"{{ object.company_id.name }} Comprobante (Ref {{ object.name or 'n/a' }})"
 
 #. module: cr_electronic_invoice
 #: model:mail.template,subject:cr_electronic_invoice.email_template_client_exoneration_expired
@@ -3210,3 +3422,528 @@ msgstr ""
 #: code:addons/cr_electronic_invoice/models/api_facturae.py:0
 msgid "Hacienda did not answer the document (HTTP %s)."
 msgstr "Hacienda no respondió al enviar el comprobante (HTTP %s)."
+
+#. module: cr_electronic_invoice
+#: model:mail.template,body_html:cr_electronic_invoice.email_template_client_exoneration_expired
+msgid ""
+"\n"
+"        \n"
+"            <div style=\"font-family: 'Lucica Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: rgb(255, 255, 255); \">\n"
+"                <p>Dear ${object.name},</p>\n"
+"                <p>\n"
+"                We realized that your VAT exoneration number ${object.exoneration_number} is expired. Please update this information as soon as possible or we'll have to create new invoices including this tax.\n"
+"                </p>\n"
+"                <br/>\n"
+"                <p>\n"
+"                Thanks for all your help.\n"
+"                </p>\n"
+"                <br/>\n"
+"                Best Regards,\n"
+"                <br/>\n"
+"                <br/>\n"
+"                ${user.name}\n"
+"                <br/>\n"
+"                <br/>\n"
+"                <br/>\n"
+"            </div>\n"
+"        \n"
+"        "
+msgstr ""
+"\n"
+"        \n"
+"            <div style=\"font-family: 'Lucica Grande', Ubuntu, Arial, Verdana, sans-serif; font-size: 12px; color: rgb(34, 34, 34); background-color: rgb(255, 255, 255); \">\n"
+"                <p>Estimado ${object.name},</p>\n"
+"                <p>\n"
+"                Nos dimos cuenta de que su número de exoneración de IVA ${object.exoneration_number} está expirado. Actualice esta información lo antes posible o tendremos que crear nuevas facturas que incluyan este impuesto.\n"
+"                </p>\n"
+"                <br/>\n"
+"                <p>\n"
+"                Gracias por toda su ayuda.\n"
+"                </p>\n"
+"                <br/>\n"
+"                Saludos,\n"
+"                <br/>\n"
+"                <br/>\n"
+"                ${user.name}\n"
+"                <br/>\n"
+"                <br/>\n"
+"                <br/>\n"
+"            </div>\n"
+"        \n"
+"        "
+
+#. module: cr_electronic_invoice
+#: model:mail.template,subject:cr_electronic_invoice.email_template_invoice_vendor
+msgid "${object.company_id.name} Invoice (Ref ${object.number or 'n/a'})"
+msgstr "${object.company_id.name} Documento (Ref ${object.number or 'n/a'})"
+
+#. module: cr_electronic_invoice
+#: model:mail.template,subject:cr_electronic_invoice.email_template_client_exoneration_expired
+msgid "${user.company_id.commercial_name}: VAT exoneration expired"
+msgstr "${user.company_id.commercial_name}: Exoneración de IVA vencida"
+
+#. module: cr_electronic_invoice
+#: model:mail.template,body_html:cr_electronic_invoice.email_template_edi_expiration_notice
+msgid ""
+"<div style=\"margin: 0px; padding: 0px;\">\n"
+"\n"
+"                <h1>NOTIFICACIÓN IMPORTANTE!!</h1>\n"
+"\n"
+"                <p>\n"
+"                    ${object.company_id.get_message_to_send()}\n"
+"                </p>\n"
+"\n"
+"            </div>\n"
+"        "
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model:mail.template,body_html:cr_electronic_invoice.email_template_invoice_vendor
+msgid ""
+"<div>\n"
+"                <p>\n"
+"                    Dear ${object.partner_id.name}\n"
+"                    % set access_action = object.with_context(force_website=True).get_access_action()\n"
+"                    % set is_online = access_action and access_action['type'] == 'ir.actions.act_url'\n"
+"                    % set access_url = object.get_mail_url()\n"
+"\n"
+"                    % if object.partner_id.parent_id:\n"
+"                    (<i>${object.partner_id.parent_id.name}</i>)\n"
+"                    % endif\n"
+"                    ,\n"
+"                </p>\n"
+"                <p>\n"
+"                    ${object.company_id.name} has accepted in \"Ministerio de Hacienda\" your\n"
+"                    % if object.number:\n"
+"                    invoice <strong>${object.number}</strong>\n"
+"                    % else:\n"
+"                    invoice\n"
+"                    % endif\n"
+"                    % if object.origin:\n"
+"                    (with reference: ${object.origin})\n"
+"                    % endif\n"
+"                    amounting in <strong>${format_amount(object.amount_total, object.currency_id)}</strong>\n"
+"                    from ${object.company_id.name}.\n"
+"                </p>\n"
+"\n"
+"                <br/>\n"
+"                <strong>Electronic number: </strong> ${object.number_electronic}\n"
+"                <br/>\n"
+"                <strong>Confirmation date: </strong> ${object.date_issuance}\n"
+"                <br/>\n"
+"                <strong>Confirmation Message: </strong> ${object.state_invoice_partner}\n"
+"                <br/>\n"
+"                <strong>\"Hacienda\" status: </strong> ${object.state_tributacion}\n"
+"\n"
+"                <br/><br/>\n"
+"                <strong>Issuing company </strong>\n"
+"                <br/>\n"
+"                <strong>Name: </strong>${object.partner_id.name}\n"
+"                <br/>\n"
+"                <strong>Id: </strong>${object.partner_id.vat}\n"
+"\n"
+"                <br/><br/>\n"
+"                <strong>Receiving company </strong>\n"
+"                <br/>\n"
+"                <strong>Name: </strong>${object.company_id.name}\n"
+"                <br/>\n"
+"                <strong>Id: </strong>${object.company_id.vat}\n"
+"                <br/><br/>\n"
+"                Attached you'll find the XMLs with the message sent to \"Hacienda\" and its response for your backup\n"
+"                <br/><br/>\n"
+"                <p>Thank you,</p>\n"
+"                <p style=\"color:#888888\">\n"
+"                    % if object.user_id and object.user_id.signature:\n"
+"                    ${object.user_id.signature | safe}\n"
+"                    % endif\n"
+"                </p>\n"
+"            </div>\n"
+"        "
+msgstr ""
+"<div>\n"
+"    <p>\n"
+"        Estimado ${object.partner_id.name}\n"
+"        % set access_action = object.with_context(force_website=True).get_access_action()\n"
+"        % set is_online = access_action and access_action['type'] == 'ir.actions.act_url'\n"
+"        % set access_url = object.get_mail_url()\n"
+"\n"
+"        % if object.partner_id.parent_id:\n"
+"        (<i>${object.partner_id.parent_id.name}</i>)\n"
+"        % endif\n"
+"        ,\n"
+"    </p>\n"
+"    <p>\n"
+"        ${object.company_id.name} ha sido aceptado en el \"Ministerio de Hacienda\" su\n"
+"        % if object.number:\n"
+"        documento <strong>${object.number}</strong>\n"
+"        % else:\n"
+"        documento\n"
+"        % endif\n"
+"        % if object.origin:\n"
+"        (con referencia: ${object.origin})\n"
+"        % endif\n"
+"        por un monto de <strong>${format_amount(object.amount_total, object.currency_id)}</strong>\n"
+"        de ${object.company_id.name}.\n"
+"    </p>\n"
+"\n"
+"    <br/>\n"
+"    <strong>Número Electrónico: </strong> ${object.number_electronic}\n"
+"    <br/>\n"
+"    <strong>Fecha de Confirmación: </strong> ${object.date_issuance}\n"
+"    <br/>\n"
+"    <strong>Mensaje de Confirmación: </strong> ${object.state_invoice_partner}\n"
+"    <br/>\n"
+"    <strong>Estado ante \"Hacienda\": </strong> ${object.state_tributacion}\n"
+"\n"
+"    <br/><br/>\n"
+"    <strong>Emisor</strong>\n"
+"    <br/>\n"
+"    <strong>Nombre: </strong>${object.partner_id.name}\n"
+"    <br/>\n"
+"    <strong>Identificación: </strong>${object.partner_id.vat}\n"
+"\n"
+"    <br/><br/>\n"
+"    <strong>Receptor </strong>\n"
+"    <br/>\n"
+"    <strong>Nombre: </strong>${object.company_id.name}\n"
+"    <br/>\n"
+"    <strong>Identificación: </strong>${object.company_id.vat}\n"
+"    <br/><br/>\n"
+"    Adjunto encontrará los XMLs con el mensaje enviado a \"Hacienda\" y la respuesta para su respaldo\n"
+"    <br/><br/>\n"
+"    <p>Gracias,</p>\n"
+"    <p style=\"color:#888888\">\n"
+"        % if object.user_id and object.user_id.signature:\n"
+"        ${object.user_id.signature | safe}\n"
+"        % endif\n"
+"    </p>\n"
+"</div>\n"
+"            "
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid ""
+"Ability to select a package type in sales orders and to force a quantity "
+"that is a multiple of the number of units per package."
+msgstr ""
+"Posibilidad de seleccionar un tipo de paquete en las órdenes de venta y "
+"forzar una cantidad que sea un múltiplo del número de unidades por paquete."
+
+#. module: cr_electronic_invoice
+#: model:ir.model,name:cr_electronic_invoice.model_account_invoice_send
+msgid "Account Invoice Send"
+msgstr "Enviar Factura"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/res_company.py:0
+#, python-format
+msgid "Actividades Económicas"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model:uom.category,name:cr_electronic_invoice.product_uom_categ_area
+msgid "Area"
+msgstr "Área"
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Attributes"
+msgstr "Atributos"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/res_company.py:0
+#, python-format
+msgid ""
+"Aviso!.\n"
+" Cargando actividades económicas desde Hacienda"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+#, python-format
+msgid ""
+"Aviso!.\n"
+" Error en carga del XML del proveedor"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+#, python-format
+msgid "E-INV CR - Send Acceptance Message - HALTED - Failed to get token"
+msgstr ""
+"E-INV CR - Enviar mensaje de aceptación - DETENIDO - No se pudo obtener el "
+"token"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+#, python-format
+msgid "E-INV CR - send_mrs_to_hacienda - 013"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__message_channel_ids
+msgid "Followers (Channels)"
+msgstr "Seguidores (Canales)"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+#, python-format
+msgid "Invoice XML has not been generated for id:"
+msgstr "No se ha generado XML del documento para el id:"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/api_facturae.py:0
+#, python-format
+msgid "La Cédula Jurídica del emisor debe de tener 10 dígitos"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/res_partner.py:0
+#, python-format
+msgid ""
+"La identificación tipo Cédula jurídica debe contener 10 dígitos, sin cero al"
+" inicio y sin guiones."
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_invoice_send____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_journal____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move_line____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move_reversal____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_payment_term____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_tax____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_aut_ex____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_code_type_product____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_economic_activity____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_identification_type____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_invoice_qr_fields____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_mail_compose_message____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_payment_methods____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_product_category____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_product_template____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_reference_code____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_reference_document____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_config_settings____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_partner____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_resolution____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_sale_conditions____last_update
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_uom_uom____last_update
+msgid "Last Modified on"
+msgstr "Última modificación el"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__message_main_attachment_id
+msgid "Main Attachment"
+msgstr "Adjunto principal"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__message_needaction_counter
+msgid "Number of messages which requires an action"
+msgstr "Número de mensajes que requieren una acción"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_company__message_unread_counter
+msgid "Number of unread messages"
+msgstr "Número de mensajes sin leer"
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Product Catalog"
+msgstr "Catálogo de producto"
+
+#. module: cr_electronic_invoice
+#: model:ir.model,name:cr_electronic_invoice.model_product_template
+msgid "Product Template"
+msgstr "Plantilla de producto"
+
+#. module: cr_electronic_invoice
+#: model:uom.category,name:cr_electronic_invoice.product_uom_categ_rent
+msgid "Rent"
+msgstr "Renta"
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Sell and purchase products in different units of measure"
+msgstr "Vender y comprar productos en diferentes unidades de medida"
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Sell products by multiple of unit # per package"
+msgstr "Vender productos por múltiplo de unidad # por paquete"
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Send a product-specific email once the invoice is paid"
+msgstr ""
+"Envíe un correo electrónico específico del producto una vez que se pague la "
+"factura"
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid ""
+"Sending an email is useful if you need to share specific information or "
+"content about a product (instructions, rules, links, media, etc.). Create "
+"and set the email template from the product detail form (in Sales tab)."
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Set product attributes (e.g. color, size) to sell variants"
+msgstr ""
+"Establezca los atributos del producto (por ejemplo, color, tamaño) para "
+"vender variantes"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+#, python-format
+msgid ""
+"The partner %s has no defined economic activity, please validate the "
+"information in the business partner before placing it!"
+msgstr ""
+"El socio %s no tiene una actividad económica definida, por favor valide la "
+"información en el socio de negocios antes de seleccionarlo! "
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/res_company.py:0
+#, python-format
+msgid "Token Correcto"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model:product.template,uom_name:cr_electronic_invoice.product_bomberos
+#: model:product.template,uom_name:cr_electronic_invoice.product_cruz_roja
+#: model:product.template,uom_name:cr_electronic_invoice.product_exportacion
+#: model:product.template,uom_name:cr_electronic_invoice.product_iva_devuelto
+#: model:product.template,uom_name:cr_electronic_invoice.product_otros_cargos
+#: model:product.template,uom_name:cr_electronic_invoice.product_parafiscal
+#: model:product.template,uom_name:cr_electronic_invoice.product_profesionales
+#: model:product.template,uom_name:cr_electronic_invoice.product_servicio
+#: model:product.template,uom_name:cr_electronic_invoice.product_tercero
+msgid "Unidad"
+msgstr ""
+
+#. module: cr_electronic_invoice
+#: model_terms:ir.ui.view,arch_db:cr_electronic_invoice.res_config_settings_view_form
+msgid "Units of Measure"
+msgstr "Unidad de Medida"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__message_unread
+msgid "Unread Messages"
+msgstr "Mensajes sin leer"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_company__message_unread_counter
+msgid "Unread Messages Counter"
+msgstr "Contador de mensajes sin leer"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_partner__exoneration_cabys_codes
+#: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_users__exoneration_cabys_codes
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid "Authorized CABYS Codes"
+msgstr "Códigos CABYS autorizados"
+
+#. module: cr_electronic_invoice
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_partner__exoneration_cabys_codes
+#: model:ir.model.fields,help:cr_electronic_invoice.field_res_users__exoneration_cabys_codes
+msgid ""
+"CABYS codes of the products the exoneration covers, as listed in the "
+"authorization (one per line). Only lines with one of these codes are "
+"exonerated; with none, no line is."
+msgstr ""
+"Códigos CABYS de los productos que cubre la exoneración, tal como vienen en "
+"la autorización (uno por línea). Solo se exoneran las líneas con uno de "
+"estos códigos; sin ninguno, no se exonera ninguna."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: its CABYS code (%(cabys)s) is not in the customer's "
+"authorization."
+msgstr ""
+"«%(line)s»: su código CABYS (%(cabys)s) no está en la autorización del "
+"cliente."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"choose the fiscal position again and press «Update Taxes and Accounts»."
+msgstr ""
+"vuelva a elegir la posición fiscal y presione «Actualizar impuestos y "
+"cuentas»."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: its CABYS code is in the customer's authorization but it carries"
+" the full IVA: %(update)s"
+msgstr ""
+"«%(line)s»: su código CABYS está en la autorización del cliente pero lleva "
+"el IVA completo: %(update)s"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid "«%(line)s»: the exonerated tax «%(tax)s» has no Parent Tax."
+msgstr "«%(line)s»: el impuesto exonerado «%(tax)s» no tiene impuesto padre."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: its exoneration is not the customer's %(percentage)s%%: "
+"%(update)s"
+msgstr ""
+"«%(line)s»: su exoneración no es el %(percentage)s%% del cliente: %(update)s"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_tax.py:0
+msgid "%(tax)s (%(percentage)s%% exonerated)"
+msgstr "%(tax)s (%(percentage)s%% exonerado)"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"The customer's percentage of VAT exoneration must be between 0 and 100."
+msgstr ""
+"El porcentaje de exoneración del IVA del cliente debe estar entre 0 y 100."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: its exoneration (%(tax)s) is not the one of the invoice it "
+"reverses, %(invoice)s."
+msgstr ""
+"«%(line)s»: su exoneración (%(tax)s) no es la de la factura que revierte, "
+"%(invoice)s."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: the invoice it reverses, %(invoice)s, exonerated it with "
+"%(tax)s: the credit note must use the same tax."
+msgstr ""
+"«%(line)s»: la factura que revierte, %(invoice)s, la exoneró con %(tax)s: la"
+" nota de crédito debe usar el mismo impuesto."

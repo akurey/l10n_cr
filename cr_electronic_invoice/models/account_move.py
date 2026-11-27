@@ -9,7 +9,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 from odoo.tools.misc import get_lang
 from .qr_generator import GenerateQrCode
-from odoo.tools import html2plaintext
+from odoo.tools import float_compare, float_round, html2plaintext
 from markupsafe import Markup
 from num2words import num2words
 
@@ -54,6 +54,35 @@ class InvoiceLineElectronic(models.Model):
     discount_code_id = fields.Many2one('discount.code', string="Discount Codes")
     other_discount_code = fields.Char(string="Other Discount Code")
     discount_code_code = fields.Char(related="discount_code_id.code", string="Discount Code")
+
+    def _cr_cabys_code(self):
+        """The CABYS code sent to Hacienda for this line: the product's, else its category's."""
+        self.ensure_one()
+        return self.product_id.cabys_code or self.product_id.categ_id.cabys_code or ''
+
+    def _get_computed_taxes(self):
+        """With the exoneration fiscal position, the IVA of each line follows the customer's authorization: its
+        percentage, and only on its CABYS codes."""
+        taxes = super()._get_computed_taxes()
+        move = self.move_id
+        if taxes and move.is_sale_document(include_receipts=True) and move.show_exoneration:
+            taxes = taxes._cr_exonerated_for(move.partner_id, self._cr_cabys_code(), move.fiscal_position_id)
+        return taxes
+
+    def _compute_price_unit(self):
+        super()._compute_price_unit()
+        for line in self.filtered(lambda l: l.product_id and l.move_id.is_sale_document(include_receipts=True)
+                                  and l.move_id.show_exoneration and not l.is_imported
+                                  and l.display_type not in ('line_section', 'line_subsection', 'line_note')):
+            move = line.move_id
+            product_taxes = line.product_id.taxes_id._filter_taxes_by_company(move.company_id)
+            mapped = move.fiscal_position_id.map_tax(product_taxes)
+            exonerated = line._get_computed_taxes()
+            if product_taxes and exonerated != mapped:
+                price = line.product_id._get_tax_included_unit_price(
+                    move.company_id, move.currency_id, move.date, 'sale', product_uom=line.product_uom_id)
+                line.price_unit = line.product_id._get_tax_included_unit_price_from_price(
+                    price, product_taxes, product_taxes_after_fp=exonerated)
 
     @api.onchange('product_id')
     def product_changed(self):
@@ -265,6 +294,69 @@ class AccountInvoiceElectronic(models.Model):
                         qr_info += f"{key} : {value} <br/>"
                     qr_info = html2plaintext(qr_info)
             record.qr_image = GenerateQrCode.generate_qr_code(qr_info)
+
+    def _cr_exoneration_problems(self):
+        """Lines whose taxes do not match the customer's authorization: an exoneration on a CABYS it does not cover or
+        with another percentage (the customer's data changed), or the full IVA on a CABYS it covers (lines copied from
+        a sale order, or set before the authorization was filled in). Hacienda would get a wrong document."""
+        self.ensure_one()
+        if self.reversed_entry_id:
+            return self._cr_reversal_exoneration_problems()
+        partner = self.partner_id
+        if not 0 < partner.percentage_exoneration <= 100:
+            return [_('The customer\'s percentage of VAT exoneration must be between 0 and 100.')]
+        authorized = partner._cr_exoneration_cabys()
+        update = _('choose the fiscal position again and press «Update Taxes and Accounts».')
+        problems = []
+        for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
+            cabys = line._cr_cabys_code()
+            if cabys in authorized and line.tax_ids.filtered(
+                    lambda t: t.tax_code == '01' and t.amount and not t.has_exoneration):
+                problems.append(_('«%(line)s»: its CABYS code is in the customer\'s authorization but it carries the '
+                                  'full IVA: %(update)s', line=line.name, update=update))
+            for tax in line.tax_ids.filtered('has_exoneration'):
+                if not tax.tax_root:
+                    problems.append(_('«%(line)s»: the exonerated tax «%(tax)s» has no Parent Tax.',
+                                      line=line.name, tax=tax.name))
+                    continue
+                expected = float_round(tax.tax_root.amount * partner.percentage_exoneration / 100, 2)
+                if cabys not in authorized:
+                    problems.append(_('«%(line)s»: its CABYS code (%(cabys)s) is not in the customer\'s authorization.',
+                                      line=line.name, cabys=line._cr_cabys_code() or '-'))
+                elif float_compare(tax.percentage_exoneration, expected, precision_digits=2):
+                    problems.append(_('«%(line)s»: its exoneration is not the customer\'s %(percentage)s%%: '
+                                      '%(update)s', line=line.name, update=update,
+                                      percentage=f'{partner.percentage_exoneration:g}'))
+        return problems
+
+    def _cr_reversal_exoneration_problems(self):
+        """A credit note keeps the exoneration of the invoice it reverses (the authorization may have changed since):
+        a CABYS the invoice exonerated carries the same IVA taxes as one of its lines (not the full IVA instead or on
+        top of the exoneration, nor no IVA), and a CABYS the invoice did not exonerate is not exonerated either."""
+        self.ensure_one()
+        invoice = self.reversed_entry_id
+
+        def iva_of(line):
+            return line.tax_ids.filtered(lambda t: t.has_exoneration or t.tax_code == '01')
+
+        given = {}  # CABYS -> the IVA taxes of each of the invoice's lines with it
+        for line in invoice.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
+            given.setdefault(line._cr_cabys_code(), []).append(iva_of(line))
+        problems = []
+        for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
+            options = given.get(line._cr_cabys_code(), [])
+            expected = self.env['account.tax'].union(*options).filtered('has_exoneration')
+            iva = iva_of(line)
+            exonerated = iva.filtered('has_exoneration')
+            if expected and iva not in options:
+                problems.append(_('«%(line)s»: the invoice it reverses, %(invoice)s, exonerated it with %(tax)s: the '
+                                  'credit note must use the same tax.', line=line.name, invoice=invoice.name,
+                                  tax=', '.join(expected.mapped('name'))))
+            elif exonerated and not expected:
+                problems.append(_('«%(line)s»: its exoneration (%(tax)s) is not the one of the invoice it reverses, '
+                                  '%(invoice)s.', line=line.name, tax=', '.join(exonerated.mapped('name')),
+                                  invoice=invoice.name))
+        return problems
 
     @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
     def _compute_show_exoneration(self):
@@ -1280,8 +1372,8 @@ class AccountInvoiceElectronic(models.Model):
                                             'iva_tax_code': taxes_lookup[i['id']]['iva_tax_code'],
                                         }
                                         # Se genera la exoneración si existe para este impuesto
-                                        if _tax_exoneration:
-                                            exoneration_percentage = taxes_lookup[i['id']]['exoneration_percentage']
+                                        exoneration_percentage = taxes_lookup[i['id']].get('exoneration_percentage')
+                                        if exoneration_percentage is not None:
                                             _tax_amount_exoneration = round(subtotal_line *
                                                                             exoneration_percentage / 100, 5)
 
@@ -1289,7 +1381,10 @@ class AccountInvoiceElectronic(models.Model):
 
                                             tax["exoneracion"] = {
                                                 "montoImpuesto": _tax_amount_exoneration,
-                                                "porcentajeCompra": int(exoneration_percentage)
+                                                # Hacienda takes up to 2 decimals (half of 13 % is 6.5)
+                                                "tarifaExonerada": int(exoneration_percentage)
+                                                if float(exoneration_percentage).is_integer()
+                                                else float_round(exoneration_percentage, 2)
                                             }
 
                                         taxes[tax_index] = tax
@@ -1732,6 +1827,8 @@ class AccountInvoiceElectronic(models.Model):
                     missing.append(_("Issue Date"))
                 if not partner.date_expiration:
                     missing.append(_("Expiration Date"))
+                if not partner._cr_exoneration_cabys() and not inv.reversed_entry_id:
+                    missing.append(_("Authorized CABYS Codes"))
                 if missing:
                     raise UserError(
                         _('With fiscal position "%s" the following customer fields are required: %s')
@@ -1739,6 +1836,9 @@ class AccountInvoiceElectronic(models.Model):
                     )
                 if partner.date_expiration < datetime.date.today():
                     raise UserError(_("The exoneration of this client has expired"))
+                problems = inv._cr_exoneration_problems()
+                if problems:
+                    raise UserError("\n".join(problems))
             elif inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \
                     (inv.partner_id.date_expiration < datetime.date.today()):
                 raise UserError(_('The exoneration of this client has expired'))

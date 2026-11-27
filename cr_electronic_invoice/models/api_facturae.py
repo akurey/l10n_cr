@@ -618,7 +618,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                                       str(receiver_company.date_issue) + 'T00:00:00-06:00' +
                                       '</FechaEmisionEX>')
                             sb.append('<TarifaExonerada>' +
-                                      str(b['exoneracion']['porcentajeCompra']) +
+                                      str(b['exoneracion']['tarifaExonerada']) +
                                       '</TarifaExonerada>')
                             sb.append('<MontoExoneracion>' +
                                       str(b['exoneracion']['montoImpuesto']) +
