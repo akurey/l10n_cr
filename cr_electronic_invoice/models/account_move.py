@@ -289,6 +289,8 @@ class AccountInvoiceElectronic(models.Model):
         with another percentage (the customer's data changed), or the full IVA on a CABYS it covers (lines copied from
         a sale order, or set before the authorization was filled in). Hacienda would get a wrong document."""
         self.ensure_one()
+        if self.reversed_entry_id:
+            return self._cr_reversal_exoneration_problems()
         partner = self.partner_id
         if not 0 < partner.percentage_exoneration <= 100:
             return [_('The customer\'s percentage of VAT exoneration must be between 0 and 100.')]
@@ -315,6 +317,18 @@ class AccountInvoiceElectronic(models.Model):
                                       '%(update)s', line=line.name, update=update,
                                       percentage=f'{partner.percentage_exoneration:g}'))
         return problems
+
+    def _cr_reversal_exoneration_problems(self):
+        """A credit note keeps the exoneration of the invoice it reverses (the authorization may have changed since):
+        each exonerated line needs a line of that invoice with the same CABYS and the same exonerated tax."""
+        self.ensure_one()
+        given = {(line._cr_cabys_code(), tax)
+                 for line in self.reversed_entry_id.invoice_line_ids for tax in line.tax_ids.filtered('has_exoneration')}
+        return [_('«%(line)s»: its exoneration (%(tax)s) is not the one of the invoice it reverses, %(invoice)s.',
+                  line=line.name, tax=tax.name, invoice=self.reversed_entry_id.name)
+                for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
+                for tax in line.tax_ids.filtered('has_exoneration')
+                if (line._cr_cabys_code(), tax) not in given]
 
     @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
     def _compute_show_exoneration(self):
@@ -1598,7 +1612,7 @@ class AccountInvoiceElectronic(models.Model):
                     missing.append(_("Issue Date"))
                 if not partner.date_expiration:
                     missing.append(_("Expiration Date"))
-                if not partner._cr_exoneration_cabys() and inv.move_type == 'out_invoice':
+                if not partner._cr_exoneration_cabys() and not inv.reversed_entry_id:
                     missing.append(_("Authorized CABYS Codes"))
                 if missing:
                     raise UserError(
@@ -1607,7 +1621,7 @@ class AccountInvoiceElectronic(models.Model):
                     )
                 if partner.date_expiration < datetime.date.today():
                     raise UserError(_("The exoneration of this client has expired"))
-                problems = inv._cr_exoneration_problems() if inv.move_type == 'out_invoice' else []
+                problems = inv._cr_exoneration_problems()
                 if problems:
                     raise UserError("\n".join(problems))
             elif inv.partner_id.has_exoneration and inv.partner_id.date_expiration and \

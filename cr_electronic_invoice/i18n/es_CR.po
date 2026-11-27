@@ -2670,3 +2670,13 @@ msgstr "%(tax)s (%(percentage)s%% exonerado)"
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid "The customer's percentage of VAT exoneration must be between 0 and 100."
 msgstr "El porcentaje de exoneración del IVA del cliente debe estar entre 0 y 100."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: its exoneration (%(tax)s) is not the one of the invoice it "
+"reverses, %(invoice)s."
+msgstr ""
+"«%(line)s»: su exoneración (%(tax)s) no es la de la factura que revierte, "
+"%(invoice)s."

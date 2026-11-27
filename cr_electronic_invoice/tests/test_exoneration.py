@@ -134,3 +134,33 @@ class TestExoneration(TransactionCase):
         self.assertEqual(invoice._cr_exoneration_problems(), [])
         self.customer.percentage_exoneration = 130
         self.assertEqual(len(invoice._cr_exoneration_problems()), 1, "said once, not once per line")
+
+    def _refund(self, lines, reversed_entry=None):
+        return self.env['account.move'].new({
+            'move_type': 'out_refund', 'partner_id': self.customer.id, 'fiscal_position_id': self.position.id,
+            'reversed_entry_id': reversed_entry,
+            'invoice_line_ids': [Command.create({'product_id': product.id, 'name': product.name,
+                                                 'tax_ids': [Command.set(taxes.ids)]}) for product, taxes in lines],
+        })
+
+    def test_a_credit_note_keeps_the_exoneration_of_its_invoice(self):
+        """The authorization changed after the invoice (50 % then, 100 % now): the credit note keeps the invoice's."""
+        half = self._exonerated(WINE)
+        invoice = self.env['account.move'].new({
+            'move_type': 'out_invoice', 'partner_id': self.customer.id, 'fiscal_position_id': self.position.id,
+            'invoice_line_ids': [Command.create({'product_id': self.wine.id, 'tax_ids': [Command.set(half.ids)]})],
+        })
+        self.customer.percentage_exoneration = 100
+        self.assertEqual(self._refund([(self.wine, half)], invoice)._cr_exoneration_problems(), [])
+        full = self.iva._cr_exoneration_tax(100, self.position)
+        problems = self._refund([(self.wine, full)], invoice).with_context(lang='en_US')._cr_exoneration_problems()
+        self.assertEqual(len(problems), 1)
+        self.assertIn("the invoice it reverses", problems[0])
+        self.assertTrue(self._refund([(self.delivery, half)], invoice)._cr_exoneration_problems(),
+                        "a CABYS the invoice did not exonerate")
+
+    def test_a_credit_note_of_its_own_follows_the_current_authorization(self):
+        problems = self._refund([(self.delivery, self._exonerated(WINE))]).with_context(
+            lang='en_US')._cr_exoneration_problems()
+        self.assertEqual(len(problems), 1)
+        self.assertIn(DELIVERY, problems[0], "a CABYS the authorization does not cover")
