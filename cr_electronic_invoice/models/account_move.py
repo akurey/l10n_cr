@@ -1355,7 +1355,7 @@ class AccountInvoiceElectronic(models.Model):
                                             tax["exoneracion"] = {
                                                 "montoImpuesto": _tax_amount_exoneration,
                                                 # Hacienda takes up to 2 decimals (half of 13 % is 6.5)
-                                                "porcentajeCompra": int(exoneration_percentage)
+                                                "tarifaExonerada": int(exoneration_percentage)
                                                 if float(exoneration_percentage).is_integer()
                                                 else float_round(exoneration_percentage, 2)
                                             }
