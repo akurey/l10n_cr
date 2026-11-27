@@ -56,6 +56,13 @@ class CompanyElectronic(models.Model):
     range_days = fields.Integer(string='Days range', default=5)
     send_user_ids = fields.Many2many('res.users', 'res_company_res_sendusers_rel', string='Users')
     to_emails = fields.Char(string='Email')
+    einvoice_issue_user_id = fields.Many2one(
+        'res.users', string="Responsible for Document Problems",
+        help="Gets an activity on every electronic document Hacienda rejects or that could not be sent.")
+    einvoice_issue_email = fields.Char(
+        string="Urgent E-mail for Document Problems",
+        help="Address (for example a group) that gets an urgent e-mail for every electronic document Hacienda "
+             "rejects or that could not be sent.")
 
     identification_id = fields.Many2one("identification.type", string="Id Type")
     frm_ws_identificador = fields.Char(string="Electronic invoice user")

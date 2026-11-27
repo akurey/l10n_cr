@@ -29,6 +29,18 @@ from lxml import etree
 
 _logger = logging.getLogger(__name__)
 
+# Seconds to wait for Hacienda's reception API (token, send and status query). Without a limit a
+# hanging connection blocks the cron, or the user who pressed the button, for good.
+HACIENDA_TIMEOUT = 30
+
+
+class HaciendaUnavailable(UserError):
+    """Hacienda could not be reached or failed on its side (no connection, timeout, HTTP 5xx).
+
+    The document itself may be fine: it goes back to the queue and is sent again later, unlike
+    the other errors, which need someone to fix the document or the configuration.
+    """
+
 
 def sign_xml(cert, password, xml, policy_id='https://www.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/'
              '2016/v4.2/ResolucionComprobantesElectronicosDGT-R-48-2016_4.2.pdf'):
@@ -208,7 +220,7 @@ def get_token_hacienda(inv, tipo_ambiente):
         try:
             # enviando solicitud post y guardando la respuesta como un objeto json
             response = requests.request(
-                "POST", endpoint, data=data, headers=headers)
+                "POST", endpoint, data=data, headers=headers, timeout=HACIENDA_TIMEOUT)
             try:
                 response_json = response.json()
             except ValueError:
@@ -217,6 +229,9 @@ def get_token_hacienda(inv, tipo_ambiente):
             # F841 local variable 'respuesta' is assigned to but never used
             # respuesta = extensions.response_validator.assert_valid_schema(response_json, 'token.json')
 
+            if response.status_code >= 500:
+                raise HaciendaUnavailable(_('Hacienda did not answer the token request (HTTP %s).',
+                                            response.status_code))
             if 200 <= response.status_code <= 299:
                 token_hacienda = response_json.get('access_token')
                 last_tokens[inv.company_id.id] = token
@@ -238,7 +253,7 @@ def get_token_hacienda(inv, tipo_ambiente):
                     detail=response_json.get('error_description') or response_json.get('error') or '-'))
 
         except requests.exceptions.RequestException as e:
-            raise UserError(_('Error Obteniendo el Token desde MH. Excepcion %s', e)) from None
+            raise HaciendaUnavailable(_('Hacienda could not be reached to get the token: %s', e)) from None
 
     return token_hacienda
 
@@ -943,9 +958,13 @@ def send_xml_fe(inv, token, date, xml, tipo_ambiente):
 
     try:
         # enviando solicitud post y guardando la respuesta como un objeto json
-        response = requests.request("POST", endpoint, data=json_hacienda, headers=headers)
+        response = requests.request("POST", endpoint, data=json_hacienda, headers=headers,
+                                    timeout=HACIENDA_TIMEOUT)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code >= 500:
+            # Hacienda is down, not refusing the document: back to the queue (HaciendaUnavailable)
+            raise HaciendaUnavailable(_('Hacienda did not answer the document (HTTP %s).', response.status_code))
         if response.status_code != 202:
             error_caused_by = response.headers.get(
                 'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
@@ -959,8 +978,8 @@ def send_xml_fe(inv, token, date, xml, tipo_ambiente):
             return {'status': response.status_code, 'text': response.reason}
             # return respuesta_hacienda
 
-    except ImportError:
-        raise Warning(_('Error enviando el XML al Ministerior de Hacienda'))
+    except requests.exceptions.RequestException as e:
+        raise HaciendaUnavailable(_('Hacienda could not be reached to send the document: %s', e)) from None
     
 # Funcion para enviar el XML del REP al Ministerio de Hacienda
 def send_xml_rep(inv, clave, token, date, xml, tipo_ambiente):
@@ -1000,9 +1019,13 @@ def send_xml_rep(inv, clave, token, date, xml, tipo_ambiente):
  
     try:
         # enviando solicitud post y guardando la respuesta como un objeto json
-        response = requests.request("POST", endpoint, data=json_hacienda, headers=headers)
+        response = requests.request("POST", endpoint, data=json_hacienda, headers=headers,
+                                    timeout=HACIENDA_TIMEOUT)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code >= 500:
+            # Hacienda is down, not refusing the document: back to the queue (HaciendaUnavailable)
+            raise HaciendaUnavailable(_('Hacienda did not answer the document (HTTP %s).', response.status_code))
         if response.status_code != 202:
             error_caused_by = response.headers.get(
                 'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
@@ -1015,8 +1038,8 @@ def send_xml_rep(inv, clave, token, date, xml, tipo_ambiente):
             return {'status': response.status_code, 'text': response.reason}
             # return respuesta_hacienda
 
-    except ImportError:
-        raise Warning(_('Error enviando el XML al Ministerior de Hacienda'))
+    except requests.exceptions.RequestException as e:
+        raise HaciendaUnavailable(_('Hacienda could not be reached to send the document: %s', e)) from None
 
 
 def schema_validator(xml_file, xsd_file) -> bool:
@@ -1126,7 +1149,7 @@ def consulta_clave(clave, token, tipo_ambiente):
 
     try:
         # response = requests.request("GET", url, headers=headers)
-        response = requests.get(endpoint, headers=headers)
+        response = requests.get(endpoint, headers=headers, timeout=HACIENDA_TIMEOUT)
 
     except requests.exceptions.RequestException as e:
         _logger.error('Exception %s', e)
@@ -1184,6 +1207,17 @@ def get_economic_activities(company, vat=None, timeout=HACIENDA_LOOKUP_TIMEOUT):
     return response_json
 
 
+def rejection_detail(respuesta_xml):
+    """Hacienda's explanation (DetalleMensaje) from its base64 answer XML; '' when there is none."""
+    if not respuesta_xml:
+        return ''
+    try:
+        decoded = base64.b64decode(respuesta_xml).decode('utf-8')
+    except (ValueError, UnicodeDecodeError):
+        return ''
+    return decoded.partition('<DetalleMensaje>')[2].partition('</DetalleMensaje>')[0].strip()
+
+
 def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
     if (inv.move_type in ['in_invoice', 'in_refund']) and (inv.tipo_documento != 'FEC'):
         clave = inv.number_electronic + "-" + inv.consecutive_number_receiver
@@ -1204,7 +1238,12 @@ def consulta_documentos(self, inv, env, token_m_h, date_cr, xml_firmado):
     # The state before this check decides below whether the acceptance e-mail goes out: reading it again after
     # the update (as this block used to) made it always the new state, so no e-mail was ever sent from here.
     last_state = inv.state_tributacion
-    inv.state_tributacion = estado_m_h
+    vals = {'state_tributacion': estado_m_h}
+    if estado_m_h == 'rechazado':
+        # Written with the state, so the alert to the company already says why.
+        vals['einvoice_error_detail'] = rejection_detail(response_json.get('respuesta-xml')) or \
+            _('Hacienda rejected the document without a detail. See its answer XML.')
+    inv.write(vals)
     if inv.move_type in ['out_invoice', 'out_refund']:
         # The "check Hacienda" button passes no date: keep the issue date the document was sent with.
         if date_cr:
@@ -1294,7 +1333,8 @@ def send_message(inv, date_cr, xml, token, env):
 
     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(token)}
     try:
-        response = requests.post(endpoint, data=json.dumps(comprobante), headers=headers)
+        response = requests.post(endpoint, data=json.dumps(comprobante), headers=headers,
+                                 timeout=HACIENDA_TIMEOUT)
 
     except requests.exceptions.RequestException as e:
         _logger.info('Exception %s', e)
