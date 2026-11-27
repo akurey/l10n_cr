@@ -1,5 +1,5 @@
 import base64
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from odoo import fields
 from odoo.exceptions import UserError
@@ -8,6 +8,7 @@ from odoo.tests.common import TransactionCase
 from odoo.tools import mute_logger
 
 from ..models import api_facturae
+from ..models.account_move import MAX_SEND_ATTEMPTS
 
 CLAVE = '50626112600310112345600200001010000000007100000007'
 NEW_CLAVE = '50627112600310112345600200001010000000009100000009'
@@ -86,11 +87,23 @@ class TestSendErrors(TransactionCase):
         self.assertFalse(self._alert_mails())
         self.assertFalse(self._issue_activities())
 
+    @mute_logger('odoo.addons.cr_electronic_invoice.models.account_move')
+    def test_a_server_error_while_sending_goes_back_to_the_queue(self):
+        """A 5xx from Hacienda's reception is Hacienda down, not a refusal: no error count towards a refusal."""
+        down = Mock(status_code=503, headers={}, reason='Service Unavailable')
+        with patch.object(api_facturae, 'get_token_hacienda', return_value='token'), \
+                patch.object(api_facturae.requests, 'request', return_value=down):
+            self.invoice.generate_and_send_invoice()
+        self.assertFalse(self.invoice.state_tributacion, "back to the send queue")
+        self.assertIn('sent again automatically', self.invoice.einvoice_error_detail)
+        self.assertIn('HTTP 503', self.invoice.einvoice_error_detail)
+        self.assertFalse(self._alert_mails())
+
     def test_hacienda_down_too_many_times_is_an_error_and_alerts(self):
-        self.invoice.error_count = 10
+        self.invoice.error_count = MAX_SEND_ATTEMPTS - 1
         self._send()
         self.assertEqual(self.invoice.state_tributacion, 'error')
-        self.assertIn('after 11 attempts', self.invoice.einvoice_error_detail)
+        self.assertIn(f'after {MAX_SEND_ATTEMPTS} attempts', self.invoice.einvoice_error_detail)
         mail = self._alert_mails()
         self.assertEqual(len(mail), 1)
         self.assertIn('URGENT', mail.subject)

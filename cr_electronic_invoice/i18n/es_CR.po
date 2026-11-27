@@ -3204,3 +3204,9 @@ msgstr "{{ object.company_id.name }} Comprobante (Ref {{ object.name or 'n/a' }}
 #: model:mail.template,subject:cr_electronic_invoice.email_template_client_exoneration_expired
 msgid "{{ user.company_id.commercial_name }}: VAT exoneration expired"
 msgstr ""
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/api_facturae.py:0
+msgid "Hacienda did not answer the document (HTTP %s)."
+msgstr "Hacienda no respondió al enviar el comprobante (HTTP %s)."

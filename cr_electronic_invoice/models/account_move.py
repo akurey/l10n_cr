@@ -1507,7 +1507,7 @@ class AccountInvoiceElectronic(models.Model):
         self.error_count += 1
         if self.tipo_documento == 'FEC':
             self._cr_einvoice_fail(_('Hacienda did not answer (%s). Press "Send FEC" again later.', error))
-        elif self.error_count > MAX_SEND_ATTEMPTS:
+        elif self.error_count >= MAX_SEND_ATTEMPTS:
             self._cr_einvoice_fail(_('Hacienda did not answer after %(count)s attempts: %(error)s',
                                      count=self.error_count, error=error))
         else:

@@ -962,6 +962,9 @@ def send_xml_fe(inv, token, date, xml, tipo_ambiente):
                                     timeout=HACIENDA_TIMEOUT)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code >= 500:
+            # Hacienda is down, not refusing the document: back to the queue (HaciendaUnavailable)
+            raise HaciendaUnavailable(_('Hacienda did not answer the document (HTTP %s).', response.status_code))
         if response.status_code != 202:
             error_caused_by = response.headers.get(
                 'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
@@ -1020,6 +1023,9 @@ def send_xml_rep(inv, clave, token, date, xml, tipo_ambiente):
                                     timeout=HACIENDA_TIMEOUT)
 
         # Verificamos el codigo devuelto, si es distinto de 202 es porque hacienda nos está devolviendo algun error
+        if response.status_code >= 500:
+            # Hacienda is down, not refusing the document: back to the queue (HaciendaUnavailable)
+            raise HaciendaUnavailable(_('Hacienda did not answer the document (HTTP %s).', response.status_code))
         if response.status_code != 202:
             error_caused_by = response.headers.get(
                 'X-Error-Cause') if 'X-Error-Cause' in response.headers else ''
