@@ -320,15 +320,27 @@ class AccountInvoiceElectronic(models.Model):
 
     def _cr_reversal_exoneration_problems(self):
         """A credit note keeps the exoneration of the invoice it reverses (the authorization may have changed since):
-        each exonerated line needs a line of that invoice with the same CABYS and the same exonerated tax."""
+        a CABYS the invoice exonerated is exonerated with one of the same taxes (not with the full IVA, nor without
+        IVA), and a CABYS the invoice did not exonerate is not exonerated either."""
         self.ensure_one()
-        given = {(line._cr_cabys_code(), tax)
-                 for line in self.reversed_entry_id.invoice_line_ids for tax in line.tax_ids.filtered('has_exoneration')}
-        return [_('«%(line)s»: its exoneration (%(tax)s) is not the one of the invoice it reverses, %(invoice)s.',
-                  line=line.name, tax=tax.name, invoice=self.reversed_entry_id.name)
-                for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
-                for tax in line.tax_ids.filtered('has_exoneration')
-                if (line._cr_cabys_code(), tax) not in given]
+        invoice = self.reversed_entry_id
+        given = {}
+        for line in invoice.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
+            given.setdefault(line._cr_cabys_code(), self.env['account.tax'])
+            given[line._cr_cabys_code()] |= line.tax_ids.filtered('has_exoneration')
+        problems = []
+        for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
+            expected = given.get(line._cr_cabys_code()) or self.env['account.tax']
+            exonerated = line.tax_ids.filtered('has_exoneration')
+            if expected and not (exonerated and exonerated <= expected):
+                problems.append(_('«%(line)s»: the invoice it reverses, %(invoice)s, exonerated it with %(tax)s: the '
+                                  'credit note must use the same tax.', line=line.name, invoice=invoice.name,
+                                  tax=', '.join(expected.mapped('name'))))
+            elif exonerated and not expected:
+                problems.append(_('«%(line)s»: its exoneration (%(tax)s) is not the one of the invoice it reverses, '
+                                  '%(invoice)s.', line=line.name, tax=', '.join(exonerated.mapped('name')),
+                                  invoice=invoice.name))
+        return problems
 
     @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
     def _compute_show_exoneration(self):

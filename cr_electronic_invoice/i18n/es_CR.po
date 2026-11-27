@@ -2680,3 +2680,13 @@ msgid ""
 msgstr ""
 "«%(line)s»: su exoneración (%(tax)s) no es la de la factura que revierte, "
 "%(invoice)s."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid ""
+"«%(line)s»: the invoice it reverses, %(invoice)s, exonerated it with "
+"%(tax)s: the credit note must use the same tax."
+msgstr ""
+"«%(line)s»: la factura que revierte, %(invoice)s, la exoneró con %(tax)s: "
+"la nota de crédito debe usar el mismo impuesto."
