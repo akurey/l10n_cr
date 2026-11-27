@@ -2634,12 +2634,30 @@ msgstr ""
 #. module: cr_electronic_invoice
 #. odoo-python
 #: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid "choose the fiscal position again and press «Update Taxes and Accounts»."
+msgstr "vuelva a elegir la posición fiscal y presione «Actualizar impuestos y cuentas»."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
 msgid ""
-"«%(line)s»: its exoneration is not the customer's %(percentage)s%%: choose "
-"the fiscal position again and press «Update Taxes and Accounts»."
+"«%(line)s»: its CABYS code is in the customer's authorization but it carries "
+"the full IVA: %(update)s"
 msgstr ""
-"«%(line)s»: su exoneración no es el %(percentage)s%% del cliente: vuelva a "
-"elegir la posición fiscal y presione «Actualizar impuestos y cuentas»."
+"«%(line)s»: su código CABYS está en la autorización del cliente pero lleva "
+"el IVA completo: %(update)s"
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid "«%(line)s»: the exonerated tax «%(tax)s» has no Parent Tax."
+msgstr "«%(line)s»: el impuesto exonerado «%(tax)s» no tiene impuesto padre."
+
+#. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
+msgid "«%(line)s»: its exoneration is not the customer's %(percentage)s%%: %(update)s"
+msgstr "«%(line)s»: su exoneración no es el %(percentage)s%% del cliente: %(update)s"
 
 #. module: cr_electronic_invoice
 #. odoo-python

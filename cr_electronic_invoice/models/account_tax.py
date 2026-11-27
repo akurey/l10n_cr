@@ -30,9 +30,12 @@ class IvaCodeType(models.Model):
         points = float_round(self.amount * percentage / 100, 2)
         # sudo: a salesperson invoicing an exonerated customer may not manage taxes; only this IVA's copy is made
         taxes = self.env['account.tax'].sudo()
-        tax = taxes.search([('has_exoneration', '=', True), ('tax_root', '=', self.id),
-                            ('percentage_exoneration', '=', points), ('type_tax_use', '=', 'sale'),
-                            ('company_id', '=', self.company_id.id)], limit=1)
+        # archived copies too: a second copy with the same name could never be unarchived
+        tax = taxes.with_context(active_test=False).search(
+            [('has_exoneration', '=', True), ('tax_root', '=', self.id), ('percentage_exoneration', '=', points),
+             ('type_tax_use', '=', 'sale'), ('company_id', '=', self.company_id.id)], order='active desc', limit=1)
+        if tax and not tax.active:
+            tax.active = True
         if not tax:
             tax = self.sudo().copy({
                 'name': _('%(tax)s (%(percentage)s%% exonerated)', tax=self.name, percentage=f'{percentage:g}'),

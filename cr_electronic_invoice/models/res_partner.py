@@ -208,9 +208,11 @@ class PartnerElectronic(models.Model):
                         self.type_exoneration = autorizacion.id
 
     def _cr_exoneration_cabys(self):
-        """The authorized CABYS codes, as a set of 13-digit codes."""
+        """The authorized CABYS codes, as a set of 13-digit codes: one per line, or separated by commas, semicolons
+        or spaces; dots and dashes inside a code are ignored, and a code that lost its leading zeros gets them back."""
         self.ensure_one()
-        return set(re.findall(r'\b\d{13}\b', self.exoneration_cabys_codes or ''))
+        codes = (re.sub(r'[.\-]', '', token) for token in re.split(r'[\s,;]+', self.exoneration_cabys_codes or ''))
+        return {code.zfill(13) for code in codes if code.isdigit() and len(code) <= 13}
 
     def check_exonerations(self):
         clients = self.env["res.partner"].search([("has_exoneration", "=", True),

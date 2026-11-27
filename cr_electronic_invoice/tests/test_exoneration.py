@@ -44,8 +44,8 @@ class TestExoneration(TransactionCase):
         return self.iva._cr_exonerated_for(customer or self.customer, cabys, self.position)
 
     def test_the_authorized_codes_are_read_from_any_layout(self):
-        self.customer.exoneration_cabys_codes = f"{WINE}, 2421100000000;\n texto 123"
-        self.assertEqual(self.customer._cr_exoneration_cabys(), {WINE, '2421100000000'})
+        self.customer.exoneration_cabys_codes = f"{WINE}, 2421-1000-00000;\n 421300000100 texto"
+        self.assertEqual(self.customer._cr_exoneration_cabys(), {WINE, '2421100000000', '0421300000100'})
 
     def test_half_of_the_iva_on_an_authorized_line(self):
         tax = self._exonerated(WINE)
@@ -125,6 +125,12 @@ class TestExoneration(TransactionCase):
         self.assertEqual(len(problems), 2)
         self.assertIn("50%", problems[0], "the customer's percentage changed: update the taxes")
         self.assertIn(DELIVERY, problems[1], "a CABYS the authorization does not cover")
-        invoice.invoice_line_ids[0].tax_ids = self._exonerated(WINE)
+        invoice.invoice_line_ids[0].tax_ids = self.iva
         invoice.invoice_line_ids[1].tax_ids = self.iva
+        problems = invoice.with_context(lang='en_US')._cr_exoneration_problems()
+        self.assertEqual(len(problems), 1)
+        self.assertIn("full IVA", problems[0], "an authorized line left with the full IVA (copied from an order)")
+        invoice.invoice_line_ids[0].tax_ids = self._exonerated(WINE)
         self.assertEqual(invoice._cr_exoneration_problems(), [])
+        self.customer.percentage_exoneration = 130
+        self.assertEqual(len(invoice._cr_exoneration_problems()), 1, "said once, not once per line")

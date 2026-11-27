@@ -285,24 +285,35 @@ class AccountInvoiceElectronic(models.Model):
             record.qr_image = GenerateQrCode.generate_qr_code(qr_info)
 
     def _cr_exoneration_problems(self):
-        """Lines whose exoneration does not match the customer's authorization (a CABYS it does not cover, or another
-        percentage, e.g. after the customer's data changed): Hacienda would get a wrong exoneration."""
+        """Lines whose taxes do not match the customer's authorization: an exoneration on a CABYS it does not cover or
+        with another percentage (the customer's data changed), or the full IVA on a CABYS it covers (lines copied from
+        a sale order, or set before the authorization was filled in). Hacienda would get a wrong document."""
         self.ensure_one()
         partner = self.partner_id
+        if not 0 < partner.percentage_exoneration <= 100:
+            return [_('The customer\'s percentage of VAT exoneration must be between 0 and 100.')]
         authorized = partner._cr_exoneration_cabys()
+        update = _('choose the fiscal position again and press «Update Taxes and Accounts».')
         problems = []
         for line in self.invoice_line_ids.filtered(lambda l: l.display_type == 'product'):
-            for tax in line.tax_ids.filtered(lambda t: t.has_exoneration and t.tax_root):
+            cabys = line._cr_cabys_code()
+            if cabys in authorized and line.tax_ids.filtered(
+                    lambda t: t.tax_code == '01' and t.amount and not t.has_exoneration):
+                problems.append(_('«%(line)s»: its CABYS code is in the customer\'s authorization but it carries the '
+                                  'full IVA: %(update)s', line=line.name, update=update))
+            for tax in line.tax_ids.filtered('has_exoneration'):
+                if not tax.tax_root:
+                    problems.append(_('«%(line)s»: the exonerated tax «%(tax)s» has no Parent Tax.',
+                                      line=line.name, tax=tax.name))
+                    continue
                 expected = float_round(tax.tax_root.amount * partner.percentage_exoneration / 100, 2)
-                if not 0 < partner.percentage_exoneration <= 100:
-                    problems.append(_('The customer\'s percentage of VAT exoneration must be between 0 and 100.'))
-                elif line._cr_cabys_code() not in authorized:
+                if cabys not in authorized:
                     problems.append(_('«%(line)s»: its CABYS code (%(cabys)s) is not in the customer\'s authorization.',
                                       line=line.name, cabys=line._cr_cabys_code() or '-'))
                 elif float_compare(tax.percentage_exoneration, expected, precision_digits=2):
-                    problems.append(_('«%(line)s»: its exoneration is not the customer\'s %(percentage)s%%: choose '
-                                      'the fiscal position again and press «Update Taxes and Accounts».',
-                                      line=line.name, percentage=f'{partner.percentage_exoneration:g}'))
+                    problems.append(_('«%(line)s»: its exoneration is not the customer\'s %(percentage)s%%: '
+                                      '%(update)s', line=line.name, update=update,
+                                      percentage=f'{partner.percentage_exoneration:g}'))
         return problems
 
     @api.depends("fiscal_position_id", "fiscal_position_id.name", "move_type")
