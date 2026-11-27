@@ -36,6 +36,10 @@ class PartnerElectronic(models.Model):
     export = fields.Boolean(string="It's export", default=False)
     exoneration_article = fields.Char(string="Exoneration Article", help="Número de artículo que establece la exoneración")
     exoneration_clause = fields.Char(string="Exoneration Clause", help="Número de inciso que establece la exoneración o autorización")
+    exoneration_cabys_codes = fields.Text(
+        string="Authorized CABYS Codes",
+        help="CABYS codes of the products the exoneration covers, as listed in the authorization (one per line). Only "
+             "lines with one of these codes are exonerated; with none, no line is.")
     frm_ws_ambiente = fields.Selection(
         selection=[('disabled', 'Deshabilitado'),
                   ('api-stag', 'Pruebas'),
@@ -171,6 +175,7 @@ class PartnerElectronic(models.Model):
                 self.percentage_exoneration = 0
                 self.institution_name = False
                 self.type_exoneration = False
+                self.exoneration_cabys_codes = False
                 # raise UserError(_('El documento de exoneración no existe.'))
 
             if peticion.status_code in (200, 202) and len(peticion._content) > 0:
@@ -187,6 +192,10 @@ class PartnerElectronic(models.Model):
                     self.date_expiration = fecha_vencimiento
                     self.percentage_exoneration = float(contenido.get('porcentajeExoneracion'))
                     self.institution_name = contenido.get('nombreInstitucion')
+                    # The CABYS codes of this authorization, never those of a previous one (a code sent as a
+                    # number loses its leading zeros)
+                    self.exoneration_cabys_codes = '\n'.join(
+                        str(code).zfill(13) for code in contenido.get('cabys') or []) or False
 
                     tipo_documento = contenido.get('tipoDocumento')
 
@@ -197,6 +206,11 @@ class PartnerElectronic(models.Model):
 
                     if len(autorizacion) > 0:
                         self.type_exoneration = autorizacion.id
+
+    def _cr_exoneration_cabys(self):
+        """The authorized CABYS codes, as a set of 13-digit codes."""
+        self.ensure_one()
+        return set(re.findall(r'\b\d{13}\b', self.exoneration_cabys_codes or ''))
 
     def check_exonerations(self):
         clients = self.env["res.partner"].search([("has_exoneration", "=", True),
