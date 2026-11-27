@@ -11,6 +11,10 @@ from .identification import LEGAL_ID_CODE, clean_identification, is_legal_id
 
 _logger = logging.getLogger(__name__)
 
+# Authorization type (nota 7) of a Free Trade Zone exoneration (Ley 7210, Ley 9635): granted by law, so it has no
+# expiration date and is always 100 %; it covers only the goods and services of the company's activity.
+FREE_TRADE_ZONE = '08'
+
 
 class PartnerElectronic(models.Model):
     _inherit = "res.partner"
@@ -40,6 +44,11 @@ class PartnerElectronic(models.Model):
         string="Authorized CABYS Codes",
         help="CABYS codes of the products the exoneration covers, as listed in the authorization (one per line). Only "
              "lines with one of these codes are exonerated; with none, no line is.")
+    exoneration_free_trade_zone = fields.Boolean(
+        string="Free Trade Zone Exoneration", compute="_compute_exoneration_free_trade_zone",
+        help="A Free Trade Zone exoneration (authorization type 08) is granted by law: it has no expiration date "
+             "and is always 100 %. It still covers only the goods and services of the company's activity: list "
+             "their CABYS codes.")
     frm_ws_ambiente = fields.Selection(
         selection=[('disabled', 'Deshabilitado'),
                   ('api-stag', 'Pruebas'),
@@ -206,6 +215,11 @@ class PartnerElectronic(models.Model):
 
                     if len(autorizacion) > 0:
                         self.type_exoneration = autorizacion.id
+
+    @api.depends('type_exoneration.code')
+    def _compute_exoneration_free_trade_zone(self):
+        for partner in self:
+            partner.exoneration_free_trade_zone = partner.type_exoneration.code == FREE_TRADE_ZONE
 
     def _cr_exoneration_cabys(self):
         """The authorized CABYS codes, as a set of 13-digit codes: one per line, or separated by commas, semicolons

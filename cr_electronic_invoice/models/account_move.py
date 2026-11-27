@@ -251,6 +251,7 @@ class AccountInvoiceElectronic(models.Model):
     percentage_exoneration = fields.Float(related="partner_id.percentage_exoneration", string="Percentage of VAT Exoneration", readonly=False)
     date_issue = fields.Date(related="partner_id.date_issue", string="Issue Date", readonly=False)
     date_expiration = fields.Date(related="partner_id.date_expiration", string="Expiration Date", readonly=False)
+    exoneration_free_trade_zone = fields.Boolean(related="partner_id.exoneration_free_trade_zone")
     exoneration_article = fields.Char(related="partner_id.exoneration_article", string="Exoneration Article", readonly=False)
     exoneration_clause = fields.Char(related="partner_id.exoneration_clause", string="Exoneration Clause", readonly=False)
 
@@ -305,6 +306,9 @@ class AccountInvoiceElectronic(models.Model):
         partner = self.partner_id
         if not 0 < partner.percentage_exoneration <= 100:
             return [_('The customer\'s percentage of VAT exoneration must be between 0 and 100.')]
+        if partner.exoneration_free_trade_zone and partner.percentage_exoneration != 100:
+            return [_('A Free Trade Zone exoneration (authorization type 08) is always 100 %: set the customer\'s '
+                      'percentage of VAT exoneration to 100.')]
         authorized = partner._cr_exoneration_cabys()
         update = _('choose the fiscal position again and press «Update Taxes and Accounts».')
         problems = []
@@ -328,6 +332,23 @@ class AccountInvoiceElectronic(models.Model):
                                       '%(update)s', line=line.name, update=update,
                                       percentage=f'{partner.percentage_exoneration:g}'))
         return problems
+
+    def _cr_exoneration_missing_fields(self):
+        """The customer's authorization fields this exonerated document still lacks (their labels). A Free Trade Zone
+        exoneration is granted by law and has no expiration date; it still lists the CABYS codes of the company's
+        activity, the only ones it covers."""
+        self.ensure_one()
+        partner = self.partner_id
+        required = [
+            (partner.exoneration_number, _("Exoneration Number")),
+            (partner.type_exoneration, _("Authorization Type")),
+            (partner.exoneration_issuer, _("Exoneration Issuer")),
+            (partner.percentage_exoneration, _("Percentage of VAT Exoneration")),
+            (partner.date_issue, _("Issue Date")),
+            (partner.date_expiration or partner.exoneration_free_trade_zone, _("Expiration Date")),
+            (partner._cr_exoneration_cabys() or self.reversed_entry_id, _("Authorized CABYS Codes")),
+        ]
+        return [label for value, label in required if not value]
 
     def _cr_reversal_exoneration_problems(self):
         """A credit note keeps the exoneration of the invoice it reverses (the authorization may have changed since):
@@ -1814,27 +1835,13 @@ class AccountInvoiceElectronic(models.Model):
             
             if inv.show_exoneration:
                 partner = inv.partner_id
-                missing = []
-                if not partner.exoneration_number:
-                    missing.append(_("Exoneration Number"))
-                if not partner.type_exoneration:
-                    missing.append(_("Authorization Type"))
-                if not partner.exoneration_issuer:
-                    missing.append(_("Exoneration Issuer"))
-                if not partner.percentage_exoneration:
-                    missing.append(_("Percentage of VAT Exoneration"))
-                if not partner.date_issue:
-                    missing.append(_("Issue Date"))
-                if not partner.date_expiration:
-                    missing.append(_("Expiration Date"))
-                if not partner._cr_exoneration_cabys() and not inv.reversed_entry_id:
-                    missing.append(_("Authorized CABYS Codes"))
+                missing = inv._cr_exoneration_missing_fields()
                 if missing:
                     raise UserError(
                         _('With fiscal position "%s" the following customer fields are required: %s')
                         % (EXONERATION_FISCAL_POSITION, ", ".join(missing))
                     )
-                if partner.date_expiration < datetime.date.today():
+                if partner.date_expiration and partner.date_expiration < datetime.date.today():
                     raise UserError(_("The exoneration of this client has expired"))
                 problems = inv._cr_exoneration_problems()
                 if problems:
