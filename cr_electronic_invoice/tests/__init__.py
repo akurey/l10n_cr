@@ -17,3 +17,4 @@ from . import test_check_hacienda
 from . import test_exoneration
 from . import test_tax_noupdate
 from . import test_send_errors
+from . import test_reversal_reference
