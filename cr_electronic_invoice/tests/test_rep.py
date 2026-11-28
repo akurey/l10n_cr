@@ -63,3 +63,30 @@ class TestRep(TransactionCase):
         self.assertEqual(summary.findtext('{*}TotalComprobante'), '16500.0')
         schema = unsigned_schema(XSD)
         self.assertTrue(schema.validate(root), schema.error_log.last_error)
+
+    def test_rep_counts_no_sujeto_in_the_total_sale(self):
+        """Codex: an invoice with a line at tarifa 01 (no sujeto) passes it to the REP, which has no no sujeto
+        totals: it counts in TotalVenta, so TotalVenta is never below TotalVentaNeta."""
+        juridica = self.env['identification.type'].search([('code', '=', '02')], limit=1)
+        fisica = self.env['identification.type'].search([('code', '=', '01')], limit=1)
+        self.env.company.write({'vat': '3101123456', 'identification_id': juridica.id, 'email': 'fe@example.com'})
+        customer = self.env['res.partner'].create(
+            {'name': 'Cliente', 'vat': '112345678', 'identification_id': fisica.id})
+        invoice = self.env['account.move'].new({
+            'move_type': 'out_invoice', 'partner_id': customer.id,
+            'tipo_documento': 'FE', 'date_issuance': '2026-10-23T12:00:00-06:00',
+            'number_electronic': '50623102600310112345600100001010000000001100000001',
+            'payment_methods_id': self.env.ref('cr_electronic_invoice.PaymentMethods_1').id,
+        })
+        lines = {1: {'detalle': 'Servicio', 'montoTotal': 10000.0, 'subtotal': 10000.0, 'montoTotalLinea': 11300.0,
+                     'impuestoNeto': 1300.0,
+                     'impuesto': {1: {'codigo': '01', 'iva_tax_code': '08', 'tarifa': 13.0, 'monto': 1300.0}}},
+                 2: {'detalle': 'Cata', 'montoTotal': 5000.0, 'subtotal': 5000.0, 'montoTotalLinea': 5000.0,
+                     'impuestoNeto': 0.0,
+                     'impuesto': {1: {'codigo': '01', 'iva_tax_code': '01', 'tarifa': 0.0, 'monto': 0.0}}}}
+        xml = str(api_facturae.generate_rep_xml(
+            invoice, 'REP', api_facturae.REP_SALE_CONDITIONS['10'], lines, 1,
+            10000.0, 0.0, 0.0, 0.0, 0.0, 0.0, 15000.0, 1300.0, 0.0, 0.0, total_no_sujeto=5000.0))
+        summary = etree.fromstring(xml.encode()).find('{*}ResumenFactura')
+        self.assertEqual(summary.findtext('{*}TotalVenta'), '15000.0')
+        self.assertEqual(summary.findtext('{*}TotalVentaNeta'), '15000.0')

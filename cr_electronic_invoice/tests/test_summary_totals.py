@@ -56,14 +56,14 @@ class TestSummaryTotals(TransactionCase):
             'name': "Servicio de prueba", 'type': 'service', 'cabys_code': SERVICE,
             'taxes_id': [Command.set(cls.iva.ids)]})
 
-    def _summary(self, lines):
+    def _summary(self, lines, document='FE'):
         """The ResumenFactura of the XML built for an FE to the customer with these (product, quantity, taxes)
         lines at 1 each, so a line amount has as many decimals as its quantity; signing and sending are
         intercepted."""
         self.env.ref('uom.decimal_product_uom').digits = 5
         invoice = self.env['account.move'].create({
             'move_type': 'out_invoice', 'partner_id': self.customer.id, 'fiscal_position_id': self.position.id,
-            'tipo_documento': 'FE', 'number_electronic': '50628112600310112345600200001010000000009100000009',
+            'tipo_documento': document, 'number_electronic': '50628112600310112345600200001010000000009100000009',
             'sequence': '00200001010000000009', 'invoice_date': '2026-11-28',
             'invoice_line_ids': [Command.create({'product_id': product.id, 'name': product.name, 'price_unit': 1,
                                                  'quantity': quantity,
@@ -102,12 +102,7 @@ class TestSummaryTotals(TransactionCase):
     def test_a_line_at_tarifa_01_is_no_sujeto(self):
         """A service at VAT tarifa 01 (0 %) with a wine at 13 %, as the FE that Hacienda rejected with -111, -483
         and -485: the service goes to the no sujeto totals, not to the taxed ones, and still adds up to the sale."""
-        zero = self.env['account.tax'].create({
-            'name': "IVA 0 % de prueba", 'amount': 0, 'type_tax_use': 'sale', 'tax_code': '01',
-            'iva_tax_code': '01', 'tax_group_id': self.iva.tax_group_id.id,
-            'company_id': self.env.company.id, 'country_id': self.env.ref('base.cr').id,
-        })
-        summary = self._summary([(self.service, 6637.16814, zero), (self.wine, 8407.07965, self.iva)])
+        summary = self._summary([(self.service, 6637.16814, self._zero()), (self.wine, 8407.07965, self.iva)])
         self.assertEqual(float(summary['TotalServGravados']), 0)
         self.assertEqual(float(summary['TotalServNoSujeto']), 6637.16814)
         self.assertEqual(float(summary['TotalMercanciasGravadas']), 8407.07965)
@@ -119,6 +114,24 @@ class TestSummaryTotals(TransactionCase):
         self.assertLess(names.index('TotalServNoSujeto'), names.index('TotalMercanciasGravadas'))
         self.assertLess(names.index('TotalExonerado'), names.index('TotalNoSujeto'))
         self.assertLess(names.index('TotalNoSujeto'), names.index('TotalVenta'))
+
+    def _zero(self):
+        return self.env['account.tax'].create({
+            'name': "IVA 0 % de prueba", 'amount': 0, 'type_tax_use': 'sale', 'tax_code': '01',
+            'iva_tax_code': '01', 'tax_group_id': self.iva.tax_group_id.id,
+            'company_id': self.env.company.id, 'country_id': self.env.ref('base.cr').id,
+        })
+
+    def test_the_export_invoice_keeps_tarifa_01_as_taxed(self):
+        """Codex: the FEE has no no sujeto totals, so a line at tarifa 01 stays in the taxed ones there (it used to
+        vanish from them while still counting in TotalVenta)."""
+        zero = self._zero()
+        summary = self._summary([(self.service, 100, zero), (self.wine, 200, zero)], document='FEE')
+        self.assertEqual(float(summary['TotalServGravados']), 100)
+        self.assertEqual(float(summary['TotalMercanciasGravadas']), 200)
+        self.assertEqual(float(summary['TotalGravado']), 300)
+        self.assertEqual(float(summary['TotalVenta']), 300)
+        self.assertFalse([name for name in summary if 'NoSujet' in name])
 
     def test_without_tarifa_01_there_are_no_no_sujeto_totals(self):
         summary = self._summary([(self.service, 100, self.iva)])

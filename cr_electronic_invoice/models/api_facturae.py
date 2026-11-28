@@ -814,7 +814,8 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
                     total_servicio_gravado, total_mercaderia_gravado, 
                     total_servicio_exento, total_mercaderia_exento,
                     totalServExonerado, totalMercExonerada, base_total,
-                    total_impuestos, total_iva_devuelto, totalOtrosCargos):
+                    total_impuestos, total_iva_devuelto, totalOtrosCargos, total_no_sujeto=0.0):
+    # The REP has no "no sujeto" totals of its own: they only count in TotalVenta
     issuing_company = inv.company_id
     cod_moneda = str(inv.currency_id.name)
     payment_methods_id = []
@@ -902,7 +903,8 @@ def generate_rep_xml(inv, tipo_documento, sale_conditions, lines, currency_rate,
                             total_servicio_exento +
                             total_mercaderia_exento +
                             totalServExonerado +
-                            totalMercExonerada, 5)) +
+                            totalMercExonerada +
+                            total_no_sujeto, 5)) +
                 '</TotalVenta>')
         sb.append('<TotalVentaNeta>' + str(round(base_total, 5)) + '</TotalVentaNeta>')
         append_tax_breakdown(sb, tax_summary)

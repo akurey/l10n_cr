@@ -1427,8 +1427,9 @@ class AccountInvoiceElectronic(models.Model):
                             exonerated_part = _tax_exoneration and round(base_line * _percentage_exoneration, 5)
                             taxed_part = round(base_line - exonerated_part, 5)
                             # A line whose only VAT is tarifa 01 (0 %, art. 32 RLIVA) is "no sujeto" for Hacienda:
-                            # summed as taxed, it is rejected with -111, -483 and -485.
-                            no_sujeto = bool(taxes) and not _tax_exoneration and all(
+                            # summed as taxed, it is rejected with -111, -483 and -485. The export invoice (FEE)
+                            # has no such totals: there it stays taxed.
+                            no_sujeto = inv.tipo_documento != 'FEE' and bool(taxes) and not _tax_exoneration and all(
                                 tax['codigo'] == '01' and tax['iva_tax_code'] == '01' for tax in taxes.values())
                             if not inv_line.product_uom_id or \
                                 inv_line.product_id.type == 'service':
@@ -1527,6 +1528,7 @@ class AccountInvoiceElectronic(models.Model):
                         inv.company_id.frm_pin,
                         xml_to_sign)
                     
+                    total_no_sujeto = round(total_servicio_no_sujeto + total_mercaderia_no_sujeto, 5)
                     rep_sale_condition = api_facturae.REP_SALE_CONDITIONS.get(sale_conditions)
                     if rep_sale_condition:
                         try:
@@ -1534,7 +1536,9 @@ class AccountInvoiceElectronic(models.Model):
                                                                             total_servicio_gravado, total_mercaderia_gravado, 
                                                                             total_servicio_exento, total_mercaderia_exento,
                                                                             total_servicio_exonerado, total_mercaderia_exonerado, base_subtotal,
-                                                                            total_impuestos, total_iva_devuelto, total_otros_cargos)
+                                                                            total_impuestos, total_iva_devuelto,
+                                                                            total_otros_cargos,
+                                                                            total_no_sujeto=total_no_sujeto)
                             inv.rep_string = rep_xml_builder
                         except Exception as error:
                             inv.message_post(subject=_('Error'),
