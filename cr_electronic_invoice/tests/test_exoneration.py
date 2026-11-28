@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from lxml import etree
+
 from odoo import Command, fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
@@ -221,38 +223,61 @@ class TestExoneration(TransactionCase):
         self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(), ["Expiration Date"])
 
     def _summary_of(self, partner, lines, number):
-        """The tax breakdown and TotalImpuesto that the XML of an FE with these (product, price, taxes) lines
-        carries: the detail lines and the total are read where the XML is built."""
-        # A Costa Rican company and position, like the test taxes
-        self.env.company.write({'frm_ws_ambiente': 'api-stag', 'account_fiscal_country_id': self.costa_rica.id,
-                                'date_expiration_sign': fields.Datetime.add(fields.Datetime.now(), days=365)})
-        self.position.country_id = self.costa_rica
+        """The TotalDesgloseImpuesto elements and the TotalImpuesto of the XML built for an FE with these
+        (product, price, taxes) lines; signing and sending are intercepted."""
+        juridica = self.env['identification.type'].search([('code', '=', '02')], limit=1)
+        district = self.env['res.country.district'].search([], limit=1)
+        self.env.company.write({
+            'account_fiscal_country_id': self.costa_rica.id, 'frm_ws_ambiente': 'api-stag',
+            'date_expiration_sign': fields.Datetime.add(fields.Datetime.now(), days=365),
+            'vat': '3101000001', 'identification_id': juridica.id, 'email': 'fe@example.com', 'street': "Calle 1",
+            'activity_id': self.env['economic.activity'].search([], limit=1).id, 'district_id': district.id,
+            'county_id': district.county_id.id, 'state_id': district.county_id.state_id.id,
+        })
+        # An exonerated customer, as its form marks it: the breakdown used to be left out for these
+        partner.write({'vat': '3101000099', 'identification_id': juridica.id, 'has_exoneration': True})
         invoice = self.env['account.move'].create({
-            'move_type': 'out_invoice', 'partner_id': partner.id, 'fiscal_position_id': self.position.id,
-            'tipo_documento': 'FE', 'sequence': '0010000101000000000%d' % number,
-            'number_electronic': '5062711260031011234560010000%03d' % number + '0' * 19,
-            'invoice_line_ids': [Command.create({'product_id': product.id, 'name': product.name, 'quantity': 1,
+            'move_type': 'out_invoice', 'partner_id': partner.id, 'tipo_documento': 'FE',
+            'number_electronic': '5062711260031011234560020000101000000000%d100000008' % number,
+            'sequence': '0020000101000000000%d' % number, 'invoice_date': '2026-11-27',
+            'invoice_line_ids': [Command.create({'product_id': product.id, 'name': product.name,
                                                  'price_unit': price, 'tax_ids': [Command.set(taxes.ids)]})
                                  for product, price, taxes in lines],
         })
-        with patch.object(api_facturae, 'gen_xml_v4_4', side_effect=RuntimeError('stop here')) as gen_xml:
-            self.env['account.move'].generate_and_send_invoices(invoice.with_context(lang='en_US'))
-        self.assertEqual(gen_xml.call_count, 1, invoice.einvoice_error_detail)
-        total_impuestos, detail = gen_xml.call_args.args[11], gen_xml.call_args.args[13]
-        breakdown = [(tax['Codigo'], tax['CodigoTarifaIVA'], round(tax['TotalMontoImpuesto'], 5))
-                     for tax in api_facturae.charged_tax_breakdown(detail).values()]
-        return breakdown, total_impuestos
+        signed = []
+
+        def sign(cert, password, xml):
+            signed.append(xml)
+            return xml.encode()
+
+        with patch.object(api_facturae, 'sign_xml', side_effect=sign), \
+                patch.object(api_facturae, 'get_token_hacienda',
+                             side_effect=api_facturae.HaciendaUnavailable('not sent in a test')):
+            invoice.generate_and_send_invoice()
+        self.assertEqual(len(signed), 1, repr(invoice.einvoice_error_detail))
+        summary = etree.fromstring(signed[0].encode()).xpath('//*[local-name()="ResumenFactura"]')[0]
+
+        def value(node, name):
+            return node.xpath('string(*[local-name()="%s"])' % name)
+
+        breakdown = [(value(tax, 'Codigo'), value(tax, 'CodigoTarifaIVA'), float(value(tax, 'TotalMontoImpuesto')))
+                     for tax in summary.xpath('*[local-name()="TotalDesgloseImpuesto"]')]
+        return breakdown, float(value(summary, 'TotalImpuesto'))
 
     def test_the_tax_breakdown_holds_the_tax_charged(self):
         """Hacienda rejects (-487) a document whose lines charge IVA without TotalDesgloseImpuesto, exoneration or
         not. The breakdown holds the IVA charged, net of the exoneration, so it adds up to TotalImpuesto."""
         laptop = self.env['product.product'].create(
             {'name': "Portátil de prueba", 'cabys_code': LAPTOP, 'taxes_id': [Command.set(self.iva.ids)]})
-        free_zone = self._free_trade_zone()
+        free_zone = self._free_trade_zone(exoneration_article='20', exoneration_clause='1')
         exonerated = self._exonerated(LAPTOP, free_zone)
         mixed = self._summary_of(free_zone, [(laptop, 1000, exonerated), (self.delivery, 500, self.iva)], 1)
         self.assertEqual(mixed, ([('01', '08', 65.0)], 65.0), "only the delivery charges IVA")
         self.assertEqual(self._summary_of(free_zone, [(laptop, 1000, exonerated)], 2), ([], 0.0),
                          "a document exonerated in full charges no tax: no breakdown, as Hacienda accepts it")
+        self.customer.write({
+            'type_exoneration': self.env.ref('cr_electronic_invoice.AutEx_1').id, 'exoneration_number': 'AL-0001',
+            'exoneration_issuer': self.env['issuer.ex'].search([], limit=1).id, 'date_issue': '2026-01-15',
+            'date_expiration': '2027-01-15'})
         half = self._summary_of(self.customer, [(self.wine, 1000, self._exonerated(WINE))], 3)
         self.assertEqual(half, ([('01', '08', 65.0)], 65.0), "half of the 13 % IVA is charged")
