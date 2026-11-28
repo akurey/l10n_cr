@@ -1080,6 +1080,8 @@ msgid "Exoneration"
 msgstr "Exoneración"
 
 #. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__exoneration_article
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__exoneration_article
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_partner__exoneration_article
@@ -1088,6 +1090,8 @@ msgid "Exoneration Article"
 msgstr "Artículo de la exoneración"
 
 #. module: cr_electronic_invoice
+#. odoo-python
+#: code:addons/cr_electronic_invoice/models/account_move.py:0
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_bank_statement_line__exoneration_clause
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_account_move__exoneration_clause
 #: model:ir.model.fields,field_description:cr_electronic_invoice.field_res_partner__exoneration_clause
