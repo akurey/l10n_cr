@@ -1419,13 +1419,17 @@ class AccountInvoiceElectronic(models.Model):
                             # self-referencing relative_uom_id tree with no
                             # "category name" left to check. product.type == 'service'
                             # is the actual, still-present flag for this distinction.
+                            # The exonerated part is rounded once and the taxed part is the rest, so both add up
+                            # to the line exactly: two halves rounded on their own lose a digit and Hacienda
+                            # rejects TotalVenta - TotalDescuentos != TotalVentaNeta (-53).
+                            exonerated_part = _tax_exoneration and round(base_line * _percentage_exoneration, 5)
+                            taxed_part = round(base_line - exonerated_part, 5)
                             if not inv_line.product_uom_id or \
                                 inv_line.product_id.type == 'service':
                                 if taxes:
                                     if _tax_exoneration:
-                                        if _percentage_exoneration < 1:
-                                            total_servicio_gravado += (base_line * (1 - _percentage_exoneration))
-                                        total_servicio_exonerado += (base_line * _percentage_exoneration)
+                                        total_servicio_gravado += taxed_part
+                                        total_servicio_exonerado += exonerated_part
 
                                     else:
                                         total_servicio_gravado += base_line
@@ -1436,9 +1440,8 @@ class AccountInvoiceElectronic(models.Model):
                             else:
                                 if taxes:
                                     if _tax_exoneration:
-                                        if _percentage_exoneration < 1:
-                                            total_mercaderia_gravado += (base_line * (1 - _percentage_exoneration))
-                                        total_mercaderia_exonerado += (base_line * _percentage_exoneration)
+                                        total_mercaderia_gravado += taxed_part
+                                        total_mercaderia_exonerado += exonerated_part
 
                                     else:
                                         total_mercaderia_gravado += base_line
