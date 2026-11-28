@@ -753,17 +753,21 @@ def otras_senas(street, max_length):
 def charged_tax_breakdown(lines):
     """The tax charged by the detail lines, per tax code and rate: Monto minus the MontoImpuesto exonerated,
     like ImpuestoNeto (a gross figure would not add up to TotalImpuesto). Hacienda requires the breakdown
-    whenever a line charges tax, exoneration or not (-487); a code exonerated in full charges nothing and is
-    left out, so a document exonerated in full carries no breakdown."""
-    summary = {}
+    whenever a line charges tax, exoneration or not (-487). A code left at zero by an exoneration is left out,
+    so a document exonerated in full carries no breakdown, as Hacienda accepts it; a code at zero because of
+    its rate (0 %, as on an export) is kept, as it always was."""
+    summary, exonerated = {}, set()
     for line in (lines or {}).values():
         for tax in (line.get('impuesto') or {}).values():
             code = str(tax['iva_tax_code'])
-            charged = float(tax['monto']) - float((tax.get('exoneracion') or {}).get('montoImpuesto') or 0)
+            exoneration = float((tax.get('exoneracion') or {}).get('montoImpuesto') or 0)
+            if exoneration:
+                exonerated.add(code)
             entry = summary.setdefault(code, {'Codigo': str(tax['codigo']), 'CodigoTarifaIVA': code,
                                               'TotalMontoImpuesto': 0.0})
-            entry['TotalMontoImpuesto'] += charged
-    return {code: tax for code, tax in summary.items() if round(tax['TotalMontoImpuesto'], 5)}
+            entry['TotalMontoImpuesto'] += float(tax['monto']) - exoneration
+    return {code: tax for code, tax in summary.items()
+            if round(tax['TotalMontoImpuesto'], 5) or code not in exonerated}
 
 
 # Function to generate "Recibo Electronico de Pago" document

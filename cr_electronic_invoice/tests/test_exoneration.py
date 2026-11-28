@@ -222,9 +222,10 @@ class TestExoneration(TransactionCase):
         invoice = self.env['account.move'].new({'move_type': 'out_invoice', 'partner_id': self.customer.id})
         self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(), ["Expiration Date"])
 
-    def _summary_of(self, partner, lines, number):
-        """The TotalDesgloseImpuesto elements and the TotalImpuesto of the XML built for an FE with these
-        (product, price, taxes) lines; signing and sending are intercepted."""
+    def _summary_of(self, partner, lines, number, document='FE'):
+        """The TotalDesgloseImpuesto elements and the TotalImpuesto of the XML built for a document (FE, FEE or
+        FEC, where the partner is the supplier that issues it) with these (product, price, taxes) lines; signing
+        and sending are intercepted."""
         juridica = self.env['identification.type'].search([('code', '=', '02')], limit=1)
         district = self.env['res.country.district'].search([], limit=1)
         self.env.company.write({
@@ -235,9 +236,12 @@ class TestExoneration(TransactionCase):
             'county_id': district.county_id.id, 'state_id': district.county_id.state_id.id,
         })
         # An exonerated customer, as its form marks it: the breakdown used to be left out for these
-        partner.write({'vat': '3101000099', 'identification_id': juridica.id, 'has_exoneration': True})
+        partner.write({'vat': '3101000099', 'identification_id': juridica.id, 'has_exoneration': True,
+                       'email': 'cliente@example.com', 'street': "Calle 2", 'district_id': district.id,
+                       'county_id': district.county_id.id, 'state_id': district.county_id.state_id.id})
         invoice = self.env['account.move'].create({
-            'move_type': 'out_invoice', 'partner_id': partner.id, 'tipo_documento': 'FE',
+            'move_type': 'in_invoice' if document == 'FEC' else 'out_invoice', 'partner_id': partner.id,
+            'tipo_documento': document,
             'number_electronic': '5062711260031011234560020000101000000000%d100000008' % number,
             'sequence': '0020000101000000000%d' % number, 'invoice_date': '2026-11-27',
             'invoice_line_ids': [Command.create({'product_id': product.id, 'name': product.name,
@@ -281,3 +285,29 @@ class TestExoneration(TransactionCase):
             'date_expiration': '2027-01-15'})
         half = self._summary_of(self.customer, [(self.wine, 1000, self._exonerated(WINE))], 3)
         self.assertEqual(half, ([('01', '08', 65.0)], 65.0), "half of the 13 % IVA is charged")
+
+    def test_the_tax_breakdown_of_a_purchase_invoice(self):
+        """An FEC: the company that receives it is the exonerated one; the breakdown follows the same rule."""
+        laptop = self.env['product.product'].create(
+            {'name': "Portátil de prueba", 'cabys_code': LAPTOP, 'taxes_id': [Command.set(self.iva.ids)]})
+        free_zone = self._free_trade_zone(exoneration_article='20', exoneration_clause='1')
+        self.env.company.partner_id.write({
+            'has_exoneration': True, 'type_exoneration': free_zone.type_exoneration.id,
+            'exoneration_number': 'ZF-0001', 'exoneration_issuer': free_zone.exoneration_issuer.id,
+            'date_issue': '2026-01-15', 'exoneration_article': '20', 'exoneration_clause': '1'})
+        supplier = self.env['res.partner'].create({'name': "Proveedor de prueba"})
+        full, half = self._exonerated(LAPTOP, free_zone), self._exonerated(WINE)
+        self.assertEqual(self._summary_of(supplier, [(laptop, 1000, full), (self.delivery, 500, self.iva)], 4,
+                                          'FEC'), ([('01', '08', 65.0)], 65.0), "mixed")
+        self.assertEqual(self._summary_of(supplier, [(self.wine, 1000, half)], 5, 'FEC'),
+                         ([('01', '08', 65.0)], 65.0), "partial")
+        self.assertEqual(self._summary_of(supplier, [(laptop, 1000, full)], 6, 'FEC'), ([], 0.0), "complete")
+
+    def test_the_tax_breakdown_of_an_export_keeps_the_zero_rate(self):
+        """An FEE carries no exoneration; a code at 0 % because of its rate keeps its breakdown, as it always did."""
+        zero = self.iva.copy({'name': "IVA 0 % de prueba", 'amount': 0, 'iva_tax_code': '01'})
+        customer = self.env['res.partner'].create({'name': "Cliente del exterior de prueba"})
+        mixed = self._summary_of(customer, [(self.delivery, 500, zero), (self.wine, 1000, self.iva)], 7, 'FEE')
+        self.assertEqual(mixed, ([('01', '01', 0.0), ('01', '08', 130.0)], 130.0))
+        self.assertEqual(self._summary_of(customer, [(self.delivery, 500, zero)], 8, 'FEE'),
+                         ([('01', '01', 0.0)], 0.0), "an export at 0 % still carries its breakdown")
