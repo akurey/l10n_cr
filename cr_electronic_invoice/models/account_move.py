@@ -1254,6 +1254,8 @@ class AccountInvoiceElectronic(models.Model):
                     total_mercaderia_gravado = 0.0
                     total_mercaderia_exento = 0.0
                     total_mercaderia_exonerado = 0.0
+                    total_servicio_no_sujeto = 0.0
+                    total_mercaderia_no_sujeto = 0.0
                     total_descuento = 0.0
                     total_impuestos = 0.0
                     base_subtotal = 0.0
@@ -1419,13 +1421,24 @@ class AccountInvoiceElectronic(models.Model):
                             # self-referencing relative_uom_id tree with no
                             # "category name" left to check. product.type == 'service'
                             # is the actual, still-present flag for this distinction.
+                            # The exonerated part is rounded once and the taxed part is the rest, so both add up
+                            # to the line exactly: two halves rounded on their own lose a digit and Hacienda
+                            # rejects TotalVenta - TotalDescuentos != TotalVentaNeta (-53).
+                            exonerated_part = _tax_exoneration and round(base_line * _percentage_exoneration, 5)
+                            taxed_part = round(base_line - exonerated_part, 5)
+                            # A line whose only VAT is tarifa 01 (0 %, art. 32 RLIVA) is "no sujeto" for Hacienda:
+                            # summed as taxed, it is rejected with -111, -483 and -485. The export invoice (FEE)
+                            # has no such totals: there it stays taxed.
+                            no_sujeto = inv.tipo_documento != 'FEE' and bool(taxes) and not _tax_exoneration and all(
+                                tax['codigo'] == '01' and tax['iva_tax_code'] == '01' for tax in taxes.values())
                             if not inv_line.product_uom_id or \
                                 inv_line.product_id.type == 'service':
-                                if taxes:
+                                if no_sujeto:
+                                    total_servicio_no_sujeto += base_line
+                                elif taxes:
                                     if _tax_exoneration:
-                                        if _percentage_exoneration < 1:
-                                            total_servicio_gravado += (base_line * (1 - _percentage_exoneration))
-                                        total_servicio_exonerado += (base_line * _percentage_exoneration)
+                                        total_servicio_gravado += taxed_part
+                                        total_servicio_exonerado += exonerated_part
 
                                     else:
                                         total_servicio_gravado += base_line
@@ -1434,11 +1447,12 @@ class AccountInvoiceElectronic(models.Model):
                                 else:
                                     total_servicio_exento += base_line
                             else:
-                                if taxes:
+                                if no_sujeto:
+                                    total_mercaderia_no_sujeto += base_line
+                                elif taxes:
                                     if _tax_exoneration:
-                                        if _percentage_exoneration < 1:
-                                            total_mercaderia_gravado += (base_line * (1 - _percentage_exoneration))
-                                        total_mercaderia_exonerado += (base_line * _percentage_exoneration)
+                                        total_mercaderia_gravado += taxed_part
+                                        total_mercaderia_exonerado += exonerated_part
 
                                     else:
                                         total_mercaderia_gravado += base_line
@@ -1504,7 +1518,9 @@ class AccountInvoiceElectronic(models.Model):
                         total_impuestos, total_descuento, lines,
                         otros_cargos, currency_rate, invoice_comments,
                         tipo_documento_referencia, numero_documento_referencia,
-                        fecha_emision_referencia, codigo_referencia, razon_referencia)
+                        fecha_emision_referencia, codigo_referencia, razon_referencia,
+                        total_servicio_no_sujeto=round(total_servicio_no_sujeto, 5),
+                        total_mercaderia_no_sujeto=round(total_mercaderia_no_sujeto, 5))
 
                     xml_to_sign = str(xml_string_builder)
                     xml_firmado = api_facturae.sign_xml(
@@ -1512,6 +1528,7 @@ class AccountInvoiceElectronic(models.Model):
                         inv.company_id.frm_pin,
                         xml_to_sign)
                     
+                    total_no_sujeto = round(total_servicio_no_sujeto + total_mercaderia_no_sujeto, 5)
                     rep_sale_condition = api_facturae.REP_SALE_CONDITIONS.get(sale_conditions)
                     if rep_sale_condition:
                         try:
@@ -1519,7 +1536,9 @@ class AccountInvoiceElectronic(models.Model):
                                                                             total_servicio_gravado, total_mercaderia_gravado, 
                                                                             total_servicio_exento, total_mercaderia_exento,
                                                                             total_servicio_exonerado, total_mercaderia_exonerado, base_subtotal,
-                                                                            total_impuestos, total_iva_devuelto, total_otros_cargos)
+                                                                            total_impuestos, total_iva_devuelto,
+                                                                            total_otros_cargos,
+                                                                            total_no_sujeto=total_no_sujeto)
                             inv.rep_string = rep_xml_builder
                         except Exception as error:
                             inv.message_post(subject=_('Error'),
