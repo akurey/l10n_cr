@@ -1,12 +1,18 @@
-from odoo import Command
+from unittest.mock import patch
+
+from lxml import etree
+
+from odoo import Command, fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from ..models import api_facturae
 from ..models.account_move import EXONERATION_FISCAL_POSITION
 
 WINE = '2421200000100'  # CABYS: wine of fresh grapes
 DELIVERY = '6803000000000'  # CABYS: local delivery services
 LAPTOP = '4524100000100'  # CABYS of the test laptop (a test value)
+KEY = '50627112600310112345600200001010000000008100000008'  # electronic key of the test invoice
 
 
 @tagged('post_install', '-at_install')
@@ -208,6 +214,63 @@ class TestExoneration(TransactionCase):
         problems = invoice.with_context(lang='en_US')._cr_exoneration_problems()
         self.assertEqual(len(problems), 1)
         self.assertIn("always 100", problems[0])
+
+    def test_the_xml_of_a_free_trade_zone_invoice(self):
+        """The document Hacienda gets: the authorized line carries the type 08 exoneration (its issue date, the whole
+        13 % and its amount) and no expiration date; a line outside the authorization carries the full IVA."""
+        laptop = self.env['product.product'].create(
+            {'name': "Portátil de prueba", 'cabys_code': LAPTOP, 'taxes_id': [Command.set(self.iva.ids)]})
+        juridica = self.env['identification.type'].search([('code', '=', '02')], limit=1)
+        free_zone = self._free_trade_zone(exoneration_article='20', exoneration_clause='1',
+                                          vat='3101000099', identification_id=juridica.id)
+        district = self.env['res.country.district'].search([], limit=1)
+        self.env.company.write({
+            'account_fiscal_country_id': self.costa_rica.id, 'frm_ws_ambiente': 'api-stag',
+            'date_expiration_sign': fields.Datetime.add(fields.Datetime.now(), days=365),
+            'vat': '3101000001', 'identification_id': juridica.id, 'email': 'fe@example.com', 'street': "Calle 1",
+            'activity_id': self.env['economic.activity'].search([], limit=1).id, 'district_id': district.id,
+            'county_id': district.county_id.id, 'state_id': district.county_id.state_id.id,
+        })
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice', 'partner_id': free_zone.id, 'tipo_documento': 'FE', 'number_electronic': KEY,
+            'sequence': '00200001010000000008', 'invoice_date': '2026-11-27',
+            'invoice_line_ids': [
+                Command.create({'product_id': laptop.id, 'name': "Portátil", 'price_unit': 1000,
+                                'tax_ids': [Command.set(self._exonerated(LAPTOP, free_zone).ids)]}),
+                Command.create({'product_id': self.wine.id, 'name': "Vino", 'price_unit': 100,
+                                'tax_ids': [Command.set(self._exonerated(WINE, free_zone).ids)]}),
+            ],
+        })
+        signed = []
+
+        def sign(cert, password, xml):
+            signed.append(xml)
+            return xml.encode()
+
+        with patch.object(api_facturae, 'sign_xml', side_effect=sign), \
+                patch.object(api_facturae, 'get_token_hacienda',
+                             side_effect=api_facturae.HaciendaUnavailable('not sent in a test')):
+            invoice.generate_and_send_invoice()
+        self.assertEqual(len(signed), 1, invoice.einvoice_error_detail)
+        document = etree.fromstring(signed[0].encode())
+        self.assertFalse(document.xpath('//*[contains(local-name(), "Vencimiento")]'), "a type 08 has no expiration")
+        laptop_line, wine_line = document.xpath('//*[local-name()="LineaDetalle"]')
+
+        def value(node, path):
+            return node.xpath('string(.//*[local-name()="%s"])' % path)
+
+        self.assertEqual(value(laptop_line, 'CodigoCABYS'), LAPTOP)
+        self.assertEqual(value(laptop_line, 'TipoDocumentoEX1'), '08')
+        self.assertEqual(value(laptop_line, 'NumeroDocumento'), 'ZF-0001')
+        self.assertEqual(value(laptop_line, 'FechaEmisionEX'), '2026-01-15T00:00:00-06:00')
+        self.assertEqual(value(laptop_line, 'TarifaExonerada'), '13', "the whole 13 %")
+        self.assertEqual(float(value(laptop_line, 'Monto')), 130)
+        self.assertEqual(float(value(laptop_line, 'MontoExoneracion')), 130)
+        self.assertEqual(float(value(laptop_line, 'ImpuestoNeto')), 0)
+        self.assertEqual(value(wine_line, 'CodigoCABYS'), WINE)
+        self.assertFalse(wine_line.xpath('.//*[local-name()="Exoneracion"]'), "the wine is not in its activity")
+        self.assertEqual(float(value(wine_line, 'Tarifa')), 13)
+        self.assertEqual(float(value(wine_line, 'ImpuestoNeto')), 13, "the full IVA")
 
     def test_other_authorizations_still_need_an_expiration_date(self):
         self.customer.write({
