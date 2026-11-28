@@ -1254,6 +1254,8 @@ class AccountInvoiceElectronic(models.Model):
                     total_mercaderia_gravado = 0.0
                     total_mercaderia_exento = 0.0
                     total_mercaderia_exonerado = 0.0
+                    total_servicio_no_sujeto = 0.0
+                    total_mercaderia_no_sujeto = 0.0
                     total_descuento = 0.0
                     total_impuestos = 0.0
                     base_subtotal = 0.0
@@ -1424,9 +1426,15 @@ class AccountInvoiceElectronic(models.Model):
                             # rejects TotalVenta - TotalDescuentos != TotalVentaNeta (-53).
                             exonerated_part = _tax_exoneration and round(base_line * _percentage_exoneration, 5)
                             taxed_part = round(base_line - exonerated_part, 5)
+                            # A line whose only VAT is tarifa 01 (0 %, art. 32 RLIVA) is "no sujeto" for Hacienda:
+                            # summed as taxed, it is rejected with -111, -483 and -485.
+                            no_sujeto = bool(taxes) and not _tax_exoneration and all(
+                                tax['codigo'] == '01' and tax['iva_tax_code'] == '01' for tax in taxes.values())
                             if not inv_line.product_uom_id or \
                                 inv_line.product_id.type == 'service':
-                                if taxes:
+                                if no_sujeto:
+                                    total_servicio_no_sujeto += base_line
+                                elif taxes:
                                     if _tax_exoneration:
                                         total_servicio_gravado += taxed_part
                                         total_servicio_exonerado += exonerated_part
@@ -1438,7 +1446,9 @@ class AccountInvoiceElectronic(models.Model):
                                 else:
                                     total_servicio_exento += base_line
                             else:
-                                if taxes:
+                                if no_sujeto:
+                                    total_mercaderia_no_sujeto += base_line
+                                elif taxes:
                                     if _tax_exoneration:
                                         total_mercaderia_gravado += taxed_part
                                         total_mercaderia_exonerado += exonerated_part
@@ -1507,7 +1517,9 @@ class AccountInvoiceElectronic(models.Model):
                         total_impuestos, total_descuento, lines,
                         otros_cargos, currency_rate, invoice_comments,
                         tipo_documento_referencia, numero_documento_referencia,
-                        fecha_emision_referencia, codigo_referencia, razon_referencia)
+                        fecha_emision_referencia, codigo_referencia, razon_referencia,
+                        total_servicio_no_sujeto=round(total_servicio_no_sujeto, 5),
+                        total_mercaderia_no_sujeto=round(total_mercaderia_no_sujeto, 5))
 
                     xml_to_sign = str(xml_string_builder)
                     xml_firmado = api_facturae.sign_xml(

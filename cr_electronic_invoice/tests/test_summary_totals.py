@@ -98,3 +98,29 @@ class TestSummaryTotals(TransactionCase):
         self.assertEqual(amount['TotalServGravados'], 6637.16814)
         self.assertEqual(round(amount['TotalVenta'] - amount['TotalDescuentos'], 5), amount['TotalVentaNeta'])
         self.assertEqual(summary['TotalVentaNeta'], summary['TotalVenta'], "no discounts: the same figure")
+
+    def test_a_line_at_tarifa_01_is_no_sujeto(self):
+        """A service at VAT tarifa 01 (0 %) with a wine at 13 %, as the FE that Hacienda rejected with -111, -483
+        and -485: the service goes to the no sujeto totals, not to the taxed ones, and still adds up to the sale."""
+        zero = self.env['account.tax'].create({
+            'name': "IVA 0 % de prueba", 'amount': 0, 'type_tax_use': 'sale', 'tax_code': '01',
+            'iva_tax_code': '01', 'tax_group_id': self.iva.tax_group_id.id,
+            'company_id': self.env.company.id, 'country_id': self.env.ref('base.cr').id,
+        })
+        summary = self._summary([(self.service, 6637.16814, zero), (self.wine, 8407.07965, self.iva)])
+        self.assertEqual(float(summary['TotalServGravados']), 0)
+        self.assertEqual(float(summary['TotalServNoSujeto']), 6637.16814)
+        self.assertEqual(float(summary['TotalMercanciasGravadas']), 8407.07965)
+        self.assertEqual(float(summary['TotalMercNoSujeta']), 0)
+        self.assertEqual(float(summary['TotalNoSujeto']), 6637.16814)
+        self.assertEqual(float(summary['TotalVenta']), round(6637.16814 + 8407.07965, 5))
+        names = list(summary)
+        self.assertLess(names.index('TotalServExonerado'), names.index('TotalServNoSujeto'))
+        self.assertLess(names.index('TotalServNoSujeto'), names.index('TotalMercanciasGravadas'))
+        self.assertLess(names.index('TotalExonerado'), names.index('TotalNoSujeto'))
+        self.assertLess(names.index('TotalNoSujeto'), names.index('TotalVenta'))
+
+    def test_without_tarifa_01_there_are_no_no_sujeto_totals(self):
+        summary = self._summary([(self.service, 100, self.iva)])
+        self.assertNotIn('TotalServNoSujeto', summary)
+        self.assertNotIn('TotalNoSujeto', summary)

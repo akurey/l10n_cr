@@ -390,10 +390,13 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                 total_impuestos, total_descuento, lines,
                 otrosCargos, currency_rate, invoice_comments,
                 tipo_documento_referencia, numero_documento_referencia,
-                fecha_emision_referencia, codigo_referencia, razon_referencia):
+                fecha_emision_referencia, codigo_referencia, razon_referencia,
+                total_servicio_no_sujeto=0.0, total_mercaderia_no_sujeto=0.0):
 
     numero_linea = 0
     payment_methods_id = []
+    # The export invoice (FEE) has no "no sujeto" totals
+    has_no_sujeto = inv.tipo_documento != 'FEE' and bool(total_servicio_no_sujeto or total_mercaderia_no_sujeto)
 
     if inv._name == 'pos.order':
         plazo_credito = '0'
@@ -677,18 +680,25 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     if inv.tipo_documento != 'FEE':
         sb.append('<TotalServExonerado>' + str(totalServExonerado) + '</TotalServExonerado>')
+    if has_no_sujeto:
+        sb.append('<TotalServNoSujeto>' + str(total_servicio_no_sujeto) + '</TotalServNoSujeto>')
 
     sb.append('<TotalMercanciasGravadas>' + str(total_mercaderia_gravado) + '</TotalMercanciasGravadas>')
     sb.append('<TotalMercanciasExentas>' + str(total_mercaderia_exento) + '</TotalMercanciasExentas>')
 
     if inv.tipo_documento != 'FEE':
         sb.append('<TotalMercExonerada>' + str(totalMercExonerada) + '</TotalMercExonerada>')
+    if has_no_sujeto:
+        sb.append('<TotalMercNoSujeta>' + str(total_mercaderia_no_sujeto) + '</TotalMercNoSujeta>')
 
     sb.append('<TotalGravado>' + str(round(total_servicio_gravado + total_mercaderia_gravado, 5)) + '</TotalGravado>')
     sb.append('<TotalExento>' + str(round(total_servicio_exento + total_mercaderia_exento, 5)) + '</TotalExento>')
 
     if inv.tipo_documento != 'FEE':
         sb.append('<TotalExonerado>' + str(round(totalServExonerado + totalMercExonerada, 5)) + '</TotalExonerado>')
+    if has_no_sujeto:
+        sb.append('<TotalNoSujeto>' + str(round(total_servicio_no_sujeto + total_mercaderia_no_sujeto, 5)) +
+                  '</TotalNoSujeto>')
 
     sb.append('<TotalVenta>' +
               str(round(total_servicio_gravado +
@@ -696,7 +706,9 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                         total_servicio_exento +
                         total_mercaderia_exento +
                         totalServExonerado +
-                        totalMercExonerada, 5)) +
+                        totalMercExonerada +
+                        total_servicio_no_sujeto +
+                        total_mercaderia_no_sujeto, 5)) +
               '</TotalVenta>')
     sb.append('<TotalDescuentos>' + str(round(total_descuento, 5)) + '</TotalDescuentos>')
     sb.append('<TotalVentaNeta>' + str(round(base_total, 5)) + '</TotalVentaNeta>')
