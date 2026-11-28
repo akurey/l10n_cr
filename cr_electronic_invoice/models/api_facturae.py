@@ -528,7 +528,6 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
 
     sb.append('<CondicionVenta>' + sale_conditions + '</CondicionVenta>')
     sb.append('<PlazoCredito>' + plazo_credito + '</PlazoCredito>')
-    tax_summary = {}
     if lines:
         sb.append('<DetalleServicio>')
         
@@ -583,14 +582,6 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
                     sb.append('<Tarifa>' + str(b['tarifa']) + '</Tarifa>')
                     sb.append('<Monto>' + str(b['monto']) + '</Monto>')
 
-                    if tax_code in tax_summary:
-                        tax_summary[tax_code]['TotalMontoImpuesto'] += float(b['monto'])
-                    else:
-                        tax_summary[tax_code] = {
-                            'Codigo': str(b['codigo']),
-                            'CodigoTarifaIVA': tax_code,
-                            'TotalMontoImpuesto': float(b['monto'])
-                        }
                     
                     if inv.tipo_documento != 'FEE':
                         if b.get('exoneracion'):
@@ -701,8 +692,7 @@ def gen_xml_v4_4(inv, sale_conditions, total_servicio_gravado,
     sb.append('<TotalDescuentos>' + str(round(total_descuento, 5)) + '</TotalDescuentos>')
     sb.append('<TotalVentaNeta>' + str(round(base_total, 5)) + '</TotalVentaNeta>')
     
-    if tax_summary and ((inv.tipo_documento != 'FEC' and not inv.partner_id.has_exoneration) or (inv.tipo_documento == 'FEC' and not receiver_company.has_exoneration)):
-        append_tax_breakdown(sb, tax_summary)
+    append_tax_breakdown(sb, charged_tax_breakdown(lines))
         
     sb.append('<TotalImpuesto>' + str(round(total_impuestos, 5)) + '</TotalImpuesto>')
 
@@ -758,6 +748,22 @@ def otras_senas(street, max_length):
     # Hacienda requires 5 characters at least: a shorter address is sent as "No Aplica".
     text = (street or '').strip()
     return escape(text[:max_length] if len(text) >= 5 else 'No Aplica')
+
+
+def charged_tax_breakdown(lines):
+    """The tax charged by the detail lines, per tax code and rate: Monto minus the MontoImpuesto exonerated,
+    like ImpuestoNeto (a gross figure would not add up to TotalImpuesto). Hacienda requires the breakdown
+    whenever a line charges tax, exoneration or not (-487); a code exonerated in full charges nothing and is
+    left out, so a document exonerated in full carries no breakdown."""
+    summary = {}
+    for line in (lines or {}).values():
+        for tax in (line.get('impuesto') or {}).values():
+            code = str(tax['iva_tax_code'])
+            charged = float(tax['monto']) - float((tax.get('exoneracion') or {}).get('montoImpuesto') or 0)
+            entry = summary.setdefault(code, {'Codigo': str(tax['codigo']), 'CodigoTarifaIVA': code,
+                                              'TotalMontoImpuesto': 0.0})
+            entry['TotalMontoImpuesto'] += charged
+    return {code: tax for code, tax in summary.items() if round(tax['TotalMontoImpuesto'], 5)}
 
 
 # Function to generate "Recibo Electronico de Pago" document

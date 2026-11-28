@@ -1,7 +1,10 @@
-from odoo import Command
+from unittest.mock import patch
+
+from odoo import Command, fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from ..models import api_facturae
 from ..models.account_move import EXONERATION_FISCAL_POSITION
 
 WINE = '2421200000100'  # CABYS: wine of fresh grapes
@@ -217,3 +220,39 @@ class TestExoneration(TransactionCase):
         invoice = self.env['account.move'].new({'move_type': 'out_invoice', 'partner_id': self.customer.id})
         self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(), ["Expiration Date"])
 
+    def _summary_of(self, partner, lines, number):
+        """The tax breakdown and TotalImpuesto that the XML of an FE with these (product, price, taxes) lines
+        carries: the detail lines and the total are read where the XML is built."""
+        # A Costa Rican company and position, like the test taxes
+        self.env.company.write({'frm_ws_ambiente': 'api-stag', 'account_fiscal_country_id': self.costa_rica.id,
+                                'date_expiration_sign': fields.Datetime.add(fields.Datetime.now(), days=365)})
+        self.position.country_id = self.costa_rica
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice', 'partner_id': partner.id, 'fiscal_position_id': self.position.id,
+            'tipo_documento': 'FE', 'sequence': '0010000101000000000%d' % number,
+            'number_electronic': '5062711260031011234560010000%03d' % number + '0' * 19,
+            'invoice_line_ids': [Command.create({'product_id': product.id, 'name': product.name, 'quantity': 1,
+                                                 'price_unit': price, 'tax_ids': [Command.set(taxes.ids)]})
+                                 for product, price, taxes in lines],
+        })
+        with patch.object(api_facturae, 'gen_xml_v4_4', side_effect=RuntimeError('stop here')) as gen_xml:
+            self.env['account.move'].generate_and_send_invoices(invoice.with_context(lang='en_US'))
+        self.assertEqual(gen_xml.call_count, 1, invoice.einvoice_error_detail)
+        total_impuestos, detail = gen_xml.call_args.args[11], gen_xml.call_args.args[13]
+        breakdown = [(tax['Codigo'], tax['CodigoTarifaIVA'], round(tax['TotalMontoImpuesto'], 5))
+                     for tax in api_facturae.charged_tax_breakdown(detail).values()]
+        return breakdown, total_impuestos
+
+    def test_the_tax_breakdown_holds_the_tax_charged(self):
+        """Hacienda rejects (-487) a document whose lines charge IVA without TotalDesgloseImpuesto, exoneration or
+        not. The breakdown holds the IVA charged, net of the exoneration, so it adds up to TotalImpuesto."""
+        laptop = self.env['product.product'].create(
+            {'name': "Portátil de prueba", 'cabys_code': LAPTOP, 'taxes_id': [Command.set(self.iva.ids)]})
+        free_zone = self._free_trade_zone()
+        exonerated = self._exonerated(LAPTOP, free_zone)
+        mixed = self._summary_of(free_zone, [(laptop, 1000, exonerated), (self.delivery, 500, self.iva)], 1)
+        self.assertEqual(mixed, ([('01', '08', 65.0)], 65.0), "only the delivery charges IVA")
+        self.assertEqual(self._summary_of(free_zone, [(laptop, 1000, exonerated)], 2), ([], 0.0),
+                         "a document exonerated in full charges no tax: no breakdown, as Hacienda accepts it")
+        half = self._summary_of(self.customer, [(self.wine, 1000, self._exonerated(WINE))], 3)
+        self.assertEqual(half, ([('01', '08', 65.0)], 65.0), "half of the 13 % IVA is charged")
