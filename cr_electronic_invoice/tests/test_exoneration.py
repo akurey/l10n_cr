@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 from odoo import Command, fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
+from ..models import api_facturae
 from ..models.account_move import EXONERATION_FISCAL_POSITION
 
 WINE = '2421200000100'  # CABYS: wine of fresh grapes
@@ -236,16 +239,26 @@ class TestExoneration(TransactionCase):
 
     def test_the_send_cron_reports_what_a_posted_document_lacks(self):
         """A document posted before the article and clause were required: the cron leaves it in error saying
-        which customer fields are missing (fixed on the customer, then «Retry Sending»), and goes on."""
+        which customer fields are missing (fixed on the customer, then «Retry Sending»), and goes on with the next
+        document of the batch."""
         self.env.company.write({'frm_ws_ambiente': 'api-stag',
                                 'date_expiration_sign': fields.Datetime.add(fields.Datetime.now(), days=365)})
-        customer = self._free_trade_zone(exoneration_article=False, exoneration_clause=False)
-        invoice = self.env['account.move'].create({
-            'move_type': 'out_invoice', 'partner_id': customer.id, 'fiscal_position_id': self.position.id,
-            'tipo_documento': 'FE', 'sequence': '00100001010000000001',
+        lacking = self.env['account.move'].create({
+            'move_type': 'out_invoice', 'fiscal_position_id': self.position.id, 'tipo_documento': 'FE',
+            'partner_id': self._free_trade_zone(exoneration_article=False, exoneration_clause=False).id,
+            'sequence': '00100001010000000001', 'number_electronic': '5062711260031011234560010000101' + '0' * 19,
         })
-        self.assertTrue(invoice.show_exoneration)
-        invoice.generate_and_send_invoices(invoice.with_context(lang='en_US'))
-        self.assertEqual(invoice.state_tributacion, 'error')
-        self.assertIn("Exoneration Article, Exoneration Clause", invoice.einvoice_error_detail)
-        self.assertFalse(invoice.xml_comprobante, "nothing was built or sent")
+        complete = self.env['account.move'].create({
+            'move_type': 'out_invoice', 'fiscal_position_id': self.position.id, 'tipo_documento': 'FE',
+            'partner_id': self._free_trade_zone().id,
+            'sequence': '00100001010000000002', 'number_electronic': '5062711260031011234560010000102' + '0' * 19,
+        })
+        self.assertTrue(lacking.show_exoneration and complete.show_exoneration)
+        # The XML of the complete one is not built here: reaching it is what shows the batch went on.
+        with patch.object(api_facturae, 'gen_xml_v4_4', side_effect=RuntimeError('stop here')) as gen_xml:
+            self.env['account.move'].generate_and_send_invoices((lacking | complete).with_context(lang='en_US'))
+        self.assertEqual(lacking.state_tributacion, 'error')
+        self.assertIn("Exoneration Article, Exoneration Clause", lacking.einvoice_error_detail)
+        self.assertFalse(lacking.xml_comprobante, "nothing was built or sent")
+        self.assertEqual(gen_xml.call_count, 1)
+        self.assertEqual(gen_xml.call_args.args[0], complete, "the next document of the batch is still built")
