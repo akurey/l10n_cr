@@ -1659,13 +1659,26 @@ class AccountInvoiceElectronic(models.Model):
                 'reference_document_id': document.id}
 
     def _cr_refer_to_reversed_entry(self):
-        """A customer credit note made outside the reversal wizard only knows the document it reverses
-        (reversed_entry_id): it refers to it too, so missing reference data stops it at posting («Incomplete
-        reference data for credit note») instead of going to Hacienda without InformacionReferencia, which
-        Hacienda rejects."""
-        for move in self.filtered(lambda m: m.move_type == 'out_refund' and m.reversed_entry_id
-                                  and not m.invoice_id):
-            move.invoice_id = move.reversed_entry_id
+        """A customer credit note made outside the reversal wizard (a Point of Sale refund without
+        cr_electronic_invoice_pos, for instance) only knows the document it reverses (reversed_entry_id): it
+        refers to it, with what Hacienda reads in InformacionReferencia and nobody else set. The referenced
+        document type follows the reversed document (FE 01, TE 04...); the reference code is 01 «Anula
+        Documento de Referencia» when the note reverses its whole amount, else 02 «Corrige monto». Whatever the
+        wizard, the user or another module already set is kept."""
+        for move in self.filtered(lambda m: m.move_type == 'out_refund' and m.reversed_entry_id):
+            if not move.invoice_id:
+                move.invoice_id = move.reversed_entry_id
+            reversed_move = move.reversed_entry_id
+            if move.invoice_id != reversed_move:
+                continue
+            if not move.reference_document_id:
+                move.reference_document_id = self.env['reference.document'].search(
+                    [('code', '=', REFERENCE_DOCUMENT_CODES.get(reversed_move.tipo_documento))], limit=1)
+            if not move.reference_code_id:
+                whole = move.currency_id == reversed_move.currency_id and not move.currency_id.compare_amounts(
+                    move.amount_total, reversed_move.amount_total)
+                move.reference_code_id = self.env.ref(
+                    'cr_electronic_invoice.ReferenceCode_1' if whole else 'cr_electronic_invoice.ReferenceCode_2')
 
     def get_invoice_sequence(self):
         tipo_documento = self.tipo_documento
