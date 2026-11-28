@@ -1,4 +1,4 @@
-from odoo import Command
+from odoo import Command, fields
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -234,3 +234,18 @@ class TestExoneration(TransactionCase):
             self.assertEqual(invoice.with_context(lang='en_US')._cr_exoneration_missing_fields(),
                              ["Exoneration Clause"], xmlid)
 
+    def test_the_send_cron_reports_what_a_posted_document_lacks(self):
+        """A document posted before the article and clause were required: the cron leaves it in error saying
+        which customer fields are missing (fixed on the customer, then «Retry Sending»), and goes on."""
+        self.env.company.write({'frm_ws_ambiente': 'api-stag',
+                                'date_expiration_sign': fields.Datetime.add(fields.Datetime.now(), days=365)})
+        customer = self._free_trade_zone(exoneration_article=False, exoneration_clause=False)
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice', 'partner_id': customer.id, 'fiscal_position_id': self.position.id,
+            'tipo_documento': 'FE', 'sequence': '00100001010000000001',
+        })
+        self.assertTrue(invoice.show_exoneration)
+        invoice.generate_and_send_invoices(invoice.with_context(lang='en_US'))
+        self.assertEqual(invoice.state_tributacion, 'error')
+        self.assertIn("Exoneration Article, Exoneration Clause", invoice.einvoice_error_detail)
+        self.assertFalse(invoice.xml_comprobante, "nothing was built or sent")

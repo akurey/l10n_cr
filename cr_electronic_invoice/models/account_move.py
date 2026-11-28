@@ -1166,6 +1166,15 @@ class AccountInvoiceElectronic(models.Model):
 
                 if not inv.xml_comprobante or (inv.tipo_documento == 'FEC' and inv.state_tributacion == 'rechazado'):
 
+                    # The XML takes the exoneration from the customer: a document posted before a field became
+                    # required (or whose customer changed since) says what is missing instead of failing to build.
+                    missing = inv.show_exoneration and inv._cr_exoneration_missing_fields()
+                    if missing:
+                        inv._cr_einvoice_fail(
+                            _('With fiscal position "%s" the following customer fields are required: %s')
+                            % (EXONERATION_FISCAL_POSITION, ", ".join(missing)))
+                        continue
+
                     if inv.tipo_documento == 'FEC' and inv.state_tributacion == 'rechazado':
                         msg_body = _('Another FEC is being sent because the previous one was rejected by Hacienda. ')
                         msg_body += _('Attached the previous XMLs. Previous key: ')
